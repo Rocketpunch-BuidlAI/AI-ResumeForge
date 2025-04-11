@@ -3,9 +3,11 @@
 import { useState } from 'react';
 
 interface RegisterResult {
-  transactionHash: string;
+  ipId?: string;
   tokenId?: string;
-  status: string;
+  txHash?: string;
+  licenseTermsIds?: string[];
+  status?: string;
   message?: string;
 }
 
@@ -118,9 +120,36 @@ export default function IpRegisterPage() {
         {result && (
           <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-md">
             <h3 className="font-bold">등록 성공!</h3>
-            <pre className="mt-2 text-sm overflow-auto">
-              {JSON.stringify(result)}
-            </pre>
+            <div className="mt-2 text-sm">
+              {result.ipId && (
+                <p className="mb-1">
+                  <span className="font-semibold">IP ID:</span> {result.ipId}
+                </p>
+              )}
+              {result.tokenId && (
+                <p className="mb-1">
+                  <span className="font-semibold">Token ID:</span> {result.tokenId}
+                </p>
+              )}
+              {result.txHash && (
+                <p className="mb-1">
+                  <span className="font-semibold">Transaction Hash:</span>{" "}
+                  <a 
+                    href={`https://aeneid.story.xyz/tx/${result.txHash}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    {result.txHash.substring(0, 10)}...{result.txHash.substring(result.txHash.length - 8)}
+                  </a>
+                </p>
+              )}
+              {result.licenseTermsIds && result.licenseTermsIds.length > 0 && (
+                <p className="mb-1">
+                  <span className="font-semibold">License Terms IDs:</span> {result.licenseTermsIds.join(', ')}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>

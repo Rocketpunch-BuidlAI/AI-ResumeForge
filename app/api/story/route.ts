@@ -57,16 +57,31 @@ export async function POST(request: Request) {
             terms: creativeCommonsAttribution.terms
           }
         ],
-        allowDuplicates: true
+        allowDuplicates: true,
+        txOptions: {
+          waitForTransaction: true // 트랜잭션 완료 대기
+        }
       });
 
-      console.log("Successfully registered IP:", response);
+      // 응답 구조 자세히 로깅
+      console.log("Successfully registered IP. Full response:", JSON.stringify(response, (key, value) => 
+        typeof value === 'bigint' ? value.toString() : value
+      , 2));
+      console.log("ipId:", response.ipId);
+      console.log("tokenId:", response.tokenId);
+      console.log("txHash:", response.txHash);
+      console.log("licenseTermsIds:", response.licenseTermsIds);
 
-      return NextResponse.json({
+      // 클라이언트에게 전송할 응답 구조
+      const clientResponse = {
         ipId: response.ipId,
-        tokenId: response.tokenId,
+        tokenId: response.tokenId ? response.tokenId.toString() : undefined,
         txHash: response.txHash,
-      });
+        licenseTermsIds: response.licenseTermsIds ? 
+          response.licenseTermsIds.map(id => id.toString()) : undefined
+      };
+
+      return NextResponse.json(clientResponse);
     } catch (mintError) {
       console.error("Error in mint process:", mintError);
       
