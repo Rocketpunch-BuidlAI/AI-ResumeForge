@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -19,15 +19,11 @@ import {
   Trash2,
   Moon,
   Sun,
-} from "lucide-react"
-import { useTheme } from "next-themes"
+} from 'lucide-react';
+import { useTheme } from 'next-themes';
 
-import { Button } from "@/components/ui/button"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Sidebar,
   SidebarContent,
@@ -36,86 +32,84 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar';
 
 const data = [
   [
     {
-      label: "Customize Page",
+      label: 'Customize Page',
       icon: Settings2,
     },
     {
-      label: "Turn into wiki",
+      label: 'Turn into wiki',
       icon: FileText,
     },
   ],
   [
     {
-      label: "Copy Link",
+      label: 'Copy Link',
       icon: Link,
     },
     {
-      label: "Duplicate",
+      label: 'Duplicate',
       icon: Copy,
     },
     {
-      label: "Move to",
+      label: 'Move to',
       icon: CornerUpRight,
     },
     {
-      label: "Move to Trash",
+      label: 'Move to Trash',
       icon: Trash2,
     },
   ],
   [
     {
-      label: "Undo",
+      label: 'Undo',
       icon: CornerUpLeft,
     },
     {
-      label: "View analytics",
+      label: 'View analytics',
       icon: LineChart,
     },
     {
-      label: "Version History",
+      label: 'Version History',
       icon: GalleryVerticalEnd,
     },
     {
-      label: "Show delete pages",
+      label: 'Show delete pages',
       icon: Trash,
     },
     {
-      label: "Notifications",
+      label: 'Notifications',
       icon: Bell,
     },
   ],
   [
     {
-      label: "Import",
+      label: 'Import',
       icon: ArrowUp,
     },
     {
-      label: "Export",
+      label: 'Export',
       icon: ArrowDown,
     },
   ],
-]
+];
 
 export function NavActions() {
-  const [isOpen, setIsOpen] = React.useState(false)
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
+  const [isOpen, setIsOpen] = React.useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
     return (
       <div className="flex items-center gap-2 text-sm">
-        <div className="hidden font-medium text-muted-foreground md:inline-block">
-          Edit Oct 08
-        </div>
+        <div className="text-muted-foreground hidden font-medium md:inline-block">Edit Oct 08</div>
         <Button variant="ghost" size="icon" className="h-7 w-7">
           <Star />
         </Button>
@@ -124,18 +118,11 @@ export function NavActions() {
         </Button>
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 data-[state=open]:bg-accent"
-            >
+            <Button variant="ghost" size="icon" className="data-[state=open]:bg-accent h-7 w-7">
               <MoreHorizontal />
             </Button>
           </PopoverTrigger>
-          <PopoverContent
-            className="w-56 overflow-hidden rounded-lg p-0"
-            align="end"
-          >
+          <PopoverContent className="w-56 overflow-hidden rounded-lg p-0" align="end">
             <Sidebar collapsible="none" className="bg-transparent">
               <SidebarContent>
                 {data.map((group, index) => (
@@ -158,14 +145,12 @@ export function NavActions() {
           </PopoverContent>
         </Popover>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex items-center gap-2 text-sm">
-      <div className="hidden font-medium text-muted-foreground md:inline-block">
-        Edit Oct 08
-      </div>
+      <div className="text-muted-foreground hidden font-medium md:inline-block">Edit Oct 08</div>
       <Button variant="ghost" size="icon" className="h-7 w-7">
         <Star />
       </Button>
@@ -173,24 +158,17 @@ export function NavActions() {
         variant="ghost"
         size="icon"
         className="h-7 w-7"
-        onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
       >
-        {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+        {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
       </Button>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 data-[state=open]:bg-accent"
-          >
+          <Button variant="ghost" size="icon" className="data-[state=open]:bg-accent h-7 w-7">
             <MoreHorizontal />
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          className="w-56 overflow-hidden rounded-lg p-0"
-          align="end"
-        >
+        <PopoverContent className="w-56 overflow-hidden rounded-lg p-0" align="end">
           <Sidebar collapsible="none" className="bg-transparent">
             <SidebarContent>
               {data.map((group, index) => (
@@ -213,5 +191,5 @@ export function NavActions() {
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

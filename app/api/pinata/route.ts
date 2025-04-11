@@ -21,9 +21,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ url, cid });
   } catch (error) {
     console.error('Error uploading file:', error);
-    return NextResponse.json(
-      'An error occurred while uploading the file.',
-      { status: 500 }
-    );
+    return NextResponse.json('An error occurred while uploading the file.', { status: 500 });
   }
 }

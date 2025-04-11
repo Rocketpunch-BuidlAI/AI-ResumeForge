@@ -1,7 +1,7 @@
 import { PinataSDK } from 'pinata';
-import { http } from "viem";
-import { Account, privateKeyToAccount, Address } from "viem/accounts";
-import { StoryClient, StoryConfig } from "@story-protocol/core-sdk";
+import { http } from 'viem';
+import { Account, privateKeyToAccount, Address } from 'viem/accounts';
+import { StoryClient, StoryConfig } from '@story-protocol/core-sdk';
 
 export const pinata = new PinataSDK({
   pinataJwt: process.env.PINATA_JWT,
@@ -28,6 +28,6 @@ const account: Account = privateKeyToAccount(privateKey);
 const config: StoryConfig = {
   account: account, // the account object from above
   transport: http(process.env.RPC_PROVIDER_URL),
-  chainId: "aeneid",
+  chainId: 'aeneid',
 };
 export const client = StoryClient.newClient(config);

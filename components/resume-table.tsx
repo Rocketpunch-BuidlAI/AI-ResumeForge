@@ -5,22 +5,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { FileText, Eye } from "lucide-react"
-import Link from "next/link"
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { FileText, Eye } from 'lucide-react';
+import Link from 'next/link';
 
 interface Resume {
-  id: string
-  fileName: string
-  rewardAmount: number
-  referenceCount: number
-  createdAt: string
-  updatedAt: string
+  id: string;
+  fileName: string;
+  rewardAmount: number;
+  referenceCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ResumeTableProps {
-  resumes: Resume[]
+  resumes: Resume[];
 }
 
 export function ResumeTable({ resumes }: ResumeTableProps) {
@@ -57,7 +57,7 @@ export function ResumeTable({ resumes }: ResumeTableProps) {
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/resumes/${resume.id}`}>
-                      <Eye className="h-4 w-4 mr-2" />
+                      <Eye className="mr-2 h-4 w-4" />
                       상세보기
                     </Link>
                   </Button>
@@ -68,5 +68,5 @@ export function ResumeTable({ resumes }: ResumeTableProps) {
         </TableBody>
       </Table>
     </div>
-  )
-} 
+  );
+}

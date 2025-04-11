@@ -81,7 +81,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
     startTransition(() => {
       formAction({ email, password, name });
     });
-  }, [password, email, name, formAction]);
+  }, [createWallet, formAction, email, password, name]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,13 +96,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
         <div className="mt-3 grid gap-6">
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              name="name"
-              type="text"
-              placeholder="Kevin"
-              required
-            />
+            <Input id="name" name="name" type="text" placeholder="Kevin" required />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
