@@ -11,7 +11,7 @@ export default function SignupPage() {
             <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-4" />
             </div>
-            Acme Inc.
+            AI - ResumeForge
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -21,10 +21,23 @@ export default function SignupPage() {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
-        <img
-          src="/placeholder.svg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+        <video
+          src="/mainMedia.webm"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            zIndex: 0,
+            borderRadius: '0.5rem',
+          }}
         />
       </div>
     </div>

@@ -44,7 +44,7 @@ export async function createUser(email: string, password: string, name: string) 
 export async function saveCoverletter(userId: number, cid: string, filePath: string) {
   // Check if a record with the same CID exists
   const existingRecord = await db.select().from(coverletters).where(eq(coverletters.cid, cid));
-  
+
   if (existingRecord.length > 0) {
     // Return null if CID already exists
     return null;
