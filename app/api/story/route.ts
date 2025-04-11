@@ -6,20 +6,19 @@ const creativeCommonsAttribution = {
   terms: {
     transferable: true,
     royaltyPolicy: "0xBe54FB168b3c982b7AaE60dB6CF75Bd8447b390E" as `0x${string}`,
-    defaultMintingFee: 0,
-    expiration: 0,
+    defaultMintingFee: BigInt(0),
+    expiration: BigInt(0),
     commercialUse: true,
     commercialAttribution: true,
     commercializerChecker: zeroAddress,
     commercializerCheckerData: "0x" as `0x${string}`,
     commercialRevShare: 0,
-    commercialRevCeiling: 0,
+    commercialRevCeiling: BigInt(0),
     derivativesAllowed: true,
     derivativesAttribution: true,
     derivativesApproval: false,
     derivativesReciprocal: true,
-    derivativeRevCelling: 0,
-    derivativeRevCeiling: 0,
+    derivativeRevCeiling: BigInt(0),
     currency: "0x1514000000000000000000000000000000000000" as `0x${string}`,
     uri: "https://github.com/piplabs/pil-document/blob/998c13e6ee1d04eb817aefd1fe16dfe8be3cd7a2/off-chain-terms/CC-BY.json",
   }
@@ -33,23 +32,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'CID and wallet address are required' }, { status: 400 });
     }
 
-    // Register IP asset with Creative Commons license
-    const response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
-      spgNftContract: "0xB727a753083a24D007d204B4220eC09B101C1407", // Sepolia testnet SPG NFT contract
-      ipMetadata: {
-        ipMetadataURI: cid,
-      },
-      recipient: walletAddress as `0x${string}`,
-      licenseTermsData: [
-        creativeCommonsAttribution
-      ],
-    });
+    // 각 단계별로 로깅하여 문제 추적
+    console.log("Attempting to register IP with CID:", cid, "for wallet:", walletAddress);
 
-    return NextResponse.json({
-      ipId: response.ipId,
-      tokenId: response.tokenId,
-      txHash: response.txHash,
-    });
+    // Register IP asset with Creative Commons license
+    try {
+      // SPG 컨트랙트 주소 (Aeneid 테스트넷)
+      // 문서에 따른 정확한 주소로 변경
+      const spgNftContract = "0xc32A8a0FF3beDDDa58393d022aF433e78739FAbc";
+      
+      console.log("Using SPG contract:", spgNftContract);
+      
+      // 표준 Creative Commons NFT 발행 시도
+      const response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
+        spgNftContract: spgNftContract,
+        ipMetadata: {
+          ipMetadataURI: cid,
+        },
+        recipient: walletAddress as `0x${string}`,
+        licenseTermsData: [
+          { 
+            terms: creativeCommonsAttribution.terms
+          }
+        ],
+        allowDuplicates: true
+      });
+
+      console.log("Successfully registered IP:", response);
+
+      return NextResponse.json({
+        ipId: response.ipId,
+        tokenId: response.tokenId,
+        txHash: response.txHash,
+      });
+    } catch (mintError) {
+      console.error("Error in mint process:", mintError);
+      
+      // 자세한 오류 정보 로깅
+      if (mintError instanceof Error) {
+        console.error("Error details:", mintError.message);
+        console.error("Error stack:", mintError.stack);
+      }
+      
+      return NextResponse.json(
+        { error: mintError instanceof Error ? mintError.message : "Failed to mint and register IP asset" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Error registering IP asset:", error);
     return NextResponse.json(

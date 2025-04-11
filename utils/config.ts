@@ -28,6 +28,6 @@ const account: Account = privateKeyToAccount(privateKey);
 const config: StoryConfig = {
   account: account, // the account object from above
   transport: http(process.env.RPC_PROVIDER_URL),
-  chainId: 'aeneid',
+  chainId: 'aeneid', // Aeneid 테스트넷
 };
 export const client = StoryClient.newClient(config);

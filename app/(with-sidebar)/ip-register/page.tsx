@@ -2,11 +2,18 @@
 
 import { useState } from 'react';
 
+interface RegisterResult {
+  transactionHash: string;
+  tokenId?: string;
+  status: string;
+  message?: string;
+}
+
 export default function IpRegisterPage() {
   const [email, setEmail] = useState('');
   const [cid, setCid] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<RegisterResult | null>(null);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,12 +52,14 @@ export default function IpRegisterPage() {
       });
 
       if (!registerResponse.ok) {
-        throw new Error('Failed to register IP asset');
+        const errorData = await registerResponse.json();
+        throw new Error(errorData.error || 'Failed to register IP asset');
       }
 
       const registerData = await registerResponse.json();
       setResult(registerData);
     } catch (err) {
+      console.error('Registration error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
