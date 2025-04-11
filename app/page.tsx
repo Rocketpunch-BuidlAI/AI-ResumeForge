@@ -1,9 +1,42 @@
 'use client';
 
-import Link from 'next/link';
-import Image from 'next/image';
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
+  const [file, setFile] = useState<File>();
+  const [url, setUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  const uploadFile = async () => {
+    try {
+      if (!file) {
+        alert("No file selected");
+        return;
+      }
+
+      setUploading(true);
+      const data = new FormData();
+      data.set("file", file);
+      const uploadRequest = await fetch("/api/pinata", {
+        method: "POST",
+        body: data,
+      });
+      const signedUrl = await uploadRequest.json();
+      setUrl(signedUrl);
+      setUploading(false);
+    } catch (e) {
+      console.log(e);
+      setUploading(false);
+      alert("Trouble uploading file");
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFile(e.target?.files?.[0]);
+  };
+
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
       <main className="row-start-2 flex flex-col items-center gap-[32px] sm:items-start">
@@ -26,12 +59,18 @@ export default function Home() {
           <li className="tracking-[-.01em]">Save and see your changes instantly.</li>
         </ol>
 
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
+        <div className="flex gap-4 items-center">
           <Link
-            className="bg-foreground text-background flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent px-4 text-sm font-medium transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
+            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
             href="/pdf"
           >
-            PDF 업로드 하기
+            Upload PDF
+          </Link>
+          <Link
+            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+            href="/privy"
+          >
+            Find Wallet
           </Link>
         </div>
       </main>
