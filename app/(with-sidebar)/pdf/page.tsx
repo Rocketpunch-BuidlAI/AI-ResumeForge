@@ -18,7 +18,7 @@ export default function Home() {
       setUploading(true);
       const data = new FormData();
       data.set('file', file);
-      data.set('userId', '13');
+      data.set('userId', '21');
       const uploadRequest = await fetch('/api/pinata', {
         method: 'POST',
         body: data,
