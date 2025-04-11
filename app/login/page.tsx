@@ -10,8 +10,8 @@ export default function LoginPage() {
           <a href="#" className="flex items-center gap-2 font-medium">
             <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-md">
               <GalleryVerticalEnd className="size-4" />
-            </div>
-            Acme Inc.
+            </div> 
+            Acme Inc.           
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">
@@ -28,5 +28,5 @@ export default function LoginPage() {
         />
       </div>
     </div>
-  );
+  )
 }
