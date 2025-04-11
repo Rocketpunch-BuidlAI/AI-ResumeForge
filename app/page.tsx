@@ -1,69 +1,60 @@
-'use client';
+import { ResumeTable } from "@/components/resume-table"
+import { WalletInfo } from "@/components/wallet-info"
+import { RewardChart } from "@/components/reward-chart"
 
-import Link from 'next/link';
-import Image from 'next/image';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export default function Home() {
+// 임시 데이터
+const mockResumes = [
+  {
+    id: "1",
+    fileName: "프론트엔드 개발자 이력서.pdf",
+    rewardAmount: 0.5,
+    referenceCount: 10,
+    createdAt: "2024-04-01",
+    updatedAt: "2024-04-10",
+  },
+  {
+    id: "2",
+    fileName: "백엔드 개발자 이력서.pdf",
+    rewardAmount: 0.3,
+    referenceCount: 5,
+    createdAt: "2024-04-05",
+    updatedAt: "2024-04-08",
+  },
+]
+
+const mockRewardData = [
+  { date: "2024-04-01", amount: 0.5 },
+  { date: "2024-04-05", amount: 0.3 },
+  { date: "2024-04-10", amount: 0.2 },
+]
+
+export default function Page() {
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-[32px] sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-center font-[family-name:var(--font-geist-mono)] text-sm/6 sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{' '}
-            <code className="rounded bg-black/[.05] px-1 py-0.5 font-[family-name:var(--font-geist-mono)] font-semibold dark:bg-white/[.06]">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-        </ol>
 
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <Link
-            className="bg-foreground text-background flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent px-4 text-sm font-medium transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
-            href="/pdf"
-          >
-            PDF 업로드 하기
-          </Link>
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <WalletInfo address="0x1234...5678" totalReward={1.0} />
+            <div className="rounded-xl border p-4">
+              <h3 className="mb-4 text-lg font-semibold">보상 이력</h3>
+              <RewardChart data={mockRewardData} />
+            </div>
+          </div>
+          <Tabs defaultValue="resumes">
+            <TabsList>
+              <TabsTrigger value="resumes">자기소개서 목록</TabsTrigger>
+              <TabsTrigger value="rewards">보상 이력</TabsTrigger>
+            </TabsList>
+            <TabsContent value="resumes">
+              <ResumeTable resumes={mockResumes} />
+            </TabsContent>
+            <TabsContent value="rewards">
+              <div className="rounded-xl border p-4">
+                <RewardChart data={mockRewardData} />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
-      </main>
-      <footer className="row-start-3 flex flex-wrap items-center justify-center gap-[24px]">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/window.svg" alt="Window icon" width={16} height={16} />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+  )
 }
