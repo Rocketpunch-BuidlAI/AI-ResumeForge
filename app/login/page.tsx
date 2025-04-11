@@ -5,9 +5,9 @@ import { LoginForm } from '@/components/login-form';
 export default function LoginPage() {
   return (
     <div className="grid min-h-svh w-full lg:grid-cols-2">
-      <div className="bg-muted relative hidden lg:block">
+      <div className=" relative hidden lg:block">
         <video
-          src="/mainMedia.webm"
+          src="/media.mp4"
           autoPlay
           loop
           muted
@@ -21,8 +21,6 @@ export default function LoginPage() {
             top: 0,
             left: 0,
             zIndex: 0,
-            borderRadius: '1.3rem',
-            padding: '0.9rem 1rem',
           }}
         />
       </div>
