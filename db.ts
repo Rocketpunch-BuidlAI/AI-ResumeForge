@@ -4,16 +4,16 @@ import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
 
-// Vercel Postgres 연결
+// Vercel Postgres connection
 const connectionString = process.env.POSTGRES_URL;
 if (!connectionString) {
-  throw new Error('POSTGRES_URL 환경 변수가 설정되지 않았습니다.');
+  throw new Error('POSTGRES_URL environment variable is not set.');
 }
 
 const client = postgres(connectionString, { ssl: 'require' });
 const db = drizzle(client);
 
-// 테이블 스키마 정의
+// Table schema definitions
 const users = pgTable('User', {
   id: serial('id').primaryKey(),
   email: varchar('email', { length: 64 }),
@@ -42,14 +42,14 @@ export async function createUser(email: string, password: string, name: string) 
 }
 
 export async function saveCoverletter(userId: number, cid: string, filePath: string) {
-  // CID가 같은 레코드가 있는지 확인
+  // Check if a record with the same CID exists
   const existingRecord = await db.select().from(coverletters).where(eq(coverletters.cid, cid));
   
   if (existingRecord.length > 0) {
-    // CID가 이미 존재하면 null 반환
+    // Return null if CID already exists
     return null;
   } else {
-    // 새로운 레코드 추가
+    // Add new record
     return await db.insert(coverletters).values({
       userId,
       cid,
@@ -118,5 +118,5 @@ async function ensureTablesExist() {
   }
 }
 
-// 테이블 생성 확인
+// Verify table creation
 ensureTablesExist();

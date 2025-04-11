@@ -1,6 +1,5 @@
 'use client';
 
-import getSession from '@/utils/getSession';
 import { useState } from 'react';
 
 export default function Home() {
@@ -11,21 +10,15 @@ export default function Home() {
 
   const uploadFile = async () => {
     try {
-      const session = await getSession();
-      if (!session?.user.id) {
-        alert('로그인이 필요합니다');
-        return;
-      }
-
       if (!file) {
-        alert('파일을 올려주세요');
+        alert('Please select a file');
         return;
       }
 
       setUploading(true);
       const data = new FormData();
       data.set('file', file);
-      data.set('userId', session.user.id);
+      data.set('userId', '13');
       const uploadRequest = await fetch('/api/pinata', {
         method: 'POST',
         body: data,
@@ -37,7 +30,7 @@ export default function Home() {
     } catch (e) {
       console.log(e);
       setUploading(false);
-      alert('업로드 중 오류 발생');
+      alert('Error occurred while uploading');
     }
   };
 
@@ -46,29 +39,28 @@ export default function Home() {
   };
 
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-8">
-        <h1 className="text-2xl font-bold">PDF 파일 업로드</h1>
-
+    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+      <main className="flex flex-col gap-8 row-start-2 items-center">
+        <h1 className="text-2xl font-bold">PDF File Upload</h1>
         <div className="flex flex-col items-center gap-4">
-          <label className="flex cursor-pointer flex-col items-center gap-2">
+          <label className="flex flex-col items-center gap-2 cursor-pointer">
             <span className="text-sm text-gray-500">
-              {file ? file.name : 'PDF 파일을 선택하세요'}
+              {file ? file.name : 'Select a PDF file'}
             </span>
             <input type="file" onChange={handleChange} accept=".pdf" className="hidden" />
           </label>
           <button
-            className="bg-foreground text-background flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent px-4 text-sm font-medium transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
+            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
             type="button"
             disabled={uploading}
             onClick={uploadFile}
           >
-            {uploading ? '업로드 중...' : '업로드'}
+            {uploading ? 'Uploading...' : 'Upload'}
           </button>
         </div>
         {url && (
           <div className="mt-4 text-center">
-            <p className="mb-2 text-sm text-gray-500">업로드된 파일 URL:</p>
+            <p className="text-sm text-gray-500 mb-2">Uploaded file URL:</p>
             <a
               href={url}
               target="_blank"
@@ -77,7 +69,7 @@ export default function Home() {
             >
               {url}
             </a>
-            <p className="mt-2 text-sm text-gray-500">CID: {cid}</p>
+            <p className="text-sm text-gray-500 mt-2">CID: {cid}</p>
           </div>
         )}
       </main>
