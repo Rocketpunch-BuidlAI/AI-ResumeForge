@@ -1,17 +1,21 @@
-import NextAuth, { User } from 'next-auth';
+import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { compare } from 'bcrypt-ts';
-import { authConfig } from './auth.config';
-import { getUser, createUser } from './db';
-import Google from 'next-auth/providers/google';
+import { getUser } from '@/db';
+import { authConfig } from '@/auth.config';
 
-export const auth = NextAuth({
+export const {
+  handlers: { GET, POST },
+  auth,
+  signIn,
+  signOut,
+} = NextAuth({
   ...authConfig,
   providers: [
-    Google,
     Credentials({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+
         const user = await getUser(credentials.email as string);
         if (user.length === 0) return null;
         const passwordsMatch = await compare(credentials.password as string, user[0].password!);
@@ -19,29 +23,24 @@ export const auth = NextAuth({
           return {
             id: user[0].id.toString(),
             email: user[0].email,
-          } as User;
+          };
         }
         return null;
       },
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === 'google') {
-        const existingUser = await getUser(user.email!);
-        if (existingUser.length === 0) {
-          // 구글 로그인 사용자를 위한 임시 비밀번호 생성
-          const tempPassword = Math.random().toString(36).slice(-8);
-          await createUser(user.email!, tempPassword);
-        }
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub!;
       }
-      return true;
+      return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
     },
   },
 });
-
-export const {
-  handlers: { GET, POST },
-  signIn,
-  signOut,
-} = auth;

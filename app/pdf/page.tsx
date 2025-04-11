@@ -1,5 +1,6 @@
 'use client';
 
+import getSession from '@/utils/getSession';
 import { useState } from 'react';
 
 export default function Home() {
@@ -10,6 +11,12 @@ export default function Home() {
 
   const uploadFile = async () => {
     try {
+      const session = await getSession();
+      if (!session?.user.id) {
+        alert('로그인이 필요합니다');
+        return;
+      }
+
       if (!file) {
         alert('파일을 올려주세요');
         return;
@@ -18,7 +25,7 @@ export default function Home() {
       setUploading(true);
       const data = new FormData();
       data.set('file', file);
-      data.set('userId', '13'); // TODO : 유저 id 받아오기
+      data.set('userId', session.user.id);
       const uploadRequest = await fetch('/api/pinata', {
         method: 'POST',
         body: data,
@@ -42,6 +49,7 @@ export default function Home() {
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 sm:p-20">
       <main className="row-start-2 flex flex-col items-center gap-8">
         <h1 className="text-2xl font-bold">PDF 파일 업로드</h1>
+
         <div className="flex flex-col items-center gap-4">
           <label className="flex cursor-pointer flex-col items-center gap-2">
             <span className="text-sm text-gray-500">

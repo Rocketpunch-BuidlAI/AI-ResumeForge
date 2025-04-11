@@ -1,11 +1,10 @@
 import { NextAuthConfig } from 'next-auth';
-import Google from 'next-auth/providers/google';
 
 export const authConfig = {
   pages: {
     signIn: '/login',
   },
-  providers: [Google],
+  providers: [],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
@@ -26,8 +25,6 @@ export const authConfig = {
       return true;
     },
     redirect({ url, baseUrl }) {
-      // 구글 OAuth 콜백 URL을 허용
-      if (url.includes('/api/auth/callback/google')) return url;
       // 회원가입 페이지로의 리다이렉션을 허용
       if (url.includes('/signup')) return url;
       // 다른 모든 경우 기본 URL을 사용
