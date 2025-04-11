@@ -21,6 +21,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isVerifiying, setIsVerifiying] = useState(false);
 
@@ -35,6 +36,13 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
       const email = formData.get('email') as string;
       const password = formData.get('password') as string;
       const confirmPassword = formData.get('confirm-password') as string;
+      const name = formData.get('name') as string;
+
+      if (!name) {
+        setError('이름을 입력해주세요.');
+        setIsVerifiying(false);
+        return;
+      }
 
       const passwordCheckResult = await checkPassword(password, confirmPassword);
       if (passwordCheckResult.error) {
@@ -52,6 +60,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
 
       setEmail(email);
       setPassword(password);
+      setName(name);
       setError('');
 
       try {
@@ -70,9 +79,9 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
   const handleVerificationSuccess = useCallback(() => {
     createWallet();
     startTransition(() => {
-      formAction({ email, password });
+      formAction({ email, password, name });
     });
-  }, [password, email, formAction]);
+  }, [password, email, name, formAction]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -85,6 +94,16 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
         </div>
         {error && <div className="text-center text-sm text-red-500">{error}</div>}
         <div className="mt-3 grid gap-6">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              placeholder="Kevin"
+              required
+            />
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
