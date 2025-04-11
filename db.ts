@@ -43,10 +43,11 @@ export async function createUser(email: string, password: string) {
 export async function saveCoverletter(userId: number, cid: string, filePath: string) {
   // CID가 같은 레코드가 있는지 확인
   const existingRecord = await db.select().from(coverletters).where(eq(coverletters.cid, cid));
-  
+
   if (existingRecord.length > 0) {
     // CID가 같은 경우 업데이트
-    return await db.update(coverletters)
+    return await db
+      .update(coverletters)
       .set({
         userId,
         filePath,
