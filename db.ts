@@ -18,6 +18,7 @@ const users = pgTable('User', {
   id: serial('id').primaryKey(),
   email: varchar('email', { length: 64 }),
   password: varchar('password', { length: 64 }),
+  name: varchar('name', { length: 64 }),
 });
 
 const coverletters = pgTable('Coverletter', {
@@ -33,11 +34,11 @@ export async function getUser(email: string) {
   return await db.select().from(users).where(eq(users.email, email));
 }
 
-export async function createUser(email: string, password: string) {
+export async function createUser(email: string, password: string, name: string) {
   const salt = genSaltSync(10);
   const hash = hashSync(password, salt);
 
-  return await db.insert(users).values({ email, password: hash });
+  return await db.insert(users).values({ email, password: hash, name });
 }
 
 export async function saveCoverletter(userId: number, cid: string, filePath: string) {
@@ -74,8 +75,26 @@ async function ensureTablesExist() {
       CREATE TABLE "User" (
         id SERIAL PRIMARY KEY,
         email VARCHAR(64) UNIQUE,
-        password VARCHAR(64)
+        password VARCHAR(64),
+        name VARCHAR(64)
       );`;
+  } else {
+    // 테이블이 존재하는 경우 name 컬럼이 있는지 확인
+    const columnCheck = await client`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'User'
+        AND column_name = 'name'
+      );`;
+
+    if (!columnCheck[0].exists) {
+      // name 컬럼이 없으면 추가
+      await client`
+        ALTER TABLE "User"
+        ADD COLUMN name VARCHAR(64);`;
+    }
   }
 
   const coverletterResult = await client`

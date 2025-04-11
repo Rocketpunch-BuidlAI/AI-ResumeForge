@@ -30,10 +30,10 @@ export async function checkEmail(email: string) {
 
 export async function signup(
   state: null,
-  payload: { email: string; password: string }
+  payload: { email: string; password: string; name: string }
 ): Promise<null> {
   try {
-    await createUser(payload.email, payload.password);
+    await createUser(payload.email, payload.password, payload.name);
     await signIn('credentials', {
       email: payload.email,
       password: payload.password,
