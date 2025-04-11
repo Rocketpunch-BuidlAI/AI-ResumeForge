@@ -48,9 +48,9 @@ export default function ResumeUploadPage() {
     <div className="container mx-auto py-8 w-full max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">자기소개서 업로드</CardTitle>
+          <CardTitle className="text-2xl font-bold">Resume Upload</CardTitle>
           <CardDescription className="text-base">
-            기존에 작성한 자기소개서를 업로드하여 AI 분석을 받아보세요.
+            Upload your existing resume to receive AI analysis.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -68,8 +68,8 @@ export default function ResumeUploadPage() {
               <div className="flex flex-col items-center gap-2">
                 <Upload className="h-10 w-10 text-muted-foreground" />
                 <div className="text-sm text-muted-foreground">
-                  <p>파일을 여기에 드래그하거나</p>
-                  <p>아래 버튼을 클릭하여 업로드하세요</p>
+                  <p>Drag and drop your file here or</p>
+                  <p>click the button below to upload</p>
                 </div>
                 <Input
                   id="file"
@@ -95,7 +95,7 @@ export default function ResumeUploadPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={!file}>
-              업로드하기
+              Upload
             </Button>
           </form>
         </CardContent>
