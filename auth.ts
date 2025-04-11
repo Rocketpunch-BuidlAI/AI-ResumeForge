@@ -40,4 +40,8 @@ export const auth = NextAuth({
   },
 });
 
-export const { handlers: { GET, POST }, signIn, signOut } = auth;
+export const {
+  handlers: { GET, POST },
+  signIn,
+  signOut,
+} = auth;

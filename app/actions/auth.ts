@@ -1,74 +1,78 @@
-'use server'
+'use server';
 
-import { getUser, createUser } from "@/db"
-import { redirect } from "next/navigation"
-import { signIn } from "@/auth"
-import { compare } from "bcrypt-ts"
-import console from "console"
+import { getUser, createUser } from '@/db';
+import { signIn } from '@/auth';
 
-export async function signup(prevState: { error: string }, formData: FormData) {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
-  const confirmPassword = formData.get("confirm-password") as string
-
-  if (password !== confirmPassword) {
-    return { error: "비밀번호가 일치하지 않습니다." }
-  }
-
+export async function checkPassword(password: string, confirmPassword: string) {
   try {
-    const existingUser = await getUser(email)
-    if (existingUser.length > 0) {
-      return { error: "이미 존재하는 이메일입니다." }
+    if (password !== confirmPassword) {
+      return { error: 'Passwords do not match.' };
     }
-
-    await createUser(email, password)
+    return { error: null };
   } catch (err) {
-    console.error(err)
-    return { error: "회원가입 중 오류가 발생했습니다." }
+    console.error(err);
+    return { error: 'An error occurred while checking the email.' };
   }
+}
 
-  redirect("/login")
+export async function checkEmail(email: string) {
+  try {
+    const existingUser = await getUser(email);
+    if (existingUser.length > 0) {
+      return { error: 'This email already exists.' };
+    }
+    return { error: null };
+  } catch (err) {
+    console.error(err);
+    return { error: 'An error occurred while checking the email.' };
+  }
+}
+
+export async function signup(
+  state: null,
+  payload: { email: string; password: string }
+): Promise<null> {
+  try {
+    await createUser(payload.email, payload.password);
+    await signIn('credentials', {
+      email: payload.email,
+      password: payload.password,
+      redirectTo: '/',
+    });
+    return null;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 }
 
 export async function login(
-  state: { error: string, success: boolean } | undefined,
-  formData: FormData
-): Promise<{ error: string, success: boolean } | undefined> {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
-
-  const user = await getUser(email)
-
-  if (user.length === 0) {
-    return { success: false, error: "이메일 또는 비밀번호가 일치하지 않습니다." }
-  }
-
-  const passwordsMatch = await compare(password, user[0].password!)
-  if (!passwordsMatch) {
-    return { success: false, error: "이메일 또는 비밀번호가 일치하지 않습니다." }
-  }
-
+  state: null,
+  payload: { email: string; password: string }
+): Promise<null> {
   try {
-    await signIn("credentials", {
-      email,
-      password,
+    await signIn('credentials', {
+      email: payload.email,
+      password: payload.password,
       redirectTo: '/',
-    })
+    });
+
+    return null;
   } catch (err) {
-    console.error(err)
-    throw err
+    console.error(err);
+    throw err;
   }
 }
 
 export async function signInWithGoogle() {
   try {
-    await signIn("google", {
+    await signIn('google', {
       redirectTo: '/',
       redirect: true,
-      callbackUrl: '/'
-    })
+      callbackUrl: '/',
+    });
   } catch (err) {
-    console.error(err)
-    throw err
+    console.error(err);
+    throw err;
   }
-} 
+}

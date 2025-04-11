@@ -5,9 +5,7 @@ export const authConfig = {
   pages: {
     signIn: '/login',
   },
-  providers: [
-    Google,
-  ],
+  providers: [Google],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
@@ -34,6 +32,6 @@ export const authConfig = {
       if (url.includes('/signup')) return url;
       // 다른 모든 경우 기본 URL을 사용
       return baseUrl;
-    }
+    },
   },
 } satisfies NextAuthConfig;

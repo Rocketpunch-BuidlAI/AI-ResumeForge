@@ -21,7 +21,7 @@ export async function getUser(email: string) {
 export async function createUser(email: string, password: string) {
   const users = await ensureTableExists();
   const salt = genSaltSync(10);
-  const hash = hashSync(password, salt);
+  const hash = hashSync(password.toString(), salt);
 
   return await db.insert(users).values({ email, password: hash });
 }
