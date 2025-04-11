@@ -18,7 +18,7 @@ export default function Home() {
       setUploading(true);
       const data = new FormData();
       data.set('file', file);
-      data.set('userId', '13'); // TODO : 유저 id 받아오기
+      data.set('userId', '15'); // TODO : 유저 id 받아오기
       const uploadRequest = await fetch('/api/pinata', {
         method: 'POST',
         body: data,
