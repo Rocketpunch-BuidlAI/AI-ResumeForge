@@ -4,7 +4,27 @@ import { SignupForm } from '@/components/signup-form';
 
 export default function SignupPage() {
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
+    <div className="grid min-h-svh w-full lg:grid-cols-2">
+      <div className=" relative hidden lg:block">
+        <video
+          src="/media.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            zIndex: 0,
+          }}
+        />
+      </div>
+
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center gap-2 font-medium">
@@ -19,26 +39,6 @@ export default function SignupPage() {
             <SignupForm />
           </div>
         </div>
-      </div>
-      <div className="bg-muted relative hidden lg:block">
-        <video
-          src="/mainMedia.webm"
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            zIndex: 0,
-            borderRadius: '0.5rem',
-          }}
-        />
       </div>
     </div>
   );

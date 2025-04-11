@@ -1,13 +1,23 @@
-import { Metadata } from 'next';
+'use client';
+
 import Image from 'next/image';
 import { RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 
 import { CodeViewer } from './components/code-viewer';
 import { MaxLengthSelector } from './components/maxlength-selector';
@@ -20,13 +30,51 @@ import { TemperatureSelector } from './components/temperature-selector';
 import { TopPSelector } from './components/top-p-selector';
 import { models, types } from './data/models';
 import { presets } from './data/presets';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, ControllerRenderProps } from 'react-hook-form';
+import * as z from 'zod';
 
-export const metadata: Metadata = {
-  title: 'Playground',
-  description: 'The OpenAI Playground built using the components.',
-};
+// Form schema
+const formSchema = z.object({
+  introduction: z.string().min(10, {
+    message: 'Introduction must be at least 10 characters.',
+  }),
+  motivation: z.string().min(10, {
+    message: 'Motivation must be at least 10 characters.',
+  }),
+  experience: z.string().min(10, {
+    message: 'Experience must be at least 10 characters.',
+  }),
+  aspirations: z.string().min(10, {
+    message: 'Aspirations must be at least 10 characters.',
+  }),
+  company: z.string().optional(),
+  department: z.string().optional(),
+  position: z.string().optional(),
+});
+
+// Define type for form values
+type FormValues = z.infer<typeof formSchema>;
 
 export default function PlaygroundPage() {
+  // Form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      introduction: '',
+      motivation: '',
+      experience: '',
+      aspirations: '',
+      company: '',
+      department: '',
+      position: '',
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values);
+  }
+
   return (
     <div className="h-full w-full flex-1 px-15">
       <div className="md:hidden">
@@ -59,81 +107,17 @@ export default function PlaygroundPage() {
           </div>
         </div>
         <Separator />
-        <Tabs defaultValue="complete" className="w-full flex-1 items-center">
+        <Tabs defaultValue="edit" className="w-full flex-1 items-center">
           <div className="container h-full py-6">
+            <div className="mb-4 flex justify-center">
+              <TabsList>
+                <TabsTrigger value="edit">Resume Information</TabsTrigger>
+                <TabsTrigger value="complete">AI Generation</TabsTrigger>
+                <TabsTrigger value="insert">Preview</TabsTrigger>
+              </TabsList>
+            </div>
             <div className="grid h-full items-stretch gap-6 md:grid-cols-[1fr_200px]">
               <div className="hidden flex-col space-y-4 sm:flex md:order-2">
-                <div className="grid gap-2">
-                  <HoverCard openDelay={200}>
-                    <HoverCardTrigger asChild>
-                      <span className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Mode
-                      </span>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-[320px] text-sm" side="left">
-                      Choose the interface that best suits your task. You can provide: a simple
-                      prompt to complete, starting and ending text to insert a completion within, or
-                      some text with instructions to edit it.
-                    </HoverCardContent>
-                  </HoverCard>
-                  <TabsList className="grid grid-cols-3">
-                    <TabsTrigger value="complete">
-                      <span className="sr-only">Complete</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        className="h-5 w-5"
-                      >
-                        <rect x="4" y="3" width="12" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="4" y="7" width="12" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="4" y="11" width="3" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="4" y="15" width="3" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="8.5" y="11" width="3" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="8.5" y="15" width="3" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="13" y="11" width="3" height="2" rx="1" fill="currentColor"></rect>
-                      </svg>
-                    </TabsTrigger>
-                    <TabsTrigger value="insert">
-                      <span className="sr-only">Insert</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        className="h-5 w-5"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M14.491 7.769a.888.888 0 0 1 .287.648.888.888 0 0 1-.287.648l-3.916 3.667a1.013 1.013 0 0 1-.692.268c-.26 0-.509-.097-.692-.268L5.275 9.065A.886.886 0 0 1 5 8.42a.889.889 0 0 1 .287-.64c.181-.17.427-.267.683-.269.257-.002.504.09.69.258L8.903 9.87V3.917c0-.243.103-.477.287-.649.183-.171.432-.268.692-.268.26 0 .509.097.692.268a.888.888 0 0 1 .287.649V9.87l2.245-2.102c.183-.172.432-.269.692-.269.26 0 .508.097.692.269Z"
-                          fill="currentColor"
-                        ></path>
-                        <rect x="4" y="15" width="3" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="8.5" y="15" width="3" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="13" y="15" width="3" height="2" rx="1" fill="currentColor"></rect>
-                      </svg>
-                    </TabsTrigger>
-                    <TabsTrigger value="edit">
-                      <span className="sr-only">Edit</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        className="h-5 w-5"
-                      >
-                        <rect x="4" y="3" width="12" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="4" y="7" width="12" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="4" y="11" width="3" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="4" y="15" width="4" height="2" rx="1" fill="currentColor"></rect>
-                        <rect x="8.5" y="11" width="3" height="2" rx="1" fill="currentColor"></rect>
-                        <path
-                          d="M17.154 11.346a1.182 1.182 0 0 0-1.671 0L11 15.829V17.5h1.671l4.483-4.483a1.182 1.182 0 0 0 0-1.671Z"
-                          fill="currentColor"
-                        ></path>
-                      </svg>
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
                 <ModelSelector types={types} models={models} />
                 <TemperatureSelector defaultValue={[0.56]} />
                 <MaxLengthSelector defaultValue={[256]} />
@@ -178,22 +162,181 @@ export default function PlaygroundPage() {
                     <div className="grid h-full gap-6 lg:grid-cols-2">
                       <div className="flex flex-col space-y-4">
                         <div className="flex flex-1 flex-col space-y-2">
-                          <Label htmlFor="input">Input</Label>
-                          <Textarea
-                            id="input"
-                            placeholder="We is going to the market."
-                            className="flex-1 lg:min-h-[580px]"
-                          />
+                          <Label htmlFor="input">Resume Information Form</Label>
+                          <Card className="flex-1">
+                            <CardContent className="pt-4">
+                              <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                  {/* Basic Information */}
+                                  <div className="space-y-4">
+                                    <h3 className="text-lg font-medium">Basic Information</h3>
+
+                                    <FormField
+                                      control={form.control}
+                                      name="introduction"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'introduction'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel>Self Introduction</FormLabel>
+                                          <FormControl>
+                                            <Textarea
+                                              placeholder="Write a brief introduction about yourself"
+                                              className="min-h-[100px]"
+                                              {...field}
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="motivation"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'motivation'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel>Motivation</FormLabel>
+                                          <FormControl>
+                                            <Textarea
+                                              placeholder="Describe your motivation for applying to this position"
+                                              className="min-h-[100px]"
+                                              {...field}
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="experience"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'experience'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel>Relevant Experience</FormLabel>
+                                          <FormControl>
+                                            <Textarea
+                                              placeholder="Share your relevant experiences and skills"
+                                              className="min-h-[100px]"
+                                              {...field}
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="aspirations"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'aspirations'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel>Future Aspirations</FormLabel>
+                                          <FormControl>
+                                            <Textarea
+                                              placeholder="Describe your aspirations after joining the company"
+                                              className="min-h-[100px]"
+                                              {...field}
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+
+                                  {/* Additional Information (Optional) */}
+                                  <div className="space-y-4 pt-4">
+                                    <h3 className="text-lg font-medium">
+                                      Additional Information (Optional)
+                                    </h3>
+
+                                    <FormField
+                                      control={form.control}
+                                      name="company"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'company'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel>Target Company</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="Company name" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="department"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'department'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel>Department</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="Department" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="position"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'position'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel>Position</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="Position/Job title" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </form>
+                              </Form>
+                            </CardContent>
+                          </Card>
                         </div>
                         <div className="flex flex-col space-y-2">
                           <Label htmlFor="instructions">Instructions</Label>
-                          <Textarea id="instructions" placeholder="Fix the grammar." />
+                          <Textarea
+                            id="instructions"
+                            placeholder="Generate a professional resume based on the information provided above."
+                          />
                         </div>
                       </div>
                       <div className="bg-muted mt-[21px] min-h-[400px] rounded-md border lg:min-h-[700px]" />
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button>Submit</Button>
+                      <Button onClick={form.handleSubmit(onSubmit)}>Submit</Button>
                       <Button variant="secondary">
                         <span className="sr-only">Show history</span>
                         <RotateCcw />

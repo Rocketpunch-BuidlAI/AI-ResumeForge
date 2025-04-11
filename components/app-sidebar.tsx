@@ -26,12 +26,12 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarRail } from '@/component
 const data = {
   teams: [
     {
-      name: 'Acme Inc',
+      name: 'AI - ResumeForge',
       logo: Command,
       plan: 'Enterprise',
     },
     {
-      name: 'Acme Corp.',
+      name: 'AI - ResumeForge',
       logo: AudioWaveform,
       plan: 'Startup',
     },

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 // TODO: 상호님이 구현해주신 API 호출
 export async function POST(request: Request) {

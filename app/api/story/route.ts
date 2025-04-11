@@ -30,10 +30,7 @@ export async function POST(request: Request) {
     const { cid, walletAddress } = await request.json();
 
     if (!cid || !walletAddress) {
-      return NextResponse.json(
-        { error: "CID and wallet address are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'CID and wallet address are required' }, { status: 400 });
     }
 
     // Register IP asset with Creative Commons license
@@ -60,4 +57,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
