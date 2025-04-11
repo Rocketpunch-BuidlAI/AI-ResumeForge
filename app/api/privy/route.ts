@@ -48,6 +48,7 @@ export async function POST(request: Request) {
         chain: wallet.chain,
       })),
     });
+    
   } catch (error) {
     console.error("Error fetching user wallets:", error);
     return NextResponse.json(
