@@ -1,5 +1,8 @@
 const nextConfig = {
-  /* config options here */
+  output: 'standalone',
+  experimental: {
+    serverActions: true,
+  },
 };
 
 export default nextConfig;
