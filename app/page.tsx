@@ -1,41 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePrivy } from '@privy-io/react-auth';
 
 export default function Home() {
-  const [file, setFile] = useState<File>();
-  const [url, setUrl] = useState('');
-  const [uploading, setUploading] = useState(false);
+  const { createWallet } = usePrivy();
 
-  const uploadFile = async () => {
-    try {
-      if (!file) {
-        alert('No file selected');
-        return;
-      }
-
-      setUploading(true);
-      const data = new FormData();
-      data.set('file', file);
-      const uploadRequest = await fetch('/api/pinata', {
-        method: 'POST',
-        body: data,
-      });
-      const signedUrl = await uploadRequest.json();
-      setUrl(signedUrl);
-      setUploading(false);
-    } catch (e) {
-      console.log(e);
-      setUploading(false);
-      alert('Trouble uploading file');
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFile(e.target?.files?.[0]);
-  };
+  useEffect(() => {
+    createWallet();
+  }, [createWallet]);
 
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
