@@ -2,10 +2,21 @@
 
 import { useState } from "react";
 
+interface Wallet {
+  address: string;
+  type: string;
+  chain?: string;
+}
+
+interface PrivyResponse {
+  userId: string;
+  wallets: Wallet[];
+}
+
 export default function PrivyPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<PrivyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,7 +93,7 @@ export default function PrivyPage() {
               <div>
                 <span className="font-medium">Wallets:</span>
                 <ul className="mt-2 space-y-2">
-                  {result.wallets.map((wallet: any, index: number) => (
+                  {result.wallets.map((wallet: Wallet, index: number) => (
                     <li key={index} className="bg-white p-3 rounded-md shadow">
                       <p><span className="font-medium">Address:</span> {wallet.address}</p>
                       <p><span className="font-medium">Type:</span> {wallet.type}</p>

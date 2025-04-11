@@ -21,12 +21,7 @@ export async function POST(request: Request) {
         ipMetadataHash: "0x",
       },
       recipient: "0x",
-      licenseTermsData: [
-        {
-          licenseTerms: "CC-BY",
-          licenseTermsURI: "",
-        },
-      ],
+      licenseTermsData: [],
     });
 
     return NextResponse.json({

@@ -13,7 +13,7 @@ const privy = new PrivyClient(
 interface Wallet {
   address: string;
   type: string;
-  chain: string;
+  chain?: string;
 }
 
 export async function POST(request: Request) {
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       userId: user.id,
-      wallets: wallets.map((wallet: any) => ({
+      wallets: wallets.map((wallet: Wallet) => ({
         address: wallet.address,
         type: wallet.type,
         chain: wallet.chain,
