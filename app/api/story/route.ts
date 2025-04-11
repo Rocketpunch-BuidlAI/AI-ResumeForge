@@ -38,12 +38,14 @@ export async function POST(request: Request) {
     // Register IP asset with Creative Commons license
     try {
       // SPG 컨트랙트 주소 (Aeneid 테스트넷)
-      // 문서에 따른 정확한 주소로 변경
+      // Story Protocol 공식 문서에서 제공하는 SPG NFT 컨트랙트 주소
       const spgNftContract = "0xc32A8a0FF3beDDDa58393d022aF433e78739FAbc";
       
       console.log("Using SPG contract:", spgNftContract);
       
-      // 표준 Creative Commons NFT 발행 시도
+      // mintAndRegisterIpAssetWithPilTerms 함수 호출
+      // - NFT를 발행하고, IP로 등록하고, 라이센스 약관을 연결하는 기능
+      // - mintFeeToken 함수 직접 호출을 하지 않고 SDK가 처리하도록 함
       const response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
         spgNftContract: spgNftContract,
         ipMetadata: {
