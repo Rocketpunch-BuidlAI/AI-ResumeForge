@@ -35,9 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SessionProvider>
             <PrivyAuthProvider>
               <SidebarProvider>
-                <div className="flex h-screen w-full">
-                  {children}
-                  </div>
+                <div className="flex h-screen w-full">{children}</div>
               </SidebarProvider>
               <Toaster />
             </PrivyAuthProvider>

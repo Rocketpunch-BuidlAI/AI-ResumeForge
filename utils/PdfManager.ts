@@ -20,7 +20,7 @@ export class PdfManager {
             reject(new Error('PDF 텍스트 추출에 실패했습니다.'));
             return;
           }
-          
+
           // 모든 페이지의 텍스트를 하나의 문자열로 결합
           const extractedText = pages.join('\n\n');
           resolve(extractedText.trim());
@@ -31,7 +31,7 @@ export class PdfManager {
       throw new Error('PDF 텍스트 추출에 실패했습니다.');
     }
   }
-  
+
   /**
    * PDF 파일에서 특정 페이지의 텍스트를 추출합니다.
    * @param filePath PDF 파일 경로
@@ -48,13 +48,13 @@ export class PdfManager {
             reject(new Error('PDF 페이지 텍스트 추출에 실패했습니다.'));
             return;
           }
-          
+
           // 페이지 번호 유효성 검사
           if (pageNumber < 1 || pageNumber > pages.length) {
             reject(new Error(`유효하지 않은 페이지 번호입니다. (1-${pages.length})`));
             return;
           }
-          
+
           // 특정 페이지의 텍스트 반환
           resolve(pages[pageNumber - 1].trim());
         });
@@ -64,7 +64,7 @@ export class PdfManager {
       throw new Error('PDF 페이지 텍스트 추출에 실패했습니다.');
     }
   }
-  
+
   /**
    * PDF 바이너리 데이터에서 텍스트를 추출합니다.
    * @param pdfBytes PDF 바이너리 데이터
@@ -75,14 +75,14 @@ export class PdfManager {
       // 임시 파일 생성
       const tempFilePath = `/tmp/pdf-${Date.now()}.pdf`;
       await fs.promises.writeFile(tempFilePath, pdfBytes);
-      
+
       try {
         // 임시 파일에서 텍스트 추출
         const extractedText = await this.extractText(tempFilePath);
         return extractedText;
       } finally {
         // 임시 파일 삭제
-        await fs.promises.unlink(tempFilePath).catch(err => {
+        await fs.promises.unlink(tempFilePath).catch((err) => {
           console.error('임시 파일 삭제 중 오류 발생:', err);
         });
       }
@@ -91,7 +91,7 @@ export class PdfManager {
       throw new Error('PDF 텍스트 추출에 실패했습니다.');
     }
   }
-  
+
   /**
    * PDF 파일 경로에서 텍스트를 추출합니다.
    * @param filePath PDF 파일 경로
@@ -100,26 +100,29 @@ export class PdfManager {
   public static async extractTextFromFile(filePath: string): Promise<string> {
     return this.extractText(filePath);
   }
-  
+
   /**
    * PDF 바이너리 데이터에서 특정 페이지의 텍스트를 추출합니다.
    * @param pdfBytes PDF 바이너리 데이터
    * @param pageNumber 페이지 번호 (1부터 시작)
    * @returns 추출된 텍스트 문자열
    */
-  public static async extractTextFromPageBytes(pdfBytes: Uint8Array, pageNumber: number): Promise<string> {
+  public static async extractTextFromPageBytes(
+    pdfBytes: Uint8Array,
+    pageNumber: number
+  ): Promise<string> {
     try {
       // 임시 파일 생성
       const tempFilePath = `/tmp/pdf-${Date.now()}.pdf`;
       await fs.promises.writeFile(tempFilePath, pdfBytes);
-      
+
       try {
         // 임시 파일에서 특정 페이지 텍스트 추출
         const extractedText = await this.extractTextFromPage(tempFilePath, pageNumber);
         return extractedText;
       } finally {
         // 임시 파일 삭제
-        await fs.promises.unlink(tempFilePath).catch(err => {
+        await fs.promises.unlink(tempFilePath).catch((err) => {
           console.error('임시 파일 삭제 중 오류 발생:', err);
         });
       }
@@ -128,17 +131,20 @@ export class PdfManager {
       throw new Error('PDF 페이지 텍스트 추출에 실패했습니다.');
     }
   }
-  
+
   /**
    * PDF 파일 경로에서 특정 페이지의 텍스트를 추출합니다.
    * @param filePath PDF 파일 경로
    * @param pageNumber 페이지 번호 (1부터 시작)
    * @returns 추출된 텍스트 문자열
    */
-  public static async extractTextFromPageFile(filePath: string, pageNumber: number): Promise<string> {
+  public static async extractTextFromPageFile(
+    filePath: string,
+    pageNumber: number
+  ): Promise<string> {
     return this.extractTextFromPage(filePath, pageNumber);
   }
-  
+
   /**
    * 텍스트를 PDF 바이너리로 변환합니다.
    * @param text 변환할 텍스트
@@ -160,22 +166,22 @@ export class PdfManager {
         fontSize = 12,
         lineHeight = 1.5,
         margin = 50,
-        fontPath = path.join(process.cwd(), 'public', 'fonts', 'arial.ttf')
+        fontPath = path.join(process.cwd(), 'public', 'fonts', 'arial.ttf'),
       } = options;
-      
+
       // 새 PDF 문서 생성
       const pdfDoc = await PDFDocument.create();
-      
+
       // fontkit 등록
       pdfDoc.registerFontkit(fontkit);
-      
+
       // 페이지 크기 설정 (A4)
       const pageWidth = 595.28;
       const pageHeight = 841.89;
-      
+
       // 페이지 추가
       let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
-      
+
       // 폰트 로드
       let fontObj: PDFFont;
       try {
@@ -187,22 +193,22 @@ export class PdfManager {
         // 폰트 로드 실패 시 기본 폰트 사용
         fontObj = await pdfDoc.embedFont(StandardFonts.Helvetica);
       }
-      
+
       // 텍스트를 줄 단위로 분리 (원본 줄바꿈 유지)
       const originalLines = text.split('\n');
       const processedLines: string[] = [];
-      
+
       // 각 줄에 대해 너비에 맞게 처리
-      const maxWidth = pageWidth - (margin * 2);
+      const maxWidth = pageWidth - margin * 2;
       for (const line of originalLines) {
         // 각 줄을 단어 단위로 분리
         const words = line.split(/\s+/);
         let currentLine = '';
-        
+
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
           const width = fontObj.widthOfTextAtSize(testLine, fontSize);
-          
+
           if (width > maxWidth) {
             if (currentLine) {
               processedLines.push(currentLine);
@@ -216,17 +222,17 @@ export class PdfManager {
             currentLine = testLine;
           }
         }
-        
+
         if (currentLine) {
           processedLines.push(currentLine);
         }
-        
+
         // 원본 줄바꿈 추가 (빈 줄 추가하지 않음)
         if (line !== originalLines[originalLines.length - 1]) {
           processedLines.push('');
         }
       }
-      
+
       // 텍스트 그리기
       let y = pageHeight - margin;
       for (const line of processedLines) {
@@ -235,26 +241,26 @@ export class PdfManager {
           y -= fontSize * lineHeight;
           continue;
         }
-        
+
         // 페이지가 부족하면 새 페이지 추가
         if (y < margin + fontSize) {
           currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
           y = pageHeight - margin;
         }
-        
+
         // 텍스트 그리기
         currentPage.drawText(line, {
           x: margin,
           y,
           size: fontSize,
           font: fontObj,
-          color: rgb(0, 0, 0)
+          color: rgb(0, 0, 0),
         });
-        
+
         // 다음 줄 위치 계산
         y -= fontSize * lineHeight;
       }
-      
+
       // PDF 바이너리 반환
       return await pdfDoc.save();
     } catch (error) {
@@ -262,7 +268,7 @@ export class PdfManager {
       throw new Error('PDF 생성에 실패했습니다.');
     }
   }
-  
+
   /**
    * 텍스트를 PDF 파일로 변환합니다.
    * @param text 변환할 텍스트
@@ -283,10 +289,10 @@ export class PdfManager {
     try {
       // PDF 바이너리 생성
       const pdfBytes = await this.createPdfFromText(text, options);
-      
+
       // 파일로 저장
       await fs.promises.writeFile(outputPath, pdfBytes);
-      
+
       return outputPath;
     } catch (error) {
       console.error('PDF 파일 생성 중 오류 발생:', error);

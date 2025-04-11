@@ -4,4 +4,4 @@ declare module 'pdf-text-extract' {
     callback: (error: Error | null, pages: string[]) => void
   ): void;
   export = pdfTextExtract;
-} 
+}
