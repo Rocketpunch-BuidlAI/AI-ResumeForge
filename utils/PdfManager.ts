@@ -140,22 +140,20 @@ export class PdfManager {
   }
   
   /**
-   * 텍스트를 PDF 파일로 변환합니다.
+   * 텍스트를 PDF 바이너리로 변환합니다.
    * @param text 변환할 텍스트
-   * @param outputPath 출력 PDF 파일 경로
    * @param options PDF 생성 옵션
-   * @returns 생성된 PDF 파일 경로
+   * @returns 생성된 PDF 바이너리 데이터
    */
   public static async createPdfFromText(
     text: string,
-    outputPath: string,
     options: {
       fontSize?: number;
       lineHeight?: number;
       margin?: number;
       fontPath?: string;
     } = {}
-  ): Promise<string> {
+  ): Promise<Uint8Array> {
     try {
       // 기본 옵션 설정
       const {
@@ -257,14 +255,42 @@ export class PdfManager {
         y -= fontSize * lineHeight;
       }
       
-      // PDF 파일 저장
-      const pdfBytes = await pdfDoc.save();
+      // PDF 바이너리 반환
+      return await pdfDoc.save();
+    } catch (error) {
+      console.error('PDF 생성 중 오류 발생:', error);
+      throw new Error('PDF 생성에 실패했습니다.');
+    }
+  }
+  
+  /**
+   * 텍스트를 PDF 파일로 변환합니다.
+   * @param text 변환할 텍스트
+   * @param outputPath 출력 PDF 파일 경로
+   * @param options PDF 생성 옵션
+   * @returns 생성된 PDF 파일 경로
+   */
+  public static async createPdfFileFromText(
+    text: string,
+    outputPath: string,
+    options: {
+      fontSize?: number;
+      lineHeight?: number;
+      margin?: number;
+      fontPath?: string;
+    } = {}
+  ): Promise<string> {
+    try {
+      // PDF 바이너리 생성
+      const pdfBytes = await this.createPdfFromText(text, options);
+      
+      // 파일로 저장
       await fs.promises.writeFile(outputPath, pdfBytes);
       
       return outputPath;
     } catch (error) {
-      console.error('PDF 생성 중 오류 발생:', error);
-      throw new Error('PDF 생성에 실패했습니다.');
+      console.error('PDF 파일 생성 중 오류 발생:', error);
+      throw new Error('PDF 파일 생성에 실패했습니다.');
     }
   }
 }
