@@ -1,16 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePrivy } from '@privy-io/react-auth';
+
 
 export default function Home() {
-  const { createWallet } = usePrivy();
+  
 
-  useEffect(() => {
-    createWallet();
-  }, [createWallet]);
+
 
   return (
     <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">

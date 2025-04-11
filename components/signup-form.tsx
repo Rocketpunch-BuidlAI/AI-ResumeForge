@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useActionState } from 'react';
 import { signup, checkEmail, checkPassword } from '@/app/actions/auth';
 import Link from 'next/link';
-import { useLoginWithEmail } from '@privy-io/react-auth';
+import { useLoginWithEmail, usePrivy } from '@privy-io/react-auth';
 import { useState, startTransition, useCallback } from 'react';
 import { EmailVerificationDialog } from './email-verification-dialog';
 interface SignupFormProps extends React.ComponentPropsWithoutRef<'form'> {
@@ -15,6 +15,7 @@ interface SignupFormProps extends React.ComponentPropsWithoutRef<'form'> {
 }
 
 export function SignupForm({ className, ...props }: SignupFormProps) {
+  const { createWallet } = usePrivy();
   const { sendCode } = useLoginWithEmail();
   const [state, formAction, isPending] = useActionState(signup, null);
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
@@ -67,6 +68,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
   );
 
   const handleVerificationSuccess = useCallback(() => {
+    createWallet();
     startTransition(() => {
       formAction({ email, password });
     });
