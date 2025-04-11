@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { pgTable, serial, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, bigint, timestamp } from 'drizzle-orm/pg-core';
 import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
@@ -13,20 +13,61 @@ if (!connectionString) {
 const client = postgres(connectionString, { ssl: 'require' });
 const db = drizzle(client);
 
+// 테이블 스키마 정의
+const users = pgTable('User', {
+  id: serial('id').primaryKey(),
+  email: varchar('email', { length: 64 }),
+  password: varchar('password', { length: 64 }),
+});
+
+const coverletters = pgTable('Coverletter', {
+  id: serial('id').primaryKey(),
+  userId: bigint('user_id', { mode: 'number' }).notNull(),
+  cid: varchar('CID', { length: 255 }).notNull(),
+  filePath: varchar('file_path', { length: 255 }),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
 export async function getUser(email: string) {
-  const users = await ensureTableExists();
   return await db.select().from(users).where(eq(users.email, email));
 }
 
 export async function createUser(email: string, password: string) {
-  const users = await ensureTableExists();
   const salt = genSaltSync(10);
   const hash = hashSync(password, salt);
 
   return await db.insert(users).values({ email, password: hash });
 }
 
-async function ensureTableExists() {
+export async function saveCoverletter(userId: number, cid: string, filePath: string) {
+  // CID가 같은 레코드가 있는지 확인
+  const existingRecord = await db.select().from(coverletters).where(eq(coverletters.cid, cid));
+  
+  if (existingRecord.length > 0) {
+    // CID가 같은 경우 업데이트
+    return await db.update(coverletters)
+      .set({
+        userId,
+        filePath,
+        updated_at: new Date(),
+      })
+      .where(eq(coverletters.cid, cid));
+  } else {
+    // 새로운 레코드 추가
+    return await db.insert(coverletters).values({
+      userId,
+      cid,
+      filePath,
+    });
+  }
+}
+
+export async function getCoverletter(userId: number) {
+  return await db.select().from(coverletters).where(eq(coverletters.userId, userId));
+}
+
+async function ensureTablesExist() {
   const result = await client`
     SELECT EXISTS (
       SELECT FROM information_schema.tables 
@@ -43,11 +84,26 @@ async function ensureTableExists() {
       );`;
   }
 
-  const table = pgTable('User', {
-    id: serial('id').primaryKey(),
-    email: varchar('email', { length: 64 }),
-    password: varchar('password', { length: 64 }),
-  });
+  const coverletterResult = await client`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'Coverletter'
+    );`;
 
-  return table;
+  if (!coverletterResult[0].exists) {
+    await client`
+      CREATE TABLE "Coverletter" (
+        id SERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        CID VARCHAR(255) NOT NULL,
+        file_path VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES "User" (id)
+      );`;
+  }
 }
+
+// 테이블 생성 확인
+ensureTablesExist();
