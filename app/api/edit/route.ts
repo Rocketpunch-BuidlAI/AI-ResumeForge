@@ -21,14 +21,14 @@ type CoverLetterSection = {
 export async function POST(request: NextRequest) {
   try {
     // 요청 데이터 파싱
-    const jsonData = await request.json() as CoverLetterSection;
+    const jsonData = (await request.json()) as CoverLetterSection;
 
     // 필수 필드 non-blank 검증
     const requiredFields = [
       'selfIntroduction',
       'motivation',
       'relevantExperience',
-      'futureAspirations'
+      'futureAspirations',
     ] as const;
 
     for (const field of requiredFields) {
@@ -55,16 +55,15 @@ export async function POST(request: NextRequest) {
 
     const aiAgentResponse = response.data;
 
-    if(response.status !== 200) {
+    if (response.status !== 200) {
       return NextResponse.json(
         { status: 'error', message: 'Failed to process edit request' },
         { status: 400 }
       );
     }
-    
+
     // 성공 응답 반환
     return NextResponse.json(aiAgentResponse, { status: 200 });
-    
   } catch (error) {
     console.error('Edit error:', error);
     return NextResponse.json(

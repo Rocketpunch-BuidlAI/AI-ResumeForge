@@ -1,12 +1,17 @@
 // app/api/resumes/route.ts
 import { NextResponse } from 'next/server';
-import { getCoverletter, saveCoverletter, getLatestCoverletterByCidAndUserId, saveCoverletterText, type ResumeMetadata } from '@/db';
+import {
+  getCoverletter,
+  saveCoverletter,
+  getLatestCoverletterByCidAndUserId,
+  saveCoverletterText,
+  type ResumeMetadata,
+} from '@/db';
 import { put } from '@vercel/blob';
 import axios from 'axios';
 import { PdfManager } from '@/utils/PdfManager';
 import { AI_AGENT_URL } from '@/utils/config';
 import console from 'console';
-
 
 export async function GET(request: Request) {
   try {
@@ -60,7 +65,7 @@ export async function POST(request: Request) {
     const savedCoverletter = await getLatestCoverletterByCidAndUserId(Number(userId));
     console.log('Saved to database, coverletter id:', savedCoverletter?.id);
 
-    if(!savedCoverletter) {
+    if (!savedCoverletter) {
       return NextResponse.json({ error: 'Coverletter not found.' }, { status: 400 });
     }
 
@@ -68,24 +73,24 @@ export async function POST(request: Request) {
     // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const pdfBytes = new Uint8Array(arrayBuffer);
-    
+
     try {
       console.log('PdfManager.extractTextFromBytes', pdfBytes);
       const extractedText = await PdfManager.extractTextFromBytes(pdfBytes);
       console.log('Text extracted successfully', extractedText);
-      
+
       // 추출된 텍스트를 새 테이블에 저장
       console.log('Saving extracted text to database...');
       await saveCoverletterText(savedCoverletter.id, extractedText);
       console.log('Text saved to database successfully');
-      
+
       // upload cover letter to pinecone
       console.log('Uploading to AI agent:', AI_AGENT_URL);
       const response = await axios.post(`${AI_AGENT_URL}/upload`, {
         text: extractedText,
         id: savedCoverletter.id.toString(),
         role: (savedCoverletter.metadata as ResumeMetadata).jobTitle,
-        experience: (savedCoverletter.metadata as ResumeMetadata).yearsOfExperience
+        experience: (savedCoverletter.metadata as ResumeMetadata).yearsOfExperience,
       });
 
       const aiAgentResponse = response.data;
@@ -101,11 +106,16 @@ export async function POST(request: Request) {
     } catch (pdfError) {
       console.error('Error processing PDF:', pdfError);
       return NextResponse.json(
-        { status: 'error', message: 'Error processing PDF file: ' + (pdfError instanceof Error ? pdfError.message : String(pdfError)) },
+        {
+          status: 'error',
+          message:
+            'Error processing PDF file: ' +
+            (pdfError instanceof Error ? pdfError.message : String(pdfError)),
+        },
         { status: 400 }
       );
     }
-    
+
     // Return both CID and complete uploadResponse
     return NextResponse.json({ url: blob.url, cid });
   } catch (error) {
@@ -116,13 +126,14 @@ export async function POST(request: Request) {
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
     }
-    
+
     return NextResponse.json(
-      { 
-        status: 'error', 
-        message: 'An error occurred while uploading the file: ' + 
-          (error instanceof Error ? error.message : String(error))
-      }, 
+      {
+        status: 'error',
+        message:
+          'An error occurred while uploading the file: ' +
+          (error instanceof Error ? error.message : String(error)),
+      },
       { status: 500 }
     );
   }

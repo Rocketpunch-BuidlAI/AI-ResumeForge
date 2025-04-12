@@ -187,14 +187,10 @@ export async function getLatestCoverletterByCidAndUserId(userId: number) {
   const result = await db
     .select()
     .from(coverletters)
-    .where(
-      and(
-        eq(coverletters.userId, userId)
-      )
-    )
+    .where(and(eq(coverletters.userId, userId)))
     .orderBy(desc(coverletters.created_at))
     .limit(1);
-  
+
   return result.length > 0 ? result[0] : null;
 }
 
@@ -208,7 +204,10 @@ export async function saveCoverletterText(coverletterId: number, text: string) {
 
 // 이력서 텍스트 조회 함수
 export async function getCoverletterTextByCoverletterId(coverletterId: number) {
-  return await db.select().from(coverletterTexts).where(eq(coverletterTexts.coverletterId, coverletterId));
+  return await db
+    .select()
+    .from(coverletterTexts)
+    .where(eq(coverletterTexts.coverletterId, coverletterId));
 }
 
 async function ensureTablesExist() {
@@ -315,7 +314,7 @@ async function ensureTablesExist() {
         await client`
           ALTER TABLE "Coverletter"
           ADD COLUMN ${client.unsafe(column)} ${client.unsafe(columnType)};`;
-        
+
         console.log(`Added column ${column} to Coverletter table`);
       }
     }

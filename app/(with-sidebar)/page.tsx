@@ -217,7 +217,7 @@ export default function Page() {
               fileName: resume.fileName,
               fileSize: resume.fileSize,
               fileType: resume.fileType,
-              uploadDate: resume.metadata?.uploadDate as string || resume.created_at,
+              uploadDate: (resume.metadata?.uploadDate as string) || resume.created_at,
             },
           })
         );
@@ -241,14 +241,14 @@ export default function Page() {
     if (selectedResume) {
       // Instead of creating an empty PDF blob, we'll use the actual PDF URL
       fetch(selectedResume.fileUrl)
-        .then(response => response.blob())
-        .then(pdfBlob => {
+        .then((response) => response.blob())
+        .then((pdfBlob) => {
           const file = new File([pdfBlob], selectedResume.fileName, {
             type: 'application/pdf',
           });
           setPreviewFile(file);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Error fetching PDF file:', error);
           setError('Failed to load PDF preview');
         });
@@ -381,7 +381,15 @@ export default function Page() {
                                 {resume.fileName}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-h-[90vh] w-full max-w-[95vw] !important overflow-hidden" style={{ maxWidth: '40vw', width: '40vw', maxHeight: '90vh', height: '90vh' }}>
+                            <DialogContent
+                              className="!important max-h-[90vh] w-full max-w-[95vw] overflow-hidden"
+                              style={{
+                                maxWidth: '40vw',
+                                width: '40vw',
+                                maxHeight: '90vh',
+                                height: '90vh',
+                              }}
+                            >
                               <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2">
                                   <FileText className="h-5 w-5" />
@@ -485,7 +493,10 @@ export default function Page() {
                                   </TooltipProvider>
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-h-[90vh] w-full max-w-[95vw] !important overflow-hidden" style={{ maxWidth: '95vw', width: '95vw' }}>
+                              <DialogContent
+                                className="!important max-h-[90vh] w-full max-w-[95vw] overflow-hidden"
+                                style={{ maxWidth: '95vw', width: '95vw' }}
+                              >
                                 <DialogHeader>
                                   <DialogTitle className="flex items-center gap-2">
                                     <FileText className="h-5 w-5" />

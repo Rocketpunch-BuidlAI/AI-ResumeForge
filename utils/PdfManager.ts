@@ -16,10 +16,10 @@ export class PdfManager {
     try {
       // 파일 데이터 읽기
       const dataBuffer = await fs.promises.readFile(filePath);
-      
+
       // pdf-parse 사용하여 PDF 파일에서 텍스트 추출
       const data = await pdfParse(dataBuffer);
-      
+
       return data.text.trim();
     } catch (error) {
       console.error('PDF 텍스트 추출 중 오류 발생:', error);
@@ -36,15 +36,15 @@ export class PdfManager {
   public static async extractTextFromPage(filePath: string, pageNumber: number): Promise<string> {
     try {
       const dataBuffer = await fs.promises.readFile(filePath);
-      
+
       // pdf-parse의 옵션을 사용하여 특정 페이지만 처리
       const options = {
         max: pageNumber, // 최대 이 페이지까지 처리
         min: pageNumber, // 최소 이 페이지부터 처리
       };
-      
+
       const data = await pdfParse(dataBuffer, options);
-      
+
       // 페이지 텍스트 반환
       return data.text.trim();
     } catch (error) {
@@ -62,21 +62,21 @@ export class PdfManager {
     try {
       // 시스템 임시 디렉토리 사용
       const tempDir = path.join(os.tmpdir(), 'ai-resumeforge-tmp');
-      
+
       // 임시 디렉토리가 없으면 생성
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
-      
+
       const tempFilePath = path.join(tempDir, `pdf-${Date.now()}.pdf`);
-      
+
       try {
         // 바이너리 데이터를 임시 파일로 저장
         await fs.promises.writeFile(tempFilePath, Buffer.from(pdfBytes));
-        
+
         // 파일에서 텍스트 추출
         const result = await this.extractText(tempFilePath);
-        
+
         return result;
       } finally {
         // 임시 파일 삭제
@@ -86,7 +86,9 @@ export class PdfManager {
       }
     } catch (error) {
       console.error('PDF 텍스트 추출 중 오류 발생:', error);
-      throw new Error(`PDF 텍스트 추출에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `PDF 텍스트 추출에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -103,21 +105,21 @@ export class PdfManager {
     try {
       // 시스템 임시 디렉토리 사용
       const tempDir = path.join(os.tmpdir(), 'ai-resumeforge-tmp');
-      
+
       // 임시 디렉토리가 없으면 생성
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
-      
+
       const tempFilePath = path.join(tempDir, `pdf-page-${Date.now()}.pdf`);
-      
+
       try {
         // 바이너리 데이터를 임시 파일로 저장
         await fs.promises.writeFile(tempFilePath, Buffer.from(pdfBytes));
-        
+
         // 특정 페이지 텍스트 추출
         const result = await this.extractTextFromPage(tempFilePath, pageNumber);
-        
+
         return result;
       } finally {
         // 임시 파일 삭제
@@ -127,7 +129,9 @@ export class PdfManager {
       }
     } catch (error) {
       console.error('PDF 페이지 텍스트 추출 중 오류 발생:', error);
-      throw new Error(`PDF 페이지 텍스트 추출에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `PDF 페이지 텍스트 추출에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 

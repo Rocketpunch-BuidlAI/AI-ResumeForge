@@ -23,4 +23,4 @@ declare module 'pdf-parse' {
   function PDFParse(dataBuffer: Buffer | Uint8Array, options?: PDFOptions): Promise<PDFData>;
 
   export = PDFParse;
-} 
+}

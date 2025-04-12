@@ -22,7 +22,13 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 
 import { CodeViewer } from './components/code-viewer';
@@ -82,10 +88,10 @@ const jobRolesData: JobRolesData = {
     ],
     'Blockchain / Web3': ['Smart Contract', 'Protocol Engineer'],
     'Data/ AI': ['Machine Learning', 'AI'],
-    'Security': ['Security Engineer'],
+    Security: ['Security Engineer'],
   },
   'Business Roles': {
-    'Marketing': ['Marketer', 'Brand Strategist', 'Content Creator'],
+    Marketing: ['Marketer', 'Brand Strategist', 'Content Creator'],
     'Product/Strategy': ['Product Manager', 'Business Analyst'],
     'Human Resources': ['People Operations', 'HR Manager', 'Talent Acquisition'],
     'Customer / Operations': [
@@ -95,7 +101,7 @@ const jobRolesData: JobRolesData = {
     ],
   },
   'Creative Roles': {
-    'Design': [
+    Design: [
       'UI/UX Designer',
       'Visual Designer',
       'Illustrator',
@@ -106,7 +112,7 @@ const jobRolesData: JobRolesData = {
       'Sound Designer',
       'VFX Artist',
     ],
-    'Contents': ['Songwriter', 'Photographer'],
+    Contents: ['Songwriter', 'Photographer'],
   },
   'Professional Services': {
     '': [
@@ -353,7 +359,10 @@ export default function PlaygroundPage() {
                                           <FormControl>
                                             <div className="flex flex-col space-y-4">
                                               {/* 직업 카테고리 선택 */}
-                                              <Popover open={openJobCategory} onOpenChange={setOpenJobCategory}>
+                                              <Popover
+                                                open={openJobCategory}
+                                                onOpenChange={setOpenJobCategory}
+                                              >
                                                 <PopoverTrigger asChild>
                                                   <Button
                                                     variant="outline"
@@ -361,25 +370,37 @@ export default function PlaygroundPage() {
                                                     aria-expanded={openJobCategory}
                                                     className="w-full justify-between"
                                                   >
-                                                    {selectedCategory || "Select job category..."}
-                                                    <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedCategory ? 'text-primary' : ''}`} />
+                                                    {selectedCategory || 'Select job category...'}
+                                                    <ChevronRight
+                                                      className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedCategory ? 'text-primary' : ''}`}
+                                                    />
                                                   </Button>
                                                 </PopoverTrigger>
-                                                <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                                <PopoverContent
+                                                  className="p-0"
+                                                  style={{
+                                                    width: 'var(--radix-popover-trigger-width)',
+                                                    minWidth: '100%',
+                                                  }}
+                                                >
                                                   <Command className="w-full">
                                                     <CommandList className="w-full">
                                                       <CommandInput placeholder="Search job category..." />
-                                                      <CommandEmpty>No category found.</CommandEmpty>
+                                                      <CommandEmpty>
+                                                        No category found.
+                                                      </CommandEmpty>
                                                       {Object.keys(jobRolesData).map((category) => (
                                                         <CommandItem
                                                           key={category}
                                                           value={category}
-                                                          onSelect={() => handleCategoryChange(category)}
+                                                          onSelect={() =>
+                                                            handleCategoryChange(category)
+                                                          }
                                                           className="cursor-pointer"
                                                         >
                                                           {category}
                                                           {selectedCategory === category && (
-                                                            <Check className="ml-auto h-4 w-4 text-primary" />
+                                                            <Check className="text-primary ml-auto h-4 w-4" />
                                                           )}
                                                         </CommandItem>
                                                       ))}
@@ -389,48 +410,73 @@ export default function PlaygroundPage() {
                                               </Popover>
 
                                               {/* 직업 서브카테고리 선택 */}
-                                              {selectedCategory && selectedCategory !== 'Professional Services' && (
-                                                <Popover open={openJobSubcategory} onOpenChange={setOpenJobSubcategory}>
-                                                  <PopoverTrigger asChild>
-                                                    <Button
-                                                      variant="outline"
-                                                      role="combobox"
-                                                      aria-expanded={openJobSubcategory}
-                                                      className="w-full justify-between"
+                                              {selectedCategory &&
+                                                selectedCategory !== 'Professional Services' && (
+                                                  <Popover
+                                                    open={openJobSubcategory}
+                                                    onOpenChange={setOpenJobSubcategory}
+                                                  >
+                                                    <PopoverTrigger asChild>
+                                                      <Button
+                                                        variant="outline"
+                                                        role="combobox"
+                                                        aria-expanded={openJobSubcategory}
+                                                        className="w-full justify-between"
+                                                      >
+                                                        {selectedSubcategory ||
+                                                          'Select subcategory...'}
+                                                        <ChevronRight
+                                                          className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedSubcategory ? 'text-primary' : ''}`}
+                                                        />
+                                                      </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent
+                                                      className="p-0"
+                                                      style={{
+                                                        width: 'var(--radix-popover-trigger-width)',
+                                                        minWidth: '100%',
+                                                      }}
                                                     >
-                                                      {selectedSubcategory || "Select subcategory..."}
-                                                      <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedSubcategory ? 'text-primary' : ''}`} />
-                                                    </Button>
-                                                  </PopoverTrigger>
-                                                  <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
-                                                    <Command className="w-full">
-                                                      <CommandList className="w-full">
-                                                        <CommandInput placeholder="Search subcategory..." />
-                                                        <CommandEmpty>No subcategory found.</CommandEmpty>
-                                                        {selectedCategory && 
-                                                          Object.keys(jobRolesData[selectedCategory]).map((subcategory) => (
-                                                            <CommandItem
-                                                              key={subcategory}
-                                                              value={subcategory}
-                                                              onSelect={() => handleSubcategoryChange(subcategory)}
-                                                              className="cursor-pointer"
-                                                            >
-                                                              {subcategory}
-                                                              {selectedSubcategory === subcategory && (
-                                                                <Check className="ml-auto h-4 w-4 text-primary" />
-                                                              )}
-                                                            </CommandItem>
-                                                          ))}
-                                                      </CommandList>
-                                                    </Command>
-                                                  </PopoverContent>
-                                                </Popover>
-                                              )}
+                                                      <Command className="w-full">
+                                                        <CommandList className="w-full">
+                                                          <CommandInput placeholder="Search subcategory..." />
+                                                          <CommandEmpty>
+                                                            No subcategory found.
+                                                          </CommandEmpty>
+                                                          {selectedCategory &&
+                                                            Object.keys(
+                                                              jobRolesData[selectedCategory]
+                                                            ).map((subcategory) => (
+                                                              <CommandItem
+                                                                key={subcategory}
+                                                                value={subcategory}
+                                                                onSelect={() =>
+                                                                  handleSubcategoryChange(
+                                                                    subcategory
+                                                                  )
+                                                                }
+                                                                className="cursor-pointer"
+                                                              >
+                                                                {subcategory}
+                                                                {selectedSubcategory ===
+                                                                  subcategory && (
+                                                                  <Check className="text-primary ml-auto h-4 w-4" />
+                                                                )}
+                                                              </CommandItem>
+                                                            ))}
+                                                        </CommandList>
+                                                      </Command>
+                                                    </PopoverContent>
+                                                  </Popover>
+                                                )}
 
                                               {/* 직업 타이틀 선택 */}
-                                              {((selectedCategory === 'Professional Services') || 
+                                              {(selectedCategory === 'Professional Services' ||
                                                 (selectedCategory && selectedSubcategory)) && (
-                                                <Popover open={openJobTitle} onOpenChange={setOpenJobTitle}>
+                                                <Popover
+                                                  open={openJobTitle}
+                                                  onOpenChange={setOpenJobTitle}
+                                                >
                                                   <PopoverTrigger asChild>
                                                     <Button
                                                       variant="outline"
@@ -438,45 +484,63 @@ export default function PlaygroundPage() {
                                                       aria-expanded={openJobTitle}
                                                       className="w-full justify-between"
                                                     >
-                                                      {selectedJobTitle || "Select job title..."}
-                                                      <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedJobTitle ? 'text-primary' : ''}`} />
+                                                      {selectedJobTitle || 'Select job title...'}
+                                                      <ChevronRight
+                                                        className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedJobTitle ? 'text-primary' : ''}`}
+                                                      />
                                                     </Button>
                                                   </PopoverTrigger>
-                                                  <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                                  <PopoverContent
+                                                    className="p-0"
+                                                    style={{
+                                                      width: 'var(--radix-popover-trigger-width)',
+                                                      minWidth: '100%',
+                                                    }}
+                                                  >
                                                     <Command className="w-full">
                                                       <CommandList className="w-full">
                                                         <CommandInput placeholder="Search job title..." />
-                                                        <CommandEmpty>No job title found.</CommandEmpty>
-                                                        {selectedCategory === 'Professional Services' ? (
-                                                          jobRolesData['Professional Services'][''].map((jobTitle) => (
-                                                            <CommandItem
-                                                              key={jobTitle}
-                                                              value={jobTitle}
-                                                              onSelect={() => handleJobTitleChange(jobTitle)}
-                                                              className="cursor-pointer"
-                                                            >
-                                                              {jobTitle}
-                                                              {selectedJobTitle === jobTitle && (
-                                                                <Check className="ml-auto h-4 w-4 text-primary" />
-                                                              )}
-                                                            </CommandItem>
-                                                          ))
-                                                        ) : (
-                                                          selectedCategory && selectedSubcategory &&
-                                                          jobRolesData[selectedCategory][selectedSubcategory]?.map((jobTitle) => (
-                                                            <CommandItem
-                                                              key={jobTitle}
-                                                              value={jobTitle}
-                                                              onSelect={() => handleJobTitleChange(jobTitle)}
-                                                              className="cursor-pointer"
-                                                            >
-                                                              {jobTitle}
-                                                              {selectedJobTitle === jobTitle && (
-                                                                <Check className="ml-auto h-4 w-4 text-primary" />
-                                                              )}
-                                                            </CommandItem>
-                                                          ))
-                                                        )}
+                                                        <CommandEmpty>
+                                                          No job title found.
+                                                        </CommandEmpty>
+                                                        {selectedCategory ===
+                                                        'Professional Services'
+                                                          ? jobRolesData['Professional Services'][
+                                                              ''
+                                                            ].map((jobTitle) => (
+                                                              <CommandItem
+                                                                key={jobTitle}
+                                                                value={jobTitle}
+                                                                onSelect={() =>
+                                                                  handleJobTitleChange(jobTitle)
+                                                                }
+                                                                className="cursor-pointer"
+                                                              >
+                                                                {jobTitle}
+                                                                {selectedJobTitle === jobTitle && (
+                                                                  <Check className="text-primary ml-auto h-4 w-4" />
+                                                                )}
+                                                              </CommandItem>
+                                                            ))
+                                                          : selectedCategory &&
+                                                            selectedSubcategory &&
+                                                            jobRolesData[selectedCategory][
+                                                              selectedSubcategory
+                                                            ]?.map((jobTitle) => (
+                                                              <CommandItem
+                                                                key={jobTitle}
+                                                                value={jobTitle}
+                                                                onSelect={() =>
+                                                                  handleJobTitleChange(jobTitle)
+                                                                }
+                                                                className="cursor-pointer"
+                                                              >
+                                                                {jobTitle}
+                                                                {selectedJobTitle === jobTitle && (
+                                                                  <Check className="text-primary ml-auto h-4 w-4" />
+                                                                )}
+                                                              </CommandItem>
+                                                            ))}
                                                       </CommandList>
                                                     </Command>
                                                   </PopoverContent>
@@ -486,7 +550,10 @@ export default function PlaygroundPage() {
                                               {/* 선택된 직업 표시 */}
                                               {selectedJobTitle && (
                                                 <div className="mt-2 flex items-center">
-                                                  <Badge variant="outline" className="bg-primary/10 text-primary">
+                                                  <Badge
+                                                    variant="outline"
+                                                    className="bg-primary/10 text-primary"
+                                                  >
                                                     {selectedJobTitle}
                                                     <Check className="ml-1 h-3 w-3" />
                                                   </Badge>
@@ -629,8 +696,6 @@ export default function PlaygroundPage() {
                                         </FormItem>
                                       )}
                                     />
-
-                                   
                                   </div>
                                 </form>
                               </Form>
