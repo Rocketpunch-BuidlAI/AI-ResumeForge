@@ -22,7 +22,7 @@ export default function DerivativePage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/story/derivative', {
+      const res = await fetch('/api/story/child', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,12 +33,12 @@ export default function DerivativePage() {
       const data = await res.json();
       if (res.ok) {
         setResponse(data);
-        toast.success('파생 IP 자산이 성공적으로 등록되었습니다.');
+        toast.success('Derivative IP asset has been successfully registered');
       } else {
-        toast.error(data.error || '파생 IP 자산 등록에 실패했습니다.');
+        toast.error(data.error || 'Failed to register derivative IP asset');
       }
     } catch (error) {
-      toast.error('오류가 발생했습니다.');
+      toast.error('An error occurred');
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
@@ -57,15 +57,15 @@ export default function DerivativePage() {
     <div className="container mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>파생 IP 자산 등록</CardTitle>
+          <CardTitle>Derivative IP Asset Registration</CardTitle>
           <CardDescription>
-            원본 IP 자산과 라이선스 토큰을 사용하여 파생 IP 자산을 등록합니다.
+            Register a derivative IP asset using the original IP asset and license tokens.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">이메일</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -78,7 +78,7 @@ export default function DerivativePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tokenId">토큰 ID</Label>
+              <Label htmlFor="tokenId">Token ID</Label>
               <Input
                 id="tokenId"
                 name="tokenId"
@@ -90,7 +90,7 @@ export default function DerivativePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="licenseTokenIds">라이선스 토큰 ID들</Label>
+              <Label htmlFor="licenseTokenIds">License Token IDs</Label>
               <Input
                 id="licenseTokenIds"
                 name="licenseTokenIds"
@@ -100,7 +100,7 @@ export default function DerivativePage() {
                 required
               />
               <p className="text-sm text-muted-foreground">
-                콤마로 구분하여 여러 라이선스 토큰 ID를 입력하세요.
+                Enter multiple license token IDs separated by commas.
               </p>
             </div>
 
@@ -117,13 +117,13 @@ export default function DerivativePage() {
             </div>
 
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? '등록 중...' : '파생 IP 자산 등록'}
+              {isLoading ? 'Registering...' : 'Register Derivative IP Asset'}
             </Button>
           </form>
 
           {response && (
             <div className="mt-6 space-y-2">
-              <h3 className="text-lg font-semibold">등록 결과</h3>
+              <h3 className="text-lg font-semibold">Registration Result</h3>
               <pre className="bg-muted p-4 rounded-md overflow-auto">
                 {JSON.stringify(response, null, 2)}
               </pre>

@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { pgTable, serial, varchar, bigint, timestamp, text, json } from 'drizzle-orm/pg-core';
-import { eq } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
 
@@ -168,6 +168,25 @@ export async function getIpAssets(userId: number) {
 // IP 자산 등록 정보 ID로 조회 함수
 export async function getIpAssetById(id: number) {
   return await db.select().from(ipAssets).where(eq(ipAssets.id, id));
+}
+
+export async function getCoverletterByCid(cid: string) {
+  return await db.select().from(coverletters).where(eq(coverletters.cid, cid));
+}
+
+export async function getLatestCoverletterByCidAndUserId(userId: number) {
+  const result = await db
+    .select()
+    .from(coverletters)
+    .where(
+      and(
+        eq(coverletters.userId, userId)
+      )
+    )
+    .orderBy(desc(coverletters.created_at))
+    .limit(1);
+  
+  return result.length > 0 ? result[0] : null;
 }
 
 async function ensureTablesExist() {
