@@ -75,9 +75,9 @@ export async function POST(request: Request) {
     await saveCoverletterWithReferences(
       savedCoverletterId,
       text,
-      references.map((ref: { id: number; contribution: number }) => ({
+      references.map((ref: { id: number; contributions: number }) => ({
         referencedId: ref.id,
-        contribution: ref.contribution
+        contribution: ref.contributions
       }))
     );
 
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       }
       ipAssets.push({
         ...ipAsset[0],
-        contribution: ref.contribution
+        contribution: ref.contributions
       });
     }
 
