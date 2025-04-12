@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
+import { streamObject } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+import console from 'console';
 
-const AI_AGENT_URL = process.env.AI_AGENT_BASE_URL;
+// note. Using AI SDK to generate cover letter (streaming method)
 
-// note. 다른 자기소개서 IP를 활용하여 새로운 자기소개서 생성
-
-// 요청 타입 정의
+// Request type definition
 type CoverLetterSection = {
   selfIntroduction: string;
   motivation: string;
@@ -19,14 +20,25 @@ type CoverLetterSection = {
   experience: string;
 };
 
+// Response schema definition
+const coverLetterSchema = z.object({
+  text: z.string().describe('Generated cover letter content'),
+  sources: z.array(
+    z.object({
+      id: z.string().describe('Referenced template ID'),
+      contributions: z.number().describe('Contribution percentage')
+    })
+  ).describe('Reference template information')
+});
+
 export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    // 요청 데이터 파싱
+    // Parse request data
     const jsonData = (await request.json()) as CoverLetterSection;
 
-    // 필수 필드 non-blank 검증
+    // Validate required fields are non-blank
     const requiredFields = [
       'selfIntroduction',
       'motivation',
@@ -44,55 +56,91 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('jsonData', {
-      selfIntroduction: jsonData.selfIntroduction,
-      motivation: jsonData.motivation,
-      relevantExperience: jsonData.relevantExperience,
-      futureAspirations: jsonData.futureAspirations,
-      ...(jsonData.targetCompany || jsonData.department || jsonData.position ? {
-        metadata: {
-          targetCompany: jsonData.targetCompany,
-          department: jsonData.department,
-          position: jsonData.position,
-          skills: jsonData.skills,
-          experience: jsonData.experience,
-        }
-      } : {}),
-      customPrompt: jsonData.customPrompt,
-    });
+    // Compose prompt
+    let systemPrompt = `
+You are an expert cover letter writer specializing in Korean-style English cover letters. Your task is to create a compelling, professional cover letter that effectively showcases the candidate's qualifications and fit for the position.
 
-    const response = await axios.post(`${AI_AGENT_URL}/edit`, {
-      selfIntroduction: jsonData.selfIntroduction,
-      motivation: jsonData.motivation,
-      relevantExperience: jsonData.relevantExperience,
-      futureAspirations: jsonData.futureAspirations,
-      ...(jsonData.targetCompany || jsonData.department || jsonData.position ? {
-        metadata: {
-          targetCompany: jsonData.targetCompany,
-          department: jsonData.department,
-          position: jsonData.position,
-          skills: jsonData.skills,
-          experience: jsonData.experience,
-        }
-      } : {}),
-      customPrompt: jsonData.customPrompt,
-    });
+STRUCTURE REQUIREMENTS:
+1. Introduction
+   - Academic background and key qualifications
+   - Core values and professional identity
+   - Career vision and personal strengths
+   - Maximum 2-3 concise paragraphs
 
-    const aiAgentResponse = response.data;
+2. Motivation and Fit
+   - Specific reasons for applying to this company/position
+   - Alignment with company values and goals
+   - Relevant skills and competencies
+   - Professional achievements and certifications
+   - Maximum 2-3 focused paragraphs
 
-    if (response.status !== 200) {
-      return NextResponse.json(
-        { status: 'error', message: 'Failed to process edit request' },
-        { status: 400 }
-      );
+3. Experiences
+   - Key projects and achievements
+   - Problem-solving examples
+   - Learning outcomes and growth
+   - Quantifiable results where possible
+   - Maximum 2-3 detailed paragraphs
+
+4. Career Aspirations
+   - Short-term goals and contributions
+   - Long-term career vision
+   - Professional development plans
+   - Maximum 1-2 forward-looking paragraphs
+
+WRITING STYLE GUIDELINES:
+- Use active voice and strong action verbs
+- Maintain professional yet engaging tone
+- Focus on concrete achievements and results
+- Limit hyphen usage to maximum 2 instances
+- Avoid repetitive sentence structures
+- Write naturally, as if by a human
+- Adapt language complexity based on experience level
+- End with forward-looking statements
+
+CONTENT REQUIREMENTS:
+1. Introduction: ${jsonData.selfIntroduction}
+2. Motivation and Fit: ${jsonData.motivation}
+3. Experiences: ${jsonData.relevantExperience}
+4. Career Aspirations: ${jsonData.futureAspirations}
+`;
+
+    if (jsonData.targetCompany || jsonData.department || jsonData.position) {
+      systemPrompt += `
+POSITION-SPECIFIC CONTEXT:
+- Target Company: ${jsonData.targetCompany || 'Not specified'}
+- Target Department: ${jsonData.department || 'Not specified'}
+- Target Position: ${jsonData.position || 'Not specified'}
+- Key Skills: ${jsonData.skills || 'Not specified'}
+- Experience Level: ${jsonData.experience === 'S' ? 'Senior (5+ years)' : 'Junior'}
+`;
     }
 
-    // 성공 응답 반환
-    return NextResponse.json(aiAgentResponse, { status: 200 });
+    if (jsonData.customPrompt) {
+      systemPrompt += `
+ADDITIONAL REQUIREMENTS:
+${jsonData.customPrompt}
+`;
+    }
+    
+console.log("프롬프트", systemPrompt);
+
+    // Generate cover letter using AI model (streaming method)
+    const result = streamObject({
+      model: openai('gpt-4o'),
+      schema: coverLetterSchema,
+      schemaName: 'CoverLetter',
+      schemaDescription: 'Cover letter generation result',
+      prompt: systemPrompt,
+      onError({ error }) {
+        console.error('Streaming error:', error);
+      },
+    });
+
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error('Edit error:', error);
     return NextResponse.json(
-      { status: 'error', message: 'Failed to process edit request' },
+      { status: 'error', message: 'Failed to process cover letter generation request.' },
       { status: 500 }
     );
   }

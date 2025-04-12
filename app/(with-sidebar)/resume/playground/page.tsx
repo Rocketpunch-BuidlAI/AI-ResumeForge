@@ -2,9 +2,11 @@
 
 import Image from 'next/image';
 import { RotateCcw, BarChart, ChevronRight, FileText, Briefcase, Check, X, Tag, Clock, Building2, Users, FileEdit } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { experimental_useObject as useObject } from '@ai-sdk/react';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -46,7 +48,6 @@ import { models, types } from './data/models';
 import { presets } from './data/presets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, ControllerRenderProps } from 'react-hook-form';
-import * as z from 'zod';
 
 // Form schema
 const formSchema = z.object({
@@ -153,36 +154,48 @@ const referencedResumes = [
   },
 ];
 
-export default function PlaygroundPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [resultText, setResultText] = useState<string>('');
-  const [parsedResult, setParsedResult] = useState<{
-    text?: string;
-    sources?: Array<{ id: string; contributions: number }>;
-  } | null>(null);
+// 스키마 정의
+const coverLetterSchema = z.object({
+  text: z.string().describe('자기소개서 생성된 텍스트 내용'),
+  sources: z.array(
+    z.object({
+      id: z.string().describe('참고 소스 ID'),
+      contributions: z.number().describe('기여도 (백분율)'),
+    })
+  ).optional(),
+});
 
-  // Form
+export default function PlaygroundPage() {
+  const [error, setError] = useState<Error | null>(null);
+
+  // Form setup
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      jobTitle: '',
-      introduction: '',
-      motivation: '',
-      experience: '',
-      aspirations: '',
-      company: '',
-      department: '',
-      position: '',
-      customPrompt: '',
-      skills: '',
-      yearsOfExperience: '',
+      jobTitle: 'Frontend Developer',
+      introduction: 'I am a developer with over 5 years of experience in web frontend development, focusing on user experience. I primarily work with React and TypeScript, and have a deep understanding of accessibility and performance optimization.',
+      motivation: 'I was deeply impressed by your company\'s innovative products and user-centric philosophy. I am particularly interested in joining your team to work on frontend development combined with AI-based services.',
+      experience: 'I have experience developing large-scale web applications using React, NextJS, and TypeScript. Recently, I participated as a lead developer in an AI-based interface implementation project. I successfully reduced page loading time by 40% through performance optimization.',
+      aspirations: 'I want to contribute to creating innovative user experiences by combining cutting-edge web technologies with AI at your company. I also aim to grow together with team members and demonstrate technical leadership.',
+      company: 'Tech Innovation',
+      department: 'Frontend Development Team',
+      position: 'Frontend Developer',
+      customPrompt: 'Please write a cover letter that reflects creative and innovative thinking.',
+      skills: 'React, TypeScript, NextJS, Redux, TailwindCSS, Responsive Design',
+      yearsOfExperience: '5-10 years',
     },
   });
 
+  // useObject 훅 사용
+  const { object, submit, isLoading, stop } = useObject({
+    api: '/api/edit',
+    schema: coverLetterSchema,
+  });
+
   // 직업 선택 상태
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
-  const [selectedJobTitle, setSelectedJobTitle] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Technical Roles');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('Web/ Software Dev');
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string>('Frontend Developer');
   const [openJobCategory, setOpenJobCategory] = useState(false);
   const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
   const [openJobTitle, setOpenJobTitle] = useState(false);
@@ -216,10 +229,8 @@ export default function PlaygroundPage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('values', values);
-    setIsLoading(true);
-    setResultText('');
-    setParsedResult(null);
+    console.log('폼 제출 시작', values);
+    setError(null);
     
     // 경력에 따라 S(시니어) 또는 J(주니어) 결정
     let experienceLevel = "J";
@@ -227,74 +238,41 @@ export default function PlaygroundPage() {
       experienceLevel = "S";
     }
     
+    const payload = {
+      selfIntroduction: values.introduction,
+      motivation: values.motivation,
+      relevantExperience: values.experience,
+      futureAspirations: values.aspirations,
+      targetCompany: values.company || null,
+      department: values.department || null,
+      position: values.jobTitle || null,
+      customPrompt: values.customPrompt || '',
+      skills: values.skills || '',
+      experience: experienceLevel,
+    };
+    
+    console.log('API 요청 데이터:', payload);
+    
     try {
-      const response = await fetch('/api/edit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          selfIntroduction: values.introduction,
-          motivation: values.motivation,
-          relevantExperience: values.experience,
-          futureAspirations: values.aspirations,
-          targetCompany: values.company || null,
-          department: values.department || null,
-          position: values.jobTitle || null,
-          customPrompt: values.customPrompt || '',
-          skills: values.skills || '',
-          experience: experienceLevel,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || '자기소개서 생성에 실패했습니다.');
-      }
-      
-      // Store the raw text
-      setResultText(data.result || data.coverLetter || JSON.stringify(data, null, 2));
-      
-      // Try to parse the JSON response if it's a string
-      try {
-        // Check if data is already an object with text property
-        if (typeof data.text === 'string') {
-          setParsedResult(data);
-        } 
-        // Check if data has result/coverLetter as a string that might be JSON
-        else if (typeof data.result === 'string' || typeof data.coverLetter === 'string') {
-          const textContent = data.result || data.coverLetter;
-          try {
-            const parsed = JSON.parse(textContent);
-            setParsedResult(parsed);
-          } catch {
-            // If it's not valid JSON, use it as plain text
-            setParsedResult({ text: textContent });
-          }
-        } 
-        // If we just have raw data
-        else {
-          setParsedResult(data);
-        }
-      } catch (e) {
-        // If parsing fails, we'll fall back to the raw text display
-        console.error("Failed to parse result:", e);
-      }
-      
-      toast('자기소개서 생성 완료', {
-        description: '자기소개서가 성공적으로 생성되었습니다.',
+      // 작업 시작 알림
+      toast('자기소개서 생성 시작', {
+        description: '자기소개서가 생성되고 있습니다.',
         icon: <Check className="h-4 w-4 text-green-500" />,
       });
-    } catch (error) {
-      console.error('제출 오류:', error);
+      
+      // useObject submit 메서드 사용하여 요청 전송
+      submit(payload);
+      
+    } catch (err) {
+      console.error('제출 오류:', err);
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      
       toast('오류 발생', {
-        description: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
         icon: <X className="h-4 w-4 text-white" />,
       });
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -336,6 +314,16 @@ export default function PlaygroundPage() {
       </p>
     ));
   };
+
+  // Notification when result generation is complete
+  useEffect(() => {
+    if (object && object.text && !isLoading) {
+      toast('Cover Letter Generated', {
+        description: 'Your cover letter has been successfully generated.',
+        icon: <Check className="h-4 w-4 text-green-500" />,
+      });
+    }
+  }, [object, isLoading]);
 
   return (
     <div className="h-full w-full flex-1 px-15">
@@ -938,28 +926,21 @@ export default function PlaygroundPage() {
                         </div>
                       </div>
                       <div className="bg-muted mt-[21px] min-h-[400px] rounded-md border lg:min-h-[700px] p-4 overflow-auto">
-                        {isLoading ? (
-                          <div className="flex h-full items-center justify-center">
-                            <div className="text-center">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                              <p className="text-muted-foreground">자기소개서 생성 중...</p>
-                            </div>
-                          </div>
-                        ) : parsedResult?.text ? (
+                        {object?.text ? (
                           <div className="max-w-3xl mx-auto bg-card p-6 rounded-lg shadow-sm">
                             <div className="prose prose-sm dark:prose-invert">
-                              {formatCoverLetter(parsedResult.text)}
+                              {formatCoverLetter(object.text)}
                             </div>
                             
-                            {parsedResult.sources && parsedResult.sources.length > 0 && parsedResult?.sources?.[0]?.id !== 'unknown' && (
+                            {object.sources && object.sources[0]?.id !== 'unknown' && (
                               <div className="mt-8 pt-4 border-t border-border">
-                                <h4 className="text-sm font-semibold mb-2">참고 소스</h4>
+                                <h4 className="text-sm font-semibold mb-2">Reference Sources</h4>
                                 <div className="text-sm text-muted-foreground">
-                                  {parsedResult.sources.map((source, index) => (
+                                  {object.sources.map((source, index) => (
                                     <div key={index} className="flex justify-between items-center mb-1">
-                                      <span>{source.id || '기본 템플릿'}</span>
+                                      <span>{source?.id || 'Default Template'}</span>
                                       <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
-                                        {source.contributions}%
+                                        {source?.contributions || 0}%
                                       </span>
                                     </div>
                                   ))}
@@ -967,11 +948,14 @@ export default function PlaygroundPage() {
                               </div>
                             )}
                           </div>
-                        ) : resultText ? (
-                          <div className="whitespace-pre-wrap">{resultText}</div>
+                        ) : error ? (
+                          <div className="p-4 bg-destructive/10 rounded-md text-destructive text-sm">
+                            <h4 className="font-medium mb-2">Error Occurred</h4>
+                            <pre className="whitespace-pre-wrap text-xs">{error.message}</pre>
+                          </div>
                         ) : (
                           <div className="flex h-full items-center justify-center text-muted-foreground">
-                            <p>폼을 작성하고 Submit 버튼을 클릭하면 결과가 여기에 표시됩니다.</p>
+                            <p>Fill out the form and click Submit to see the results here.</p>
                           </div>
                         )}
                       </div>
@@ -981,16 +965,16 @@ export default function PlaygroundPage() {
                         onClick={form.handleSubmit(onSubmit)} 
                         disabled={isLoading}
                       >
-                        {isLoading ? '처리 중...' : 'Submit'}
+                        {isLoading ? 'Processing...' : 'Submit'}
                       </Button>
                       <Button 
                         variant="secondary" 
-                        onClick={() => setResultText('')}
-                        disabled={isLoading || !resultText}
+                        onClick={() => stop()}
+                        disabled={!isLoading}
                       >
-                        <span className="sr-only">Clear result</span>
-                        <RotateCcw className="h-4 w-4 mr-2" />
-                        초기화
+                        <span className="sr-only">Stop generation</span>
+                        <X className="h-4 w-4 mr-2" />
+                        Stop Generation
                       </Button>
                     </div>
                   </div>
