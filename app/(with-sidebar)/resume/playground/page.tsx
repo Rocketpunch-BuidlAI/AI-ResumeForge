@@ -403,16 +403,44 @@ export default function PlaygroundPage() {
       // PDF를 Blob으로 변환
       const pdfBlob = pdf.output('blob');
 
+      // 경력 수준 가져오기 (S 또는 J)
+      const experienceLevel = form.getValues('yearsOfExperience') === "5-10 years" || form.getValues('yearsOfExperience') === "10+ years" ? "S" : "J";
+      
+      // 현재 날짜 포맷팅
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+      
+      // 회사명에서 특수문자 제거하고 짧게 처리
+      const safeCompanyName = company.replace(/[^\w가-힣]/g, '').substring(0, 10);
+      
+      // 직무명에서 특수문자 제거하고 짧게 처리
+      const safeJobTitle = selectedJobTitle ? selectedJobTitle.replace(/[^\w가-힣]/g, '') : 
+                          fullJobTitle.replace(/[^\w가-힣]/g, '');
+      const shortJobTitle = safeJobTitle.substring(0, 15);
+      
+      // 특별한 파일명 생성
+      const specialFileName = `coverletter_${shortJobTitle}_${safeCompanyName}_${experienceLevel}_${dateStr}.pdf`;
+
       // 기존 FormData에 PDF 추가
       const formData = new FormData();
       formData.append('text', object.text);
-      formData.append('pdf', pdfBlob, 'coverletter.pdf'); // PDF 추가
+      formData.append('pdf', pdfBlob, specialFileName); // 특별한 파일명으로 PDF 추가
       formData.append('walletAddress', wallets[0]?.address || '');
       formData.append('userId', session?.user?.id || '');
       formData.append('references', JSON.stringify(object.sources || []));
       formData.append('metadata', JSON.stringify({
+        jobTitle: fullJobTitle,
         role: fullJobTitle,
         experience: experienceLevel,
+        companyName: company,
+        yearsOfExperience: experienceLevel,
+        skills: form.getValues('skills'),
+        fileName: specialFileName,
+        fileSize: pdfBlob.size,
+        fileType: 'application/pdf',
+        jobCategory: selectedCategory,
+        jobSubcategory: selectedSubcategory,
+        jobSpecific: selectedJobTitle,
       }));
 
       const response = await fetch('/api/edit/upload', {
