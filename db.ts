@@ -323,14 +323,14 @@ export async function saveCoverletterReference(
 export async function saveCoverletterWithReferences(
   coverletterId: number,
   text: string,
-  references: Array<{ referencedId: number; contribution: number }>
+  references: Array<{ id: number; contribution: number }>
 ) {
   // 이력서 텍스트 저장
   await saveCoverletterText(coverletterId, text);
 
   // 참조하는 이력서들 저장
   for (const ref of references) {
-    await saveCoverletterReference(coverletterId, ref.referencedId, ref.contribution);
+    await saveCoverletterReference(coverletterId, ref.id, ref.contribution);
   }
 }
 

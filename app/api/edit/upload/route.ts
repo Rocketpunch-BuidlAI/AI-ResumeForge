@@ -27,6 +27,11 @@ export async function POST(request: Request) {
 
     // references JSON 파싱
     const references = JSON.parse(referencesJson);
+    
+    // contributions 값이 높은 상위 3개만 선택
+    const topReferences = references
+      .sort((a: { contributions: number }, b: { contributions: number }) => b.contributions - a.contributions)
+      .slice(0, 3);
 
     // TODO: Story IP 등록
 
@@ -76,15 +81,12 @@ export async function POST(request: Request) {
     await saveCoverletterWithReferences(
       savedCoverletterId,
       text,
-      references.map((ref: { id: number; contributions: number }) => ({
-        referencedId: ref.id,
-        contribution: ref.contributions
-      }))
+      topReferences
     );
 
     // Get all IP asset information for references
     const ipAssets = [];
-    for (const ref of references) {
+    for (const ref of topReferences) {
       const ipAsset = await getIpAssetByCid(ref.id);
       if (!ipAsset || !ipAsset[0]) {
         console.error(`IP asset not found for ID: ${ref.id}`);
@@ -103,7 +105,7 @@ export async function POST(request: Request) {
         licenseTermsId: ipAsset.licenseTermId,
         licensorIpId: ipAsset.ipId as `0x${string}`,
         amount: 1,
-        maxMintingFee: BigInt(ipAsset.contribution),
+        maxMintingFee: 0,
         maxRevenueShare: 100, // default
         txOptions: { waitForTransaction: true },
       });
@@ -184,7 +186,7 @@ export async function POST(request: Request) {
           receiverIpId: ipAsset.ipId as `0x${string}`,
           payerIpId: zeroAddress,
           token: WIP_TOKEN_ADDRESS,
-          amount: ipAsset.contribution,
+          amount: ipAsset.contribution * 1000000000000000,
           txOptions: { waitForTransaction: true },
         });
 
