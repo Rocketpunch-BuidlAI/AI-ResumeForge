@@ -206,7 +206,13 @@ export async function getCoverletter(userId: number) {
   return await db.select().from(coverletters).where(eq(coverletters.userId, userId));
 }
 
-export async function getCoverletterById(id: number) {
+export async function getCoverletterById(id: number, aiGenerated?: boolean) {
+  if (aiGenerated !== undefined) {
+    return await db
+      .select()
+      .from(coverletters)
+      .where(and(eq(coverletters.id, id), eq(coverletters.aiGenerated, aiGenerated)));
+  }
   return await db.select().from(coverletters).where(eq(coverletters.id, id));
 }
 

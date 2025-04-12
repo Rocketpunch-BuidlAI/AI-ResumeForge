@@ -44,6 +44,7 @@ import {
   Cell,
   Legend,
 } from 'recharts';
+import { useRouter } from 'next/navigation';
 
 
 // Resume type definitions
@@ -60,6 +61,7 @@ interface ResumeMetadata {
   fileSize?: number;
   fileType?: string;
   uploadDate?: string;
+  aiGenerated?: boolean;
 }
 
 interface UploadedResume {
@@ -138,7 +140,7 @@ const mockAIGeneratedResumes: AIGeneratedResume[] = [
 export default function Page() {
   const [selectedResume, setSelectedResume] = useState<UploadedResume | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
-  const [uploadedResumes, setUploadedResumes] = useState<UploadedResume[]>([]);
+  const [resumes, setResumes] = useState<UploadedResume[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [totalReward, setTotalReward] = useState<number>(0);
@@ -153,6 +155,7 @@ export default function Page() {
   console.log('recentRewards', recentRewards);
 
   const { wallets } = useWallets();
+  const router = useRouter();
 
   console.log('useruser', wallets);
 
@@ -163,29 +166,23 @@ export default function Page() {
       setError(null);
 
       try {
-        // Replace this with the actual user ID (can be from a session/auth context)
         const session = await getSession();
         const userId = session?.user?.id;
         console.log(userId);
 
+        // Fetch all resumes
         const response = await fetch(`/api/resumes?userId=${userId}`);
-
         if (!response.ok) {
           throw new Error(`Failed to fetch resumes: ${response.statusText}`);
         }
-
         const data = await response.json();
-
-        console.log('data', data);
-
-        // Transform data to match UploadedResume interface if needed
         const transformedResumes: UploadedResume[] = data.resumes.map(
           (resume: CoverletterResponse) => ({
             id: resume.id.toString(),
             fileName: resume.fileName || `Resume_${resume.id}.pdf`,
             fileUrl: resume.filePath,
-            rewardAmount: 0, // Set default or calculate from data
-            referenceCount: 0, // Set default or calculate from data
+            rewardAmount: 0,
+            referenceCount: 0,
             createdAt: resume.created_at,
             updatedAt: resume.updated_at,
             jobCategory: resume.jobCategory,
@@ -204,11 +201,11 @@ export default function Page() {
               fileSize: resume.fileSize,
               fileType: resume.fileType,
               uploadDate: (resume.metadata?.uploadDate as string) || resume.created_at,
+              aiGenerated: resume.metadata?.aiGenerated === true,
             },
           })
         );
-
-        setUploadedResumes(transformedResumes);
+        setResumes(transformedResumes);
 
         const resumeStat = await fetch(`/api/home/resume-stat?userId=${userId}`);
         const resumeStatData = await resumeStat.json();
@@ -263,9 +260,6 @@ export default function Page() {
   const handleViewFile = (resume: UploadedResume) => {
     setSelectedResume(resume);
   };
-
-  // Resumes to display - either from API or fallback
-  const resumes = uploadedResumes.length > 0 ? uploadedResumes : [];
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
@@ -521,7 +515,6 @@ export default function Page() {
               {isLoading ? (
                 <div className="flex items-center justify-center p-12">
                   <Loader2 className="text-primary h-8 w-8 animate-spin" />
-                  <span className="ml-2">Loading your resumes...</span>
                 </div>
               ) : resumes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 text-center">
@@ -530,7 +523,7 @@ export default function Page() {
                   <p className="text-muted-foreground text-sm">
                     You haven&apos;t uploaded any resumes yet.
                   </p>
-                  <Button className="mt-4">
+                  <Button className="mt-4" onClick={() => router.push('/resume/upload')}>
                     <FileUp className="mr-2 h-4 w-4" />
                     Upload a Resume
                   </Button>
@@ -745,51 +738,219 @@ export default function Page() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {mockAIGeneratedResumes.map((resume) => (
-                  <Card
-                    key={resume.id}
-                    className="hover:border-primary overflow-hidden transition-colors"
-                  >
-                    <CardHeader className="flex flex-row items-center gap-3 space-y-0 p-4 pb-2">
-                      <Avatar className="h-9 w-9 border">
-                        <AvatarFallback className="text-sm">{resume.icon}</AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-1">
-                        <CardTitle className="text-base">{resume.name}</CardTitle>
-                        <CardDescription className="text-xs">
-                          Created on{' '}
+              {isLoading ? (
+                <div className="flex items-center justify-center p-12">
+                  <Loader2 className="text-primary h-8 w-8 animate-spin" />
+                </div>
+              ) : resumes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 text-center">
+                  <FileText className="text-muted-foreground/60 mb-4 h-16 w-16" />
+                  <h3 className="mb-2 text-lg font-medium">No AI Generated Resumes Found</h3>
+                  <p className="text-muted-foreground text-sm">
+                    You haven&apos;t generated any resumes using AI yet.
+                  </p>
+                  <Button className="mt-4" onClick={() => router.push('/resume/playground')}>
+                    <FileUp className="mr-2 h-4 w-4" />
+                    Generate Resume with AI
+                  </Button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[250px]">Filename</TableHead>
+                      <TableHead>Metadata</TableHead>
+                      <TableHead className="text-center">Reward Amount</TableHead>
+                      <TableHead className="text-center">Reference Count</TableHead>
+                      <TableHead className="text-center">Creation Date</TableHead>
+                      <TableHead className="w-[100px] text-center">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {resumes.map((resume) => (
+                      <TableRow key={resume.id}>
+                        <TableCell>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="link"
+                                className="flex items-center gap-2 p-0 text-left font-medium"
+                                onClick={() => handleViewFile(resume)}
+                              >
+                                <FileText className="h-4 w-4" />
+                                {resume.fileName}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent
+                              className="!important max-h-[90vh] w-full max-w-[95vw] overflow-hidden"
+                              style={{
+                                maxWidth: '40vw',
+                                width: '40vw',
+                                maxHeight: '90vh',
+                                height: '90vh',
+                              }}
+                            >
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                  <FileText className="h-5 w-5" />
+                                  {selectedResume?.fileName}
+                                </DialogTitle>
+                                <DialogDescription>
+                                  {selectedResume?.createdAt
+                                    ? new Date(selectedResume.createdAt).toLocaleDateString(
+                                        'en-US',
+                                        { year: 'numeric', month: 'numeric', day: 'numeric' }
+                                      )
+                                    : ''}{' '}
+                                  Uploaded
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="h-[75vh] overflow-hidden rounded-md border">
+                                <FilePreview file={previewFile} />
+                              </div>
+                              <DialogFooter>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => window.open(selectedResume?.fileUrl)}
+                                >
+                                  <DownloadCloud className="mr-2 h-4 w-4" />
+                                  Download
+                                </Button>
+                                <DialogClose asChild>
+                                  <Button>Close</Button>
+                                </DialogClose>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex max-w-[800px] flex-col gap-1 text-sm">
+                            <div className="flex items-center gap-1">
+                              <Briefcase className="text-muted-foreground h-3 w-3" />
+                              {resume.metadata.jobSpecific ? (
+                                <>
+                                  <span>{resume.metadata.jobSpecific}</span>
+                                  {resume.metadata.companyName && (
+                                    <>
+                                      <span className="text-muted-foreground mx-1">|</span>
+                                      <span>{resume.metadata.companyName}</span>
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <span>{resume.metadata.jobTitle}</span>
+                                  {resume.metadata.companyName && (
+                                    <>
+                                      <span className="text-muted-foreground mx-1">|</span>
+                                      <span>{resume.metadata.companyName}</span>
+                                    </>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {resume.metadata.skills.split(',').map((skill, idx) => (
+                                <Badge
+                                  key={idx}
+                                  variant="secondary"
+                                  className="text-xs font-normal"
+                                >
+                                  {skill.trim()}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center font-medium">
+                          {resume.rewardAmount} WIP
+                        </TableCell>
+                        <TableCell className="text-center">{resume.referenceCount} times</TableCell>
+                        <TableCell className="text-center">
                           {new Date(resume.createdAt).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'numeric',
                             day: 'numeric',
                           })}
-                        </CardDescription>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-2">
-                      <p className="text-muted-foreground mb-3 text-sm">{resume.description}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <div className="bg-muted h-1.5 w-24 overflow-hidden rounded-full">
-                            <div
-                              className="bg-primary h-full rounded-full"
-                              style={{ width: `${resume.reference}%` }}
-                            />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleViewFile(resume)}
+                                >
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Eye className="h-4 w-4" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>View Details</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent
+                                className="!important max-h-[90vh] w-full max-w-[95vw] overflow-hidden"
+                                style={{ maxWidth: '95vw', width: '95vw' }}
+                              >
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <FileText className="h-5 w-5" />
+                                    {selectedResume?.fileName}
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    {selectedResume?.createdAt
+                                      ? new Date(selectedResume.createdAt).toLocaleDateString(
+                                          'en-US',
+                                          { year: 'numeric', month: 'numeric', day: 'numeric' }
+                                        )
+                                      : ''}{' '}
+                                    Uploaded
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="h-[75vh] overflow-hidden rounded-md border">
+                                  <FilePreview file={previewFile} />
+                                </div>
+                                <DialogFooter>
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => window.open(selectedResume?.fileUrl)}
+                                  >
+                                    <DownloadCloud className="mr-2 h-4 w-4" />
+                                    Download
+                                  </Button>
+                                  <DialogClose asChild>
+                                    <Button>Close</Button>
+                                  </DialogClose>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => window.open(resume.fileUrl)}
+                                  >
+                                    <DownloadCloud className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Download</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
-                          <span className="text-muted-foreground text-xs">
-                            {resume.reference}% reference rate
-                          </span>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          <Eye className="mr-2 h-3 w-3" />
-                          View Details
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
