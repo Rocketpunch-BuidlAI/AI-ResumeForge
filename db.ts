@@ -71,6 +71,15 @@ const ipAssets = pgTable('Ip', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
+// 이력서 텍스트 저장 테이블
+const coverletterTexts = pgTable('CoverletterText', {
+  id: serial('id').primaryKey(),
+  coverletterId: bigint('coverletter_id', { mode: 'number' }).notNull(),
+  text: text('text').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
 export async function getUser(email: string) {
   return await db.select().from(users).where(eq(users.email, email));
 }
@@ -178,15 +187,27 @@ export async function getLatestCoverletterByCidAndUserId(userId: number) {
   const result = await db
     .select()
     .from(coverletters)
-    .where(
-      and(
-        eq(coverletters.userId, userId)
-      )
-    )
+    .where(and(eq(coverletters.userId, userId)))
     .orderBy(desc(coverletters.created_at))
     .limit(1);
-  
+
   return result.length > 0 ? result[0] : null;
+}
+
+// 이력서 텍스트 저장 함수
+export async function saveCoverletterText(coverletterId: number, text: string) {
+  return await db.insert(coverletterTexts).values({
+    coverletterId,
+    text,
+  });
+}
+
+// 이력서 텍스트 조회 함수
+export async function getCoverletterTextByCoverletterId(coverletterId: number) {
+  return await db
+    .select()
+    .from(coverletterTexts)
+    .where(eq(coverletterTexts.coverletterId, coverletterId));
 }
 
 async function ensureTablesExist() {
@@ -293,7 +314,7 @@ async function ensureTablesExist() {
         await client`
           ALTER TABLE "Coverletter"
           ADD COLUMN ${client.unsafe(column)} ${client.unsafe(columnType)};`;
-        
+
         console.log(`Added column ${column} to Coverletter table`);
       }
     }
@@ -319,6 +340,25 @@ async function ensureTablesExist() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES "User" (id)
+      );`;
+  }
+
+  const coverletterTextsResult = await client`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'CoverletterText'
+    );`;
+
+  if (!coverletterTextsResult[0].exists) {
+    await client`
+      CREATE TABLE "CoverletterText" (
+        id SERIAL PRIMARY KEY,
+        coverletter_id BIGINT NOT NULL,
+        text TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT coverletter_id FOREIGN KEY (coverletter_id) REFERENCES "Coverletter" (id)
       );`;
   }
 }

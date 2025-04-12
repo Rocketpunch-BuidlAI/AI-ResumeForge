@@ -78,10 +78,10 @@ const jobRolesData: JobRolesData = {
     ],
     'Blockchain / Web3': ['Smart Contract', 'Protocol Engineer'],
     'Data/ AI': ['Machine Learning', 'AI'],
-    'Security': ['Security Engineer'],
+    Security: ['Security Engineer'],
   },
   'Business Roles': {
-    'Marketing': ['Marketer', 'Brand Strategist', 'Content Creator'],
+    Marketing: ['Marketer', 'Brand Strategist', 'Content Creator'],
     'Product/Strategy': ['Product Manager', 'Business Analyst'],
     'Human Resources': ['People Operations', 'HR Manager', 'Talent Acquisition'],
     'Customer / Operations': [
@@ -91,7 +91,7 @@ const jobRolesData: JobRolesData = {
     ],
   },
   'Creative Roles': {
-    'Design': [
+    Design: [
       'UI/UX Designer',
       'Visual Designer',
       'Illustrator',
@@ -102,7 +102,7 @@ const jobRolesData: JobRolesData = {
       'Sound Designer',
       'VFX Artist',
     ],
-    'Contents': ['Songwriter', 'Photographer'],
+    Contents: ['Songwriter', 'Photographer'],
   },
   'Professional Services': {
     '': [
@@ -143,8 +143,6 @@ export default function ResumeUploadPage() {
   const [openJobCategory, setOpenJobCategory] = useState(false);
   const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
   const [openJobTitle, setOpenJobTitle] = useState(false);
-
-  console.log(progressValue);
 
   // Form setup with react-hook-form and zod validation
   const form = useForm<FormValues>({
@@ -289,7 +287,7 @@ export default function ResumeUploadPage() {
           }
           return prev + 1;
         });
-      }, 20);
+      }, 100);
 
       const session = await getSession();
 
@@ -301,11 +299,11 @@ export default function ResumeUploadPage() {
       formData.append('userId', session?.user?.id || '');
 
       // 메타데이터에 선택된 직업 정보 추가
-      const fullJobTitle = selectedJobTitle ? 
-        (selectedCategory === 'Professional Services' ? 
-          selectedJobTitle : 
-          `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
-        ) : data.jobTitle;
+      const fullJobTitle = selectedJobTitle
+        ? selectedCategory === 'Professional Services'
+          ? selectedJobTitle
+          : `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
+        : data.jobTitle;
 
       // 메타데이터 추가
       formData.append(
@@ -341,7 +339,26 @@ export default function ResumeUploadPage() {
       });
 
       if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
+        console.error('Upload failed with status:', uploadResponse.status);
+        console.error(
+          'Response headers:',
+          Object.fromEntries([...uploadResponse.headers.entries()])
+        );
+
+        // 응답 타입 확인
+        const contentType = uploadResponse.headers.get('content-type');
+        console.error('Content-Type:', contentType);
+
+        let errorData;
+
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await uploadResponse.json();
+          console.error('Error response (JSON):', errorData);
+        } else {
+          errorData = { message: await uploadResponse.text() };
+          console.error('Error response (Text):', errorData.message);
+        }
+
         throw new Error(errorData.message || 'An error occurred while uploading the file.');
       }
 
@@ -557,11 +574,19 @@ export default function ResumeUploadPage() {
                                     aria-expanded={openJobCategory}
                                     className="w-full justify-between"
                                   >
-                                    {selectedCategory || "Select job category..."}
-                                    <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedCategory ? 'text-primary' : ''}`} />
+                                    {selectedCategory || 'Select job category...'}
+                                    <ChevronRight
+                                      className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedCategory ? 'text-primary' : ''}`}
+                                    />
                                   </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                <PopoverContent
+                                  className="p-0"
+                                  style={{
+                                    width: 'var(--radix-popover-trigger-width)',
+                                    minWidth: '100%',
+                                  }}
+                                >
                                   <Command className="w-full">
                                     <CommandList className="w-full">
                                       <CommandInput placeholder="Search job category..." />
@@ -575,7 +600,7 @@ export default function ResumeUploadPage() {
                                         >
                                           {category}
                                           {selectedCategory === category && (
-                                            <Check className="ml-auto h-4 w-4 text-primary" />
+                                            <Check className="text-primary ml-auto h-4 w-4" />
                                           )}
                                         </CommandItem>
                                       ))}
@@ -586,7 +611,10 @@ export default function ResumeUploadPage() {
 
                               {/* 직업 서브카테고리 선택 */}
                               {selectedCategory && selectedCategory !== 'Professional Services' && (
-                                <Popover open={openJobSubcategory} onOpenChange={setOpenJobSubcategory}>
+                                <Popover
+                                  open={openJobSubcategory}
+                                  onOpenChange={setOpenJobSubcategory}
+                                >
                                   <PopoverTrigger asChild>
                                     <Button
                                       variant="outline"
@@ -594,17 +622,29 @@ export default function ResumeUploadPage() {
                                       aria-expanded={openJobSubcategory}
                                       className="w-full justify-between"
                                     >
-                                      {selectedSubcategory || "Select subcategory..."}
-                                      <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedSubcategory ? 'text-primary' : ''}`} />
+                                      {selectedSubcategory || 'Select subcategory...'}
+                                      <ChevronRight
+                                        className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedSubcategory ? 'text-primary' : ''}`}
+                                      />
                                     </Button>
                                   </PopoverTrigger>
-                                  <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                  <PopoverContent
+                                    className="p-0"
+                                    style={{
+                                      width: 'var(--radix-popover-trigger-width)',
+                                      minWidth: '100%',
+                                    }}
+                                  >
                                     <Command className="w-full">
                                       <CommandList className="w-full">
                                         <CommandInput placeholder="Search subcategory..." />
                                         <CommandEmpty>No subcategory found.</CommandEmpty>
-                                        {selectedCategory && 
-                                          Object.keys(jobRolesData[selectedCategory as keyof typeof jobRolesData]).map((subcategory) => (
+                                        {selectedCategory &&
+                                          Object.keys(
+                                            jobRolesData[
+                                              selectedCategory as keyof typeof jobRolesData
+                                            ]
+                                          ).map((subcategory) => (
                                             <CommandItem
                                               key={subcategory}
                                               value={subcategory}
@@ -613,7 +653,7 @@ export default function ResumeUploadPage() {
                                             >
                                               {subcategory}
                                               {selectedSubcategory === subcategory && (
-                                                <Check className="ml-auto h-4 w-4 text-primary" />
+                                                <Check className="text-primary ml-auto h-4 w-4" />
                                               )}
                                             </CommandItem>
                                           ))}
@@ -624,7 +664,7 @@ export default function ResumeUploadPage() {
                               )}
 
                               {/* 직업 타이틀 선택 */}
-                              {((selectedCategory === 'Professional Services') || 
+                              {(selectedCategory === 'Professional Services' ||
                                 (selectedCategory && selectedSubcategory)) && (
                                 <Popover open={openJobTitle} onOpenChange={setOpenJobTitle}>
                                   <PopoverTrigger asChild>
@@ -634,45 +674,56 @@ export default function ResumeUploadPage() {
                                       aria-expanded={openJobTitle}
                                       className="w-full justify-between"
                                     >
-                                      {selectedJobTitle || "Select job title..."}
-                                      <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedJobTitle ? 'text-primary' : ''}`} />
+                                      {selectedJobTitle || 'Select job title...'}
+                                      <ChevronRight
+                                        className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedJobTitle ? 'text-primary' : ''}`}
+                                      />
                                     </Button>
                                   </PopoverTrigger>
-                                  <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                  <PopoverContent
+                                    className="p-0"
+                                    style={{
+                                      width: 'var(--radix-popover-trigger-width)',
+                                      minWidth: '100%',
+                                    }}
+                                  >
                                     <Command className="w-full">
                                       <CommandList className="w-full">
                                         <CommandInput placeholder="Search job title..." />
                                         <CommandEmpty>No job title found.</CommandEmpty>
-                                        {selectedCategory === 'Professional Services' ? (
-                                          jobRolesData['Professional Services'][''].map((jobTitle) => (
-                                            <CommandItem
-                                              key={jobTitle}
-                                              value={jobTitle}
-                                              onSelect={() => handleJobTitleChange(jobTitle)}
-                                              className="cursor-pointer"
-                                            >
-                                              {jobTitle}
-                                              {selectedJobTitle === jobTitle && (
-                                                <Check className="ml-auto h-4 w-4 text-primary" />
-                                              )}
-                                            </CommandItem>
-                                          ))
-                                        ) : (
-                                          selectedCategory && selectedSubcategory &&
-                                          jobRolesData[selectedCategory as keyof typeof jobRolesData][selectedSubcategory]?.map((jobTitle) => (
-                                            <CommandItem
-                                              key={jobTitle}
-                                              value={jobTitle}
-                                              onSelect={() => handleJobTitleChange(jobTitle)}
-                                              className="cursor-pointer"
-                                            >
-                                              {jobTitle}
-                                              {selectedJobTitle === jobTitle && (
-                                                <Check className="ml-auto h-4 w-4 text-primary" />
-                                              )}
-                                            </CommandItem>
-                                          ))
-                                        )}
+                                        {selectedCategory === 'Professional Services'
+                                          ? jobRolesData['Professional Services'][''].map(
+                                              (jobTitle) => (
+                                                <CommandItem
+                                                  key={jobTitle}
+                                                  value={jobTitle}
+                                                  onSelect={() => handleJobTitleChange(jobTitle)}
+                                                  className="cursor-pointer"
+                                                >
+                                                  {jobTitle}
+                                                  {selectedJobTitle === jobTitle && (
+                                                    <Check className="text-primary ml-auto h-4 w-4" />
+                                                  )}
+                                                </CommandItem>
+                                              )
+                                            )
+                                          : selectedCategory &&
+                                            selectedSubcategory &&
+                                            jobRolesData[
+                                              selectedCategory as keyof typeof jobRolesData
+                                            ][selectedSubcategory]?.map((jobTitle) => (
+                                              <CommandItem
+                                                key={jobTitle}
+                                                value={jobTitle}
+                                                onSelect={() => handleJobTitleChange(jobTitle)}
+                                                className="cursor-pointer"
+                                              >
+                                                {jobTitle}
+                                                {selectedJobTitle === jobTitle && (
+                                                  <Check className="text-primary ml-auto h-4 w-4" />
+                                                )}
+                                              </CommandItem>
+                                            ))}
                                       </CommandList>
                                     </Command>
                                   </PopoverContent>

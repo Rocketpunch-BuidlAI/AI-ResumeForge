@@ -47,7 +47,7 @@ export default function DerivativePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -99,7 +99,7 @@ export default function DerivativePage() {
                 placeholder="1,2,3"
                 required
               />
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Enter multiple license token IDs separated by commas.
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function DerivativePage() {
           {response && (
             <div className="mt-6 space-y-2">
               <h3 className="text-lg font-semibold">Registration Result</h3>
-              <pre className="bg-muted p-4 rounded-md overflow-auto">
+              <pre className="bg-muted overflow-auto rounded-md p-4">
                 {JSON.stringify(response, null, 2)}
               </pre>
             </div>
@@ -133,4 +133,4 @@ export default function DerivativePage() {
       </Card>
     </div>
   );
-} 
+}

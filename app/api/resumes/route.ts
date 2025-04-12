@@ -1,11 +1,17 @@
 // app/api/resumes/route.ts
 import { NextResponse } from 'next/server';
-import { getCoverletter, saveCoverletter, getLatestCoverletterByCidAndUserId, type ResumeMetadata } from '@/db';
+import {
+  getCoverletter,
+  saveCoverletter,
+  getLatestCoverletterByCidAndUserId,
+  saveCoverletterText,
+  type ResumeMetadata,
+} from '@/db';
 import { put } from '@vercel/blob';
 import axios from 'axios';
 import { PdfManager } from '@/utils/PdfManager';
 import { AI_AGENT_URL } from '@/utils/config';
-
+import console from 'console';
 
 export async function GET(request: Request) {
   try {
@@ -35,56 +41,100 @@ export async function POST(request: Request) {
     const userId = formData.get('userId') as string;
     const metadata = formData.get('metadata') as string;
 
-    console.log('metadata', metadata);
+    console.log('Received upload request - userId:', userId);
+    console.log('Received file:', file ? `${file.name} (${file.size} bytes)` : 'No file');
+    console.log('metadata:', metadata);
 
     if (!file || !userId) {
-      return NextResponse.json('File and user ID are required.', { status: 400 });
+      return NextResponse.json({ error: 'File and user ID are required.' }, { status: 400 });
     }
 
+    console.log('Uploading file to blob storage...');
     const blob = await put(file.name, file, {
       access: 'public',
       allowOverwrite: true,
     });
 
     const cid = blob.url.split('/').pop() ?? blob.url;
-
-    console.log('cid', cid);
+    console.log('File uploaded to blob storage, cid:', cid);
 
     // Save to database with metadata
+    console.log('Saving to database...');
     await saveCoverletter(Number(userId), cid, blob.url, metadata);
 
     const savedCoverletter = await getLatestCoverletterByCidAndUserId(Number(userId));
+    console.log('Saved to database, coverletter id:', savedCoverletter?.id);
 
-    if(!savedCoverletter) {
-      return NextResponse.json('Coverletter not found.', { status: 400 });
+    if (!savedCoverletter) {
+      return NextResponse.json({ error: 'Coverletter not found.' }, { status: 400 });
     }
 
-    // // Convert File to ArrayBuffer
+    console.log('Extracting text from PDF...');
+    // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const pdfBytes = new Uint8Array(arrayBuffer);
-    const extractedText = await PdfManager.extractTextFromBytes(pdfBytes);
 
-    // // upload cover letter to pinecone
-    const response = await axios.post(`${AI_AGENT_URL}/upload`, {
-      text: extractedText,
-      id: savedCoverletter.id.toString(),
-      role: (savedCoverletter.metadata as ResumeMetadata).jobTitle,
-      experience: (savedCoverletter.metadata as ResumeMetadata).yearsOfExperience
-    });
+    try {
+      console.log('PdfManager.extractTextFromBytes', pdfBytes);
+      const extractedText = await PdfManager.extractTextFromBytes(pdfBytes);
+      console.log('Text extracted successfully', extractedText);
 
-    const aiAgentResponse = response.data;
+      // 추출된 텍스트를 새 테이블에 저장
+      console.log('Saving extracted text to database...');
+      await saveCoverletterText(savedCoverletter.id, extractedText);
+      console.log('Text saved to database successfully');
 
-    if (aiAgentResponse.status !== 'success') {
+      // upload cover letter to pinecone
+      console.log('Uploading to AI agent:', AI_AGENT_URL);
+      const response = await axios.post(`${AI_AGENT_URL}/upload`, {
+        text: extractedText,
+        id: savedCoverletter.id.toString(),
+        role: (savedCoverletter.metadata as ResumeMetadata).jobTitle,
+        experience: (savedCoverletter.metadata as ResumeMetadata).yearsOfExperience,
+      });
+
+      const aiAgentResponse = response.data;
+      console.log('AI agent response:', aiAgentResponse);
+
+      if (aiAgentResponse.status !== 'success') {
+        console.error('AI agent returned error:', aiAgentResponse);
+        return NextResponse.json(
+          { status: 'error', message: aiAgentResponse.message },
+          { status: 400 }
+        );
+      }
+    } catch (pdfError) {
+      console.error('Error processing PDF:', pdfError);
       return NextResponse.json(
-        { status: 'error', message: aiAgentResponse.message },
+        {
+          status: 'error',
+          message:
+            'Error processing PDF file: ' +
+            (pdfError instanceof Error ? pdfError.message : String(pdfError)),
+        },
         { status: 400 }
       );
     }
-    
+
     // Return both CID and complete uploadResponse
     return NextResponse.json({ url: blob.url, cid });
   } catch (error) {
     console.error('Error uploading file:', error);
-    return NextResponse.json('An error occurred while uploading the file.', { status: 500 });
+    // 자세한 오류 로깅
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+
+    return NextResponse.json(
+      {
+        status: 'error',
+        message:
+          'An error occurred while uploading the file: ' +
+          (error instanceof Error ? error.message : String(error)),
+      },
+      { status: 500 }
+    );
   }
 }

@@ -56,7 +56,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, fileUrl, className }) => {
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
       }
-      
+
       // PDF 인스턴스 정리
       if (documentRef.current) {
         try {
@@ -65,7 +65,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, fileUrl, className }) => {
           console.warn('PDF 문서 정리 중 오류:', e);
         }
       }
-      
+
       setFileSource(null);
     };
   }, [file, fileUrl]);
@@ -127,7 +127,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, fileUrl, className }) => {
     return (
       <div className="flex h-full flex-col items-center justify-center space-y-4 p-8 text-center">
         <p className="text-red-500">{error}</p>
-        <p className="text-sm text-muted-foreground">PDF 미리보기를 불러오는 데 문제가 발생했습니다.</p>
+        <p className="text-muted-foreground text-sm">
+          PDF 미리보기를 불러오는 데 문제가 발생했습니다.
+        </p>
         <Button onClick={downloadFile}>
           <Download className="mr-2 h-4 w-4" />
           파일 다운로드

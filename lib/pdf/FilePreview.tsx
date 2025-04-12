@@ -17,7 +17,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, fileUrl }) => {
   // PDF 뷰어 마운트/언마운트 시 key 변경으로 컴포넌트 강제 재렌더링
   useEffect(() => {
     // 새로운 파일이나 URL이 설정될 때마다 key 증가
-    setKey(prevKey => prevKey + 1);
+    setKey((prevKey) => prevKey + 1);
     setErrorMessage(null);
   }, [file, fileUrl]);
 

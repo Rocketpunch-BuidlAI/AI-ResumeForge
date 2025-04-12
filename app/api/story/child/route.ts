@@ -7,19 +7,13 @@ export async function POST(request: Request) {
     const { email, tokenId, licenseTokenIds, cid } = await request.json();
 
     if (!email || !tokenId || !licenseTokenIds || !cid) {
-      return NextResponse.json(
-        { error: 'Required parameters are missing' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Required parameters are missing' }, { status: 400 });
     }
 
     // Get wallet address by email
     const walletAddress = await getWalletAddressByEmail(email);
     if (!walletAddress) {
-      return NextResponse.json(
-        { error: 'Wallet address not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Wallet address not found' }, { status: 404 });
     }
 
     // Convert license token IDs to array
@@ -48,4 +42,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

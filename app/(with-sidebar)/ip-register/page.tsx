@@ -22,7 +22,7 @@ export default function IpRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!session?.user?.id) {
       toast.error('Login is required.');
       return;
@@ -79,7 +79,7 @@ export default function IpRegisterPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -90,9 +90,7 @@ export default function IpRegisterPage() {
       <Card>
         <CardHeader>
           <CardTitle>IP Asset Registration</CardTitle>
-          <CardDescription>
-            Register files uploaded to IPFS as IP assets.
-          </CardDescription>
+          <CardDescription>Register files uploaded to IPFS as IP assets.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -142,7 +140,7 @@ export default function IpRegisterPage() {
           {response && (
             <div className="mt-6 space-y-2">
               <h3 className="text-lg font-semibold">Registration Result</h3>
-              <pre className="bg-muted p-4 rounded-md overflow-auto">
+              <pre className="bg-muted overflow-auto rounded-md p-4">
                 {JSON.stringify(response, null, 2)}
               </pre>
             </div>
