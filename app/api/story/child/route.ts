@@ -7,7 +7,6 @@ import { WIP_TOKEN_ADDRESS } from '@story-protocol/core-sdk'
 import { saveIpAsset, saveIpReference, getIpAssetByIpId, saveRoyalty } from '@/db';
 import { zeroAddress } from 'viem'
 import { encryptCID } from '@/utils/encryption';
-import { MintAndRegisterIpAssetWithPilTermsResponse } from '@story-protocol/core-sdk';
 
 export async function POST(request: Request) {
   try {

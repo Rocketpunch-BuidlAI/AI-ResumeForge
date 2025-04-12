@@ -31,9 +31,10 @@ export interface ResumeMetadata {
 
 // Table schema definitions
 export const users = pgTable('User', {
-  id: bigint('id', { mode: 'number' }).primaryKey(),
+  id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }),
   email: varchar('email', { length: 255 }),
+  password: varchar('password', { length: 64 }),
   image: varchar('image', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -99,6 +100,9 @@ const royalties = pgTable('Royalty', {
   amount: doublePrecision('amount'),
   txHash: varchar('tx_hash', { length: 255 }).notNull(),
   revenueReceipt: varchar('revenue_receipt', { length: 255 }),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
 
 const coverletterReferences = pgTable('CoverletterReferences', {
   id: serial('id').primaryKey(),
@@ -292,6 +296,7 @@ export async function getRoyaltiesByUserId(userId: number) {
 // Function to retrieve royalties by child IP ID
 export async function getRoyaltiesByChildIpId(childIpId: number) {
   return await db.select().from(royalties).where(eq(royalties.childIpId, childIpId));
+}
 
 // 이력서 참조 정보 저장 함수
 export async function saveCoverletterReference(
