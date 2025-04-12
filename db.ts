@@ -52,6 +52,19 @@ const coverletters = pgTable('Coverletter', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
+// IP 자산 등록 정보 테이블
+const ipAssets = pgTable('Ip', {
+  id: serial('id').primaryKey(),
+  userId: bigint('user_id', { mode: 'number' }).notNull(),
+  tokenId: bigint('token_id', { mode: 'number' }).notNull(),
+  licenseTermId: bigint('license_term_id', { mode: 'number' }).notNull(),
+  cid: varchar('cid', { length: 255 }).notNull(),
+  ipId: varchar('ip_id', { length: 255 }).notNull(),
+  txHash: varchar('tx_hash', { length: 255 }).notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
 export async function getUser(email: string) {
   return await db.select().from(users).where(eq(users.email, email));
 }
@@ -109,6 +122,35 @@ export async function getCoverletter(userId: number) {
 
 export async function getCoverletterById(id: number) {
   return await db.select().from(coverletters).where(eq(coverletters.id, id));
+}
+
+// IP 자산 등록 정보 저장 함수
+export async function saveIpAsset(
+  userId: number,
+  tokenId: number,
+  licenseTermId: number,
+  cid: string,
+  ipId: string,
+  txHash: string
+) {
+  return await db.insert(ipAssets).values({
+    userId,
+    tokenId,
+    licenseTermId,
+    cid,
+    ipId,
+    txHash,
+  });
+}
+
+// IP 자산 등록 정보 조회 함수
+export async function getIpAssets(userId: number) {
+  return await db.select().from(ipAssets).where(eq(ipAssets.userId, userId));
+}
+
+// IP 자산 등록 정보 ID로 조회 함수
+export async function getIpAssetById(id: number) {
+  return await db.select().from(ipAssets).where(eq(ipAssets.id, id));
 }
 
 async function ensureTablesExist() {
@@ -211,6 +253,29 @@ async function ensureTablesExist() {
           ADD COLUMN ${client.unsafe(column)} ${client.unsafe(columnType)};`;
       }
     }
+  }
+
+  const ipAssetsResult = await client`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'ip_assets'
+    );`;
+
+  if (!ipAssetsResult[0].exists) {
+    await client`
+      CREATE TABLE ip_assets (
+        id SERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        token_id BIGINT NOT NULL,
+        license_term_id BIGINT NOT NULL,
+        cid VARCHAR(255) NOT NULL,
+        ip_id VARCHAR(255) NOT NULL,
+        tx_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES "User" (id)
+      );`;
   }
 }
 
