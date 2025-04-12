@@ -541,7 +541,7 @@ export default function ResumeUploadPage() {
                       control={form.control}
                       name="jobTitle"
                       render={() => (
-                        <FormItem className="space-y-4">
+                        <FormItem>
                           <FormLabel className="flex items-center gap-2">
                             <Briefcase className="text-muted-foreground h-4 w-4" />
                             Job Title

@@ -39,6 +39,13 @@ interface ResumeMetadata {
   yearsOfExperience: string;
   skills: string;
   additionalInfo: string;
+  jobCategory?: string;
+  jobSubcategory?: string;
+  jobSpecific?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
+  uploadDate?: string;
 }
 
 interface UploadedResume {
@@ -50,6 +57,9 @@ interface UploadedResume {
   createdAt: string;
   updatedAt: string;
   metadata: ResumeMetadata;
+  jobCategory?: string;
+  jobSubcategory?: string;
+  jobSpecific?: string;
 }
 
 interface AIGeneratedResume {
@@ -75,6 +85,9 @@ interface CoverletterResponse {
   fileName?: string;
   fileSize?: number;
   fileType?: string;
+  jobCategory?: string;
+  jobSubcategory?: string;
+  jobSpecific?: string;
   metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -189,12 +202,22 @@ export default function Page() {
             referenceCount: 0, // Set default or calculate from data
             createdAt: resume.created_at,
             updatedAt: resume.updated_at,
+            jobCategory: resume.jobCategory,
+            jobSubcategory: resume.jobSubcategory,
+            jobSpecific: resume.jobSpecific,
             metadata: {
               jobTitle: resume.jobTitle || '',
               companyName: resume.companyName || '',
               yearsOfExperience: resume.yearsOfExperience || '',
               skills: resume.skills || '',
               additionalInfo: resume.additionalInfo || '',
+              jobCategory: resume.jobCategory || '',
+              jobSubcategory: resume.jobSubcategory || '',
+              jobSpecific: resume.jobSpecific || '',
+              fileName: resume.fileName,
+              fileSize: resume.fileSize,
+              fileType: resume.fileType,
+              uploadDate: resume.metadata?.uploadDate as string || resume.created_at,
             },
           })
         );
@@ -216,12 +239,19 @@ export default function Page() {
   // Create a mock file for demonstration purposes
   useEffect(() => {
     if (selectedResume) {
-      // Creating an empty PDF blob for demonstration
-      const emptyPdfBlob = new Blob([''], { type: 'application/pdf' });
-      const mockFile = new File([emptyPdfBlob], selectedResume.fileName, {
-        type: 'application/pdf',
-      });
-      setPreviewFile(mockFile);
+      // Instead of creating an empty PDF blob, we'll use the actual PDF URL
+      fetch(selectedResume.fileUrl)
+        .then(response => response.blob())
+        .then(pdfBlob => {
+          const file = new File([pdfBlob], selectedResume.fileName, {
+            type: 'application/pdf',
+          });
+          setPreviewFile(file);
+        })
+        .catch(error => {
+          console.error('Error fetching PDF file:', error);
+          setError('Failed to load PDF preview');
+        });
     }
   }, [selectedResume]);
 
@@ -351,7 +381,7 @@ export default function Page() {
                                 {resume.fileName}
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="max-h-[90vh] w-full max-w-4xl overflow-hidden">
+                            <DialogContent className="max-h-[90vh] w-full max-w-[95vw] !important overflow-hidden" style={{ maxWidth: '40vw', width: '40vw', maxHeight: '90vh', height: '90vh' }}>
                               <DialogHeader>
                                 <DialogTitle className="flex items-center gap-2">
                                   <FileText className="h-5 w-5" />
@@ -367,7 +397,7 @@ export default function Page() {
                                   Uploaded
                                 </DialogDescription>
                               </DialogHeader>
-                              <div className="h-[60vh] overflow-hidden rounded-md border">
+                              <div className="h-[75vh] overflow-hidden rounded-md border">
                                 <FilePreview file={previewFile} />
                               </div>
                               <DialogFooter>
@@ -389,9 +419,27 @@ export default function Page() {
                           <div className="flex flex-col gap-1 text-sm">
                             <div className="flex items-center gap-1">
                               <Briefcase className="text-muted-foreground h-3 w-3" />
-                              <span>{resume.metadata.jobTitle}</span>
-                              <span className="text-muted-foreground mx-1">|</span>
-                              <span>{resume.metadata.companyName}</span>
+                              {resume.metadata.jobSpecific ? (
+                                <>
+                                  <span>{resume.metadata.jobSpecific}</span>
+                                  {resume.metadata.companyName && (
+                                    <>
+                                      <span className="text-muted-foreground mx-1">|</span>
+                                      <span>{resume.metadata.companyName}</span>
+                                    </>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <span>{resume.metadata.jobTitle}</span>
+                                  {resume.metadata.companyName && (
+                                    <>
+                                      <span className="text-muted-foreground mx-1">|</span>
+                                      <span>{resume.metadata.companyName}</span>
+                                    </>
+                                  )}
+                                </>
+                              )}
                             </div>
                             <div className="mt-1 flex flex-wrap gap-1">
                               {resume.metadata.skills.split(',').map((skill, idx) => (
@@ -437,7 +485,7 @@ export default function Page() {
                                   </TooltipProvider>
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-h-[90vh] w-full max-w-4xl overflow-hidden">
+                              <DialogContent className="max-h-[90vh] w-full max-w-[95vw] !important overflow-hidden" style={{ maxWidth: '95vw', width: '95vw' }}>
                                 <DialogHeader>
                                   <DialogTitle className="flex items-center gap-2">
                                     <FileText className="h-5 w-5" />
@@ -453,7 +501,7 @@ export default function Page() {
                                     Uploaded
                                   </DialogDescription>
                                 </DialogHeader>
-                                <div className="h-[60vh] overflow-hidden rounded-md border">
+                                <div className="h-[75vh] overflow-hidden rounded-md border">
                                   <FilePreview file={previewFile} />
                                 </div>
                                 <DialogFooter>

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PDFViewer from './PDFViewer';
 import DocPreview from './DocPreview';
 import { FileText } from 'lucide-react';
@@ -11,8 +11,20 @@ interface FilePreviewProps {
 }
 
 const FilePreview: React.FC<FilePreviewProps> = ({ file, fileUrl }) => {
-  console.log('file', file);
-  console.log('fileUrl', fileUrl);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [key, setKey] = useState<number>(0);
+
+  // PDF 뷰어 마운트/언마운트 시 key 변경으로 컴포넌트 강제 재렌더링
+  useEffect(() => {
+    // 새로운 파일이나 URL이 설정될 때마다 key 증가
+    setKey(prevKey => prevKey + 1);
+    setErrorMessage(null);
+  }, [file, fileUrl]);
+
+  // 로그 출력
+  useEffect(() => {
+    console.log('FilePreview 렌더링:', { file, fileUrl });
+  }, [file, fileUrl]);
 
   // 파일이나 URL 중 하나가 없는 경우 안내 메시지 표시
   if (!file && !fileUrl) {
@@ -24,13 +36,22 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, fileUrl }) => {
     );
   }
 
-  // URL이 제공된 경우 (Vercel Blob 등), 파일 확장자를 URL에서 추출
+  // 에러 표시
+  if (errorMessage) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+        <p className="text-red-500">{errorMessage}</p>
+      </div>
+    );
+  }
+
+  // URL이 제공된 경우, 확장자로 처리 방식 결정
   if (fileUrl) {
     // URL에서 확장자 추출
     const extension = fileUrl.split('.').pop()?.toLowerCase();
 
     if (extension === 'pdf') {
-      return <PDFViewer fileUrl={fileUrl} />;
+      return <PDFViewer key={`pdf-${key}`} fileUrl={fileUrl} />;
     } else if (extension === 'doc' || extension === 'docx') {
       return <DocPreview fileUrl={fileUrl} />;
     } else {
@@ -55,7 +76,7 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, fileUrl }) => {
   const fileType = file?.type;
 
   if (fileType === 'application/pdf') {
-    return <PDFViewer file={file} />;
+    return <PDFViewer key={`pdf-${key}`} file={file} />;
   } else if (
     fileType === 'application/msword' ||
     fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'

@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { RotateCcw, BarChart, ChevronRight, FileText } from 'lucide-react';
+import { RotateCcw, BarChart, ChevronRight, FileText, Briefcase, Check } from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -20,6 +21,9 @@ import {
 } from '@/components/ui/form';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Badge } from '@/components/ui/badge';
 
 import { CodeViewer } from './components/code-viewer';
 import { MaxLengthSelector } from './components/maxlength-selector';
@@ -38,6 +42,9 @@ import * as z from 'zod';
 
 // Form schema
 const formSchema = z.object({
+  jobTitle: z.string().min(1, {
+    message: 'Job title is required.',
+  }),
   introduction: z.string().min(10, {
     message: 'Introduction must be at least 10 characters.',
   }),
@@ -57,6 +64,61 @@ const formSchema = z.object({
 
 // Define type for form values
 type FormValues = z.infer<typeof formSchema>;
+
+// 직업 계층 데이터
+type JobRolesData = {
+  [category: string]: {
+    [subcategory: string]: string[];
+  };
+};
+
+const jobRolesData: JobRolesData = {
+  'Technical Roles': {
+    'Web/ Software Dev': [
+      'Backend Engineer',
+      'Frontend Developer',
+      'Full-Stack Developer',
+      'Web Developer',
+    ],
+    'Blockchain / Web3': ['Smart Contract', 'Protocol Engineer'],
+    'Data/ AI': ['Machine Learning', 'AI'],
+    'Security': ['Security Engineer'],
+  },
+  'Business Roles': {
+    'Marketing': ['Marketer', 'Brand Strategist', 'Content Creator'],
+    'Product/Strategy': ['Product Manager', 'Business Analyst'],
+    'Human Resources': ['People Operations', 'HR Manager', 'Talent Acquisition'],
+    'Customer / Operations': [
+      'Customer Success Manager',
+      'Customer Support Specialist',
+      'Operations Manager',
+    ],
+  },
+  'Creative Roles': {
+    'Design': [
+      'UI/UX Designer',
+      'Visual Designer',
+      'Illustrator',
+      'Video Editor',
+      '3D Artist',
+      'AI Artist',
+      'Copywriter',
+      'Sound Designer',
+      'VFX Artist',
+    ],
+    'Contents': ['Songwriter', 'Photographer'],
+  },
+  'Professional Services': {
+    '': [
+      'Consultant',
+      'Auditor',
+      'Lawyer/ Legal Counsel',
+      'Pharmacist',
+      'Clinical Researcher',
+      'Counselor',
+    ],
+  },
+};
 
 // 참고 이력서 데이터
 const referencedResumes = [
@@ -85,6 +147,7 @@ export default function PlaygroundPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      jobTitle: '',
       introduction: '',
       motivation: '',
       experience: '',
@@ -94,6 +157,42 @@ export default function PlaygroundPage() {
       position: '',
     },
   });
+
+  // 직업 선택 상태
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string>('');
+  const [openJobCategory, setOpenJobCategory] = useState(false);
+  const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
+  const [openJobTitle, setOpenJobTitle] = useState(false);
+
+  // 직업 카테고리 변경 핸들러
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedSubcategory('');
+    setSelectedJobTitle('');
+    setOpenJobCategory(false);
+
+    // Professional Services는 서브카테고리가 없으므로 바로 직업 선택 가능
+    if (category === 'Professional Services') {
+      setOpenJobTitle(true);
+    }
+  };
+
+  // 서브카테고리 변경 핸들러
+  const handleSubcategoryChange = (subcategory: string) => {
+    setSelectedSubcategory(subcategory);
+    setSelectedJobTitle('');
+    setOpenJobSubcategory(false);
+    setOpenJobTitle(true);
+  };
+
+  // 직업 선택 핸들러
+  const handleJobTitleChange = (jobTitle: string) => {
+    setSelectedJobTitle(jobTitle);
+    setOpenJobTitle(false);
+    form.setValue('jobTitle', jobTitle, { shouldValidate: true });
+  };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
@@ -241,6 +340,164 @@ export default function PlaygroundPage() {
                                   {/* Basic Information */}
                                   <div className="space-y-4">
                                     <h3 className="text-lg font-medium">Basic Information</h3>
+
+                                    <FormField
+                                      control={form.control}
+                                      name="jobTitle"
+                                      render={() => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center gap-2">
+                                            <Briefcase className="text-muted-foreground h-4 w-4" />
+                                            Job Title
+                                          </FormLabel>
+                                          <FormControl>
+                                            <div className="flex flex-col space-y-4">
+                                              {/* 직업 카테고리 선택 */}
+                                              <Popover open={openJobCategory} onOpenChange={setOpenJobCategory}>
+                                                <PopoverTrigger asChild>
+                                                  <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    aria-expanded={openJobCategory}
+                                                    className="w-full justify-between"
+                                                  >
+                                                    {selectedCategory || "Select job category..."}
+                                                    <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedCategory ? 'text-primary' : ''}`} />
+                                                  </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                                  <Command className="w-full">
+                                                    <CommandList className="w-full">
+                                                      <CommandInput placeholder="Search job category..." />
+                                                      <CommandEmpty>No category found.</CommandEmpty>
+                                                      {Object.keys(jobRolesData).map((category) => (
+                                                        <CommandItem
+                                                          key={category}
+                                                          value={category}
+                                                          onSelect={() => handleCategoryChange(category)}
+                                                          className="cursor-pointer"
+                                                        >
+                                                          {category}
+                                                          {selectedCategory === category && (
+                                                            <Check className="ml-auto h-4 w-4 text-primary" />
+                                                          )}
+                                                        </CommandItem>
+                                                      ))}
+                                                    </CommandList>
+                                                  </Command>
+                                                </PopoverContent>
+                                              </Popover>
+
+                                              {/* 직업 서브카테고리 선택 */}
+                                              {selectedCategory && selectedCategory !== 'Professional Services' && (
+                                                <Popover open={openJobSubcategory} onOpenChange={setOpenJobSubcategory}>
+                                                  <PopoverTrigger asChild>
+                                                    <Button
+                                                      variant="outline"
+                                                      role="combobox"
+                                                      aria-expanded={openJobSubcategory}
+                                                      className="w-full justify-between"
+                                                    >
+                                                      {selectedSubcategory || "Select subcategory..."}
+                                                      <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedSubcategory ? 'text-primary' : ''}`} />
+                                                    </Button>
+                                                  </PopoverTrigger>
+                                                  <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                                    <Command className="w-full">
+                                                      <CommandList className="w-full">
+                                                        <CommandInput placeholder="Search subcategory..." />
+                                                        <CommandEmpty>No subcategory found.</CommandEmpty>
+                                                        {selectedCategory && 
+                                                          Object.keys(jobRolesData[selectedCategory]).map((subcategory) => (
+                                                            <CommandItem
+                                                              key={subcategory}
+                                                              value={subcategory}
+                                                              onSelect={() => handleSubcategoryChange(subcategory)}
+                                                              className="cursor-pointer"
+                                                            >
+                                                              {subcategory}
+                                                              {selectedSubcategory === subcategory && (
+                                                                <Check className="ml-auto h-4 w-4 text-primary" />
+                                                              )}
+                                                            </CommandItem>
+                                                          ))}
+                                                      </CommandList>
+                                                    </Command>
+                                                  </PopoverContent>
+                                                </Popover>
+                                              )}
+
+                                              {/* 직업 타이틀 선택 */}
+                                              {((selectedCategory === 'Professional Services') || 
+                                                (selectedCategory && selectedSubcategory)) && (
+                                                <Popover open={openJobTitle} onOpenChange={setOpenJobTitle}>
+                                                  <PopoverTrigger asChild>
+                                                    <Button
+                                                      variant="outline"
+                                                      role="combobox"
+                                                      aria-expanded={openJobTitle}
+                                                      className="w-full justify-between"
+                                                    >
+                                                      {selectedJobTitle || "Select job title..."}
+                                                      <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedJobTitle ? 'text-primary' : ''}`} />
+                                                    </Button>
+                                                  </PopoverTrigger>
+                                                  <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                                    <Command className="w-full">
+                                                      <CommandList className="w-full">
+                                                        <CommandInput placeholder="Search job title..." />
+                                                        <CommandEmpty>No job title found.</CommandEmpty>
+                                                        {selectedCategory === 'Professional Services' ? (
+                                                          jobRolesData['Professional Services'][''].map((jobTitle) => (
+                                                            <CommandItem
+                                                              key={jobTitle}
+                                                              value={jobTitle}
+                                                              onSelect={() => handleJobTitleChange(jobTitle)}
+                                                              className="cursor-pointer"
+                                                            >
+                                                              {jobTitle}
+                                                              {selectedJobTitle === jobTitle && (
+                                                                <Check className="ml-auto h-4 w-4 text-primary" />
+                                                              )}
+                                                            </CommandItem>
+                                                          ))
+                                                        ) : (
+                                                          selectedCategory && selectedSubcategory &&
+                                                          jobRolesData[selectedCategory][selectedSubcategory]?.map((jobTitle) => (
+                                                            <CommandItem
+                                                              key={jobTitle}
+                                                              value={jobTitle}
+                                                              onSelect={() => handleJobTitleChange(jobTitle)}
+                                                              className="cursor-pointer"
+                                                            >
+                                                              {jobTitle}
+                                                              {selectedJobTitle === jobTitle && (
+                                                                <Check className="ml-auto h-4 w-4 text-primary" />
+                                                              )}
+                                                            </CommandItem>
+                                                          ))
+                                                        )}
+                                                      </CommandList>
+                                                    </Command>
+                                                  </PopoverContent>
+                                                </Popover>
+                                              )}
+
+                                              {/* 선택된 직업 표시 */}
+                                              {selectedJobTitle && (
+                                                <div className="mt-2 flex items-center">
+                                                  <Badge variant="outline" className="bg-primary/10 text-primary">
+                                                    {selectedJobTitle}
+                                                    <Check className="ml-1 h-3 w-3" />
+                                                  </Badge>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
 
                                     <FormField
                                       control={form.control}
