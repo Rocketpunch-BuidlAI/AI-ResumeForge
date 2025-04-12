@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { client } from '@/utils/config';
 import { creativeCommonsAttribution } from '@/utils/terms';
+import { saveIpAsset } from '@/db';
 
 export async function POST(request: Request) {
   try {
-    const { cid, walletAddress } = await request.json();
+    const { cid, walletAddress, userId } = await request.json();
 
-    if (!cid || !walletAddress) {
-      return NextResponse.json({ error: 'CID and wallet address are required' }, { status: 400 });
+    if (!cid || !walletAddress || !userId) {
+      return NextResponse.json(
+        { error: 'CID, wallet address, and user ID are required' },
+        { status: 400 }
+      );
     }
 
     // Log each step for debugging
@@ -38,6 +42,18 @@ export async function POST(request: Request) {
           waitForTransaction: true, // Wait for transaction completion
         },
       });
+
+      // Save IP asset registration info to database
+      await saveIpAsset(
+        userId,
+        Number(response.tokenId),
+        response.licenseTermsIds && response.licenseTermsIds.length > 0 
+          ? Number(response.licenseTermsIds[0]) 
+          : 0,
+        cid,
+        response.ipId || '',
+        response.txHash || ''
+      );
 
       // Log detailed response structure
       console.log(

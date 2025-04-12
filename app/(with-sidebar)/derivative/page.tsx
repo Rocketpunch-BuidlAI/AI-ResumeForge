@@ -14,7 +14,7 @@ export default function DerivativePage() {
     licenseTokenIds: '',
     cid: '',
   });
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
