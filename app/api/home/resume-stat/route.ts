@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     })
     .slice(0, 3)
     .map(r => ({
-      amount: r.amount,
+      amount: Number(r.amount) * 0.001,
       createdAt: r.created_at || new Date().toISOString(),
     }));
 
