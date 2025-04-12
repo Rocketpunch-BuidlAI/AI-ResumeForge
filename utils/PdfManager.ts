@@ -4,6 +4,7 @@ import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib';
 import * as path from 'path';
 import * as fontkit from 'fontkit';
+import * as os from 'os';
 
 export class PdfManager {
   /**
@@ -59,8 +60,8 @@ export class PdfManager {
    */
   public static async extractTextFromBytes(pdfBytes: Uint8Array): Promise<string> {
     try {
-      // 임시 파일 생성
-      const tempDir = path.join(process.cwd(), 'tmp');
+      // 시스템 임시 디렉토리 사용
+      const tempDir = path.join(os.tmpdir(), 'ai-resumeforge-tmp');
       
       // 임시 디렉토리가 없으면 생성
       if (!fs.existsSync(tempDir)) {
@@ -100,8 +101,8 @@ export class PdfManager {
     pageNumber: number
   ): Promise<string> {
     try {
-      // 임시 파일 생성
-      const tempDir = path.join(process.cwd(), 'tmp');
+      // 시스템 임시 디렉토리 사용
+      const tempDir = path.join(os.tmpdir(), 'ai-resumeforge-tmp');
       
       // 임시 디렉토리가 없으면 생성
       if (!fs.existsSync(tempDir)) {
