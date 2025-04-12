@@ -309,13 +309,19 @@ export default function ResumeUploadPage() {
           : `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
         : data.jobTitle;
 
+      // 경력에 따라 S(시니어) 또는 J(주니어) 결정
+      let experienceLevel = "J";
+      if (data.yearsOfExperience === "5-10 years" || data.yearsOfExperience === "10+ years") {
+        experienceLevel = "S";
+      }
+
       // 메타데이터 추가
       formData.append(
         'metadata',
         JSON.stringify({
           jobTitle: fullJobTitle,
           companyName: data.companyName,
-          yearsOfExperience: data.yearsOfExperience,
+          yearsOfExperience: experienceLevel, // 변환된 경력 레벨 ("S" 또는 "J")
           skills: data.skills,
           additionalInfo: data.additionalInfo || '',
           fileName: file.name,

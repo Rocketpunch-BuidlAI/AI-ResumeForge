@@ -15,6 +15,8 @@ type CoverLetterSection = {
   department: string | null;
   position: string | null;
   customPrompt: string;
+  skills: string;
+  experience: string;
 };
 
 export const maxDuration = 300;
@@ -42,6 +44,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log('jsonData', {
+      selfIntroduction: jsonData.selfIntroduction,
+      motivation: jsonData.motivation,
+      relevantExperience: jsonData.relevantExperience,
+      futureAspirations: jsonData.futureAspirations,
+      ...(jsonData.targetCompany || jsonData.department || jsonData.position ? {
+        metadata: {
+          targetCompany: jsonData.targetCompany,
+          department: jsonData.department,
+          position: jsonData.position,
+          skills: jsonData.skills,
+          experience: jsonData.experience,
+        }
+      } : {}),
+      customPrompt: jsonData.customPrompt,
+    });
+
     const response = await axios.post(`${AI_AGENT_URL}/edit`, {
       selfIntroduction: jsonData.selfIntroduction,
       motivation: jsonData.motivation,
@@ -52,6 +71,8 @@ export async function POST(request: NextRequest) {
           targetCompany: jsonData.targetCompany,
           department: jsonData.department,
           position: jsonData.position,
+          skills: jsonData.skills,
+          experience: jsonData.experience,
         }
       } : {}),
       customPrompt: jsonData.customPrompt,
