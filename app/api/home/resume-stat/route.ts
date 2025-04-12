@@ -11,14 +11,14 @@ export async function GET(request: Request) {
 
   const resume = await getResume(Number(userId));
 
-  const uploadedResumeCount = resume.filter(r => !r.aiGenerated).length;
-  const aiGeneratedResumeCount = resume.filter(r => r.aiGenerated).length;
+  const uploadedResumeCount = resume.filter((r) => !r.aiGenerated).length;
+  const aiGeneratedResumeCount = resume.filter((r) => r.aiGenerated).length;
 
   // 사용자의 IP 목록 조회
   const userIPs = await getUserIPs(Number(userId));
-    
+
   // IP ID 목록 추출
-  const ipIds = userIPs.map(ip => ip.id);
+  const ipIds = userIPs.map((ip) => ip.id);
 
   // 모든 IP에 대한 로열티 정보를 한 번에 조회
   const royalties = await getRoyaltiesByIpIds(ipIds);
@@ -30,14 +30,14 @@ export async function GET(request: Request) {
       return dateB - dateA;
     })
     .slice(0, 3)
-    .map(r => ({
+    .map((r) => ({
       amount: Number(r.amount) * 0.001,
       createdAt: r.created_at || new Date().toISOString(),
     }));
 
-  return NextResponse.json({ 
+  return NextResponse.json({
     uploadedResumeCount,
     aiGeneratedResumeCount,
-    recentRewards
+    recentRewards,
   });
 }

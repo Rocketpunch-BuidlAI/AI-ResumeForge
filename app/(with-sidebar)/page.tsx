@@ -31,7 +31,15 @@ import FilePreview from '@/lib/pdf/FilePreview';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import getSession from '@/utils/getSession';
 import { useWallets } from '@privy-io/react-auth';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 // Resume type definitions
 interface ResumeMetadata {
@@ -132,10 +140,10 @@ const mockRewardData = [
 const mockChartData = [
   { month: 'Nov', reward: 0.05 },
   { month: 'Dec', reward: 0.15 },
-  { month: 'Jan', reward: 0.10 },
+  { month: 'Jan', reward: 0.1 },
   { month: 'Feb', reward: 0.08 },
   { month: 'Mar', reward: 0.12 },
-  { month: 'Apr', reward: 0.50 },
+  { month: 'Apr', reward: 0.5 },
 ];
 
 export default function Page() {
@@ -244,20 +252,20 @@ export default function Page() {
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+      <div className="grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
         <WalletInfo address={wallets[0]?.address ?? 'Loading...'} totalReward={totalReward} />
 
-        <Card className="flex flex-col h-full">
+        <Card className="flex h-full flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-xl">
-              <BarChart className="h-5 w-5 text-primary" />
+              <BarChart className="text-primary h-5 w-5" />
               Reward History
             </CardTitle>
             <CardDescription>ETH rewards for your resume uploads</CardDescription>
           </CardHeader>
-          <CardContent className="pt-0 flex-grow">
-            <div className="space-y-5 h-full flex flex-col">
-              <div className="flex items-center justify-between rounded-lg bg-primary/5 p-3 border border-primary/10">
+          <CardContent className="flex-grow pt-0">
+            <div className="flex h-full flex-col space-y-5">
+              <div className="bg-primary/5 border-primary/10 flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium">Total Rewards</h4>
                   <p className="text-muted-foreground text-xs">Lifetime ETH rewards received</p>
@@ -272,65 +280,73 @@ export default function Page() {
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border p-4 flex-grow flex flex-col">
+              <div className="flex flex-grow flex-col rounded-lg border p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <h4 className="text-sm font-medium">Monthly Reward Trend</h4>
                     <p className="text-muted-foreground text-xs">Last 6 months reward history</p>
                   </div>
-                  <div className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1">
-                    <span className="text-xs font-medium text-primary">+20.1%</span>
+                  <div className="bg-primary/10 flex items-center gap-1 rounded-md px-2 py-1">
+                    <span className="text-primary text-xs font-medium">+20.1%</span>
                     <span className="text-muted-foreground text-xs">vs last month</span>
                   </div>
                 </div>
                 <div className="h-[180px] flex-grow">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={mockChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <LineChart
+                      data={mockChartData}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    >
                       <defs>
                         <linearGradient id="rewardGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2} />
                           <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
-                      <XAxis 
-                        dataKey="month" 
-                        axisLine={false} 
-                        tickLine={false} 
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="var(--border)"
+                        strokeOpacity={0.5}
+                      />
+                      <XAxis
+                        dataKey="month"
+                        axisLine={false}
+                        tickLine={false}
                         tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                         dy={5}
                       />
                       <YAxis hide={true} />
-                      <RechartsTooltip 
+                      <RechartsTooltip
                         formatter={(value) => [`${value} ETH`, 'Reward']}
                         labelFormatter={(label) => `${label}`}
                         cursor={{ stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '3 3' }}
-                        contentStyle={{ 
+                        contentStyle={{
                           backgroundColor: 'var(--background)',
                           border: '1px solid var(--border)',
                           borderRadius: '8px',
                           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
                           color: 'var(--foreground)',
                           fontSize: '12px',
-                          padding: '8px 12px'
+                          padding: '8px 12px',
                         }}
                       />
-                      <Line 
-                        type="natural" 
-                        dataKey="reward" 
-                        stroke="var(--primary)" 
+                      <Line
+                        type="natural"
+                        dataKey="reward"
+                        stroke="var(--primary)"
                         strokeWidth={2.5}
-                        dot={{ 
-                          stroke: 'var(--primary)', 
-                          strokeWidth: 2, 
-                          fill: 'var(--background)', 
-                          r: 4 
-                        }}
-                        activeDot={{ 
-                          r: 6, 
-                          stroke: 'var(--primary)', 
+                        dot={{
+                          stroke: 'var(--primary)',
                           strokeWidth: 2,
-                          fill: 'var(--background)'
+                          fill: 'var(--background)',
+                          r: 4,
+                        }}
+                        activeDot={{
+                          r: 6,
+                          stroke: 'var(--primary)',
+                          strokeWidth: 2,
+                          fill: 'var(--background)',
                         }}
                         isAnimationActive={true}
                         animationDuration={1000}
@@ -345,7 +361,7 @@ export default function Page() {
           </CardContent>
         </Card>
 
-        <Card className="flex flex-col h-full">
+        <Card className="flex h-full flex-col">
           <CardHeader className="p-4 pb-3">
             <CardTitle className="flex items-center gap-2 text-xl">
               <FileUp className="h-5 w-5" />
@@ -353,8 +369,8 @@ export default function Page() {
             </CardTitle>
             <CardDescription>Resume statistics and reward history</CardDescription>
           </CardHeader>
-          <CardContent className="p-4 pt-0 flex-grow">
-            <div className="space-y-4 h-full flex flex-col">
+          <CardContent className="flex-grow p-4 pt-0">
+            <div className="flex h-full flex-col space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
                   <p className="text-muted-foreground text-sm">Uploaded Resumes</p>
@@ -366,9 +382,9 @@ export default function Page() {
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2 flex-grow">
+              <div className="mt-4 flex-grow space-y-2">
                 <h4 className="text-sm font-medium">Recent Reward History</h4>
-                <div className="space-y-2 flex-grow">
+                <div className="flex-grow space-y-2">
                   {mockRewardData.map((reward, index) => (
                     <div
                       key={index}

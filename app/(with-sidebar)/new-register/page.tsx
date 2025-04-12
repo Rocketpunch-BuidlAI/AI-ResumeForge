@@ -30,8 +30,8 @@ export default function NewRegisterPage() {
         },
         body: JSON.stringify({
           spgNftContract: formData.spgNftContract,
-          parentIpIds: formData.parentIpIds.split(',').map(id => id.trim()),
-          licenseTermsIds: formData.licenseTermsIds.split(',').map(id => id.trim()),
+          parentIpIds: formData.parentIpIds.split(',').map((id) => id.trim()),
+          licenseTermsIds: formData.licenseTermsIds.split(',').map((id) => id.trim()),
           ipMetadataURI: formData.ipMetadataURI,
         }),
       });
@@ -56,9 +56,7 @@ export default function NewRegisterPage() {
       <Card>
         <CardHeader>
           <CardTitle>Create Derivative IP</CardTitle>
-          <CardDescription>
-            Create a derivative IP asset from an existing IP asset.
-          </CardDescription>
+          <CardDescription>Create a derivative IP asset from an existing IP asset.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -107,9 +105,7 @@ export default function NewRegisterPage() {
             </div>
 
             <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Create Derivative IP
             </Button>
           </form>
@@ -117,7 +113,7 @@ export default function NewRegisterPage() {
           {response && (
             <div className="mt-6 space-y-2">
               <h3 className="text-lg font-semibold">Result</h3>
-              <pre className="bg-muted p-4 rounded-md overflow-auto">
+              <pre className="bg-muted overflow-auto rounded-md p-4">
                 {JSON.stringify(response, null, 2)}
               </pre>
             </div>

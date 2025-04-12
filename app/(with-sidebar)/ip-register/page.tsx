@@ -122,8 +122,8 @@ export default function IpRegisterPage() {
               <Switch
                 id="withoutLicense"
                 checked={formData.withoutLicense}
-                onCheckedChange={(checked) => 
-                  setFormData(prev => ({ ...prev, withoutLicense: checked }))
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({ ...prev, withoutLicense: checked }))
                 }
               />
               <Label htmlFor="withoutLicense">

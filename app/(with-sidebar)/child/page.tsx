@@ -17,7 +17,7 @@ interface LicenseInfo {
 
 export default function DerivativePage() {
   const [licenseInfos, setLicenseInfos] = useState<LicenseInfo[]>([
-    { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' }
+    { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' },
   ]);
   const [formData, setFormData] = useState({
     email: '',
@@ -80,7 +80,10 @@ export default function DerivativePage() {
   };
 
   const addLicenseInfo = () => {
-    setLicenseInfos((prev) => [...prev, { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' }]);
+    setLicenseInfos((prev) => [
+      ...prev,
+      { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' },
+    ]);
   };
 
   const removeLicenseInfo = (index: number) => {
@@ -99,8 +102,8 @@ export default function DerivativePage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {licenseInfos.map((licenseInfo, index) => (
-              <div key={index} className="space-y-4 border rounded-lg p-4">
-                <div className="flex justify-between items-center">
+              <div key={index} className="space-y-4 rounded-lg border p-4">
+                <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">License Info {index + 1}</h3>
                   {index > 0 && (
                     <Button
@@ -118,7 +121,9 @@ export default function DerivativePage() {
                   <Input
                     id={`licenseTermsId-${index}`}
                     value={licenseInfo.licenseTermsId}
-                    onChange={(e) => handleLicenseInfoChange(index, 'licenseTermsId', e.target.value)}
+                    onChange={(e) =>
+                      handleLicenseInfoChange(index, 'licenseTermsId', e.target.value)
+                    }
                     placeholder="1300"
                     required
                   />
@@ -139,7 +144,9 @@ export default function DerivativePage() {
                     id={`maxMintingFee-${index}`}
                     type="number"
                     value={licenseInfo.maxMintingFee}
-                    onChange={(e) => handleLicenseInfoChange(index, 'maxMintingFee', e.target.value)}
+                    onChange={(e) =>
+                      handleLicenseInfoChange(index, 'maxMintingFee', e.target.value)
+                    }
                     placeholder="0"
                     required
                   />
@@ -150,13 +157,8 @@ export default function DerivativePage() {
               </div>
             ))}
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addLicenseInfo}
-              className="w-full"
-            >
-              <Plus className="h-4 w-4 mr-2" />
+            <Button type="button" variant="outline" onClick={addLicenseInfo} className="w-full">
+              <Plus className="mr-2 h-4 w-4" />
               Add License Info
             </Button>
 

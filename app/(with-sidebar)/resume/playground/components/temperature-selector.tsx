@@ -9,10 +9,18 @@ import { Slider } from '@/components/ui/slider';
 
 interface TemperatureSelectorProps {
   defaultValue: SliderProps['defaultValue'];
+  onValueChange?: (value: number[]) => void;
 }
 
-export function TemperatureSelector({ defaultValue }: TemperatureSelectorProps) {
+export function TemperatureSelector({ defaultValue, onValueChange }: TemperatureSelectorProps) {
   const [value, setValue] = React.useState(defaultValue);
+
+  const handleValueChange = (newValue: number[]) => {
+    setValue(newValue);
+    if (onValueChange) {
+      onValueChange(newValue);
+    }
+  };
 
   return (
     <div className="grid gap-2 pt-2">
@@ -30,7 +38,7 @@ export function TemperatureSelector({ defaultValue }: TemperatureSelectorProps) 
               max={1}
               defaultValue={value}
               step={0.1}
-              onValueChange={setValue}
+              onValueChange={handleValueChange}
               className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
               aria-label="Temperature"
             />

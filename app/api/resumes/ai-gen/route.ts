@@ -11,13 +11,15 @@ export async function GET(request: Request) {
 
   const resumes = await getResume(Number(userId));
 
-  const aiGeneratedResumes = resumes.filter(r => r.aiGenerated).map(r => {
-    return {
-      id: r.id,
-      jobTitle: r.jobTitle,
-      createdAt: r.created_at,
-    }
-  });
+  const aiGeneratedResumes = resumes
+    .filter((r) => r.aiGenerated)
+    .map((r) => {
+      return {
+        id: r.id,
+        jobTitle: r.jobTitle,
+        createdAt: r.created_at,
+      };
+    });
 
   return NextResponse.json(aiGeneratedResumes);
 }

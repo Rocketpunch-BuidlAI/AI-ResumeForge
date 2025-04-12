@@ -141,8 +141,8 @@ export async function POST(request: Request) {
       await saveIpAsset(
         Number(userId),
         Number(response.tokenId),
-        response.licenseTermsIds && response.licenseTermsIds.length > 0 
-          ? Number(response.licenseTermsIds[0]) 
+        response.licenseTermsIds && response.licenseTermsIds.length > 0
+          ? Number(response.licenseTermsIds[0])
           : 0,
         savedCoverletter.id.toString(),
         response.ipId || '',

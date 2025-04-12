@@ -4,6 +4,6 @@ const nextConfig = {
     // 빌드 시 타입 체크 무시
     ignoreBuildErrors: true,
   },
-}
+};
 
-module.exports = nextConfig 
+module.exports = nextConfig;

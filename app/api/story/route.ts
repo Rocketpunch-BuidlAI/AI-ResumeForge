@@ -73,8 +73,8 @@ export async function POST(request: Request) {
         await saveIpAsset(
           userId,
           Number(response.tokenId),
-          response.licenseTermsIds && response.licenseTermsIds.length > 0 
-            ? Number(response.licenseTermsIds[0]) 
+          response.licenseTermsIds && response.licenseTermsIds.length > 0
+            ? Number(response.licenseTermsIds[0])
             : 0,
           encryptedCID, // Save encrypted CID
           response.ipId || '',
@@ -103,9 +103,10 @@ export async function POST(request: Request) {
         ipId: response.ipId,
         tokenId: response.tokenId ? response.tokenId.toString() : undefined,
         txHash: response.txHash,
-        licenseTermsIds: !withoutLicense && response.licenseTermsIds
-          ? response.licenseTermsIds.map((id: bigint) => id.toString())
-          : undefined,
+        licenseTermsIds:
+          !withoutLicense && response.licenseTermsIds
+            ? response.licenseTermsIds.map((id: bigint) => id.toString())
+            : undefined,
       };
 
       return NextResponse.json(clientResponse);

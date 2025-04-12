@@ -1,5 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, Copy, ExternalLink, Clock, CheckCircle2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import {
+  Wallet,
+  Copy,
+  ExternalLink,
+  Clock,
+  CheckCircle2,
+  ArrowUpRight,
+  ArrowDownLeft,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -41,11 +49,11 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between gap-2 text-xl">
           <div className="flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-primary" />
+            <Wallet className="text-primary h-5 w-5" />
             Wallet Info
           </div>
           <Badge variant="outline" className="px-2 py-0.5 text-xs">
-            <span className="size-2 rounded-full bg-green-500 mr-1"></span>Connected
+            <span className="mr-1 size-2 rounded-full bg-green-500"></span>Connected
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -60,7 +68,11 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyAddress}>
-                        {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copied ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>{copied ? 'Copied!' : 'Copy Address'}</TooltipContent>
@@ -74,7 +86,9 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
-                        onClick={() => window.open(`https://aeneid.storyscan.io/address/${address}`, '_blank')}
+                        onClick={() =>
+                          window.open(`https://aeneid.storyscan.io/address/${address}`, '_blank')
+                        }
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </Button>
@@ -85,8 +99,8 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
               </div>
             </div>
           </div>
-          
-          <div className="flex justify-between items-center">
+
+          <div className="flex items-center justify-between">
             <div>
               <h3 className="text-muted-foreground text-xs font-medium">Total Reward Amount</h3>
               <p className="text-2xl font-bold">{totalReward} ETH</p>
@@ -109,7 +123,7 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
                 <p className="text-muted-foreground text-xs">Standard</p>
                 <p className="text-sm font-medium">{mockGasInfo.standard} Gwei</p>
               </div>
-              <div className="rounded-md border bg-primary/5 p-2 text-center">
+              <div className="bg-primary/5 rounded-md border p-2 text-center">
                 <p className="text-muted-foreground text-xs">Fast</p>
                 <p className="text-sm font-medium">{mockGasInfo.fast} Gwei</p>
               </div>
@@ -124,12 +138,17 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
             <h3 className="text-muted-foreground text-xs font-medium">Recent Transactions</h3>
             <div className="space-y-2">
               {mockTransactions.map((tx, index) => (
-                <div key={index} className="flex items-center justify-between rounded-md border p-2">
+                <div
+                  key={index}
+                  className="flex items-center justify-between rounded-md border p-2"
+                >
                   <div className="flex items-center gap-2">
-                    <div className={cn(
-                      "flex h-6 w-6 items-center justify-center rounded-full",
-                      tx.type === 'in' ? "bg-green-100" : "bg-orange-100"
-                    )}>
+                    <div
+                      className={cn(
+                        'flex h-6 w-6 items-center justify-center rounded-full',
+                        tx.type === 'in' ? 'bg-green-100' : 'bg-orange-100'
+                      )}
+                    >
                       {tx.type === 'in' ? (
                         <ArrowDownLeft className="h-3.5 w-3.5 text-green-600" />
                       ) : (
@@ -145,7 +164,8 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-medium">
-                      {tx.type === 'in' ? '+' : '-'}{tx.amount} ETH
+                      {tx.type === 'in' ? '+' : '-'}
+                      {tx.amount} ETH
                     </p>
                     <p className="text-muted-foreground text-xs">
                       {tx.status === 'completed' ? (
@@ -163,7 +183,7 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
               ))}
             </div>
           </div>
-          
+
           <Button variant="outline" size="sm" className="w-full">
             <ExternalLink className="mr-1 h-3.5 w-3.5" />
             View All Transactions

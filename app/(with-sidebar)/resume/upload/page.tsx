@@ -310,9 +310,9 @@ export default function ResumeUploadPage() {
         : data.jobTitle;
 
       // 경력에 따라 S(시니어) 또는 J(주니어) 결정
-      let experienceLevel = "J";
-      if (data.yearsOfExperience === "5-10 years" || data.yearsOfExperience === "10+ years") {
-        experienceLevel = "S";
+      let experienceLevel = 'J';
+      if (data.yearsOfExperience === '5-10 years' || data.yearsOfExperience === '10+ years') {
+        experienceLevel = 'S';
       }
 
       // 메타데이터 추가
