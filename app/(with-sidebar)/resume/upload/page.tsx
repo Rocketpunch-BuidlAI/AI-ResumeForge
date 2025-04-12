@@ -145,6 +145,8 @@ export default function ResumeUploadPage() {
   const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
   const [openJobTitle, setOpenJobTitle] = useState(false);
 
+  const { wallets } = useWallets();
+
   // Form setup with react-hook-form and zod validation
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -298,8 +300,6 @@ export default function ResumeUploadPage() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('userId', session?.user?.id || '');
-
-      // TODO : wallet address 넘기기
       formData.append('walletAddress', wallets[0]?.address || '');
 
       // 메타데이터에 선택된 직업 정보 추가
