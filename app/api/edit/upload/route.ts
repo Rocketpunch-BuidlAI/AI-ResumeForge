@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getIpAssetByIpId, saveCoverletter, saveCoverletterWithReferences, saveIpAsset, saveIpReference, saveRoyalty } from '@/db';
+import { getIpAssetByCid, getIpAssetByIpId, saveCoverletter, saveCoverletterWithReferences, saveIpAsset, saveIpReference, saveRoyalty } from '@/db';
 import { AI_AGENT_URL, client, publicClient, stroyAccount, walletClient } from '@/utils/config';
 import { put } from '@vercel/blob';
 import axios from 'axios';
@@ -12,13 +12,12 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const text = formData.get('text') as string;
-    // TODO: 동준님 이거 해주세요. walletAddress랑 userId 보내주세요.
     const walletAddress = formData.get('walletAddress') as string;
     const userId = formData.get('userId') as string;
     const referencesJson = formData.get('references') as string;
     const metadata = formData.get('metadata') as string;
 
-    if (!file || !text || !referencesJson || !metadata) {
+    if (!file || !text || !walletAddress || !userId || !referencesJson || !metadata) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -27,8 +26,6 @@ export async function POST(request: Request) {
 
     // references JSON 파싱
     const references = JSON.parse(referencesJson);
-
-    // TODO: Story IP 등록
 
     console.log('Uploading file to blob storage...');
     const blob = await put(file.name, file, {
@@ -77,7 +74,7 @@ export async function POST(request: Request) {
     // Get all IP asset information for references
     const ipAssets = [];
     for (const ref of references) {
-      const ipAsset = await getIpAssetByIpId(ref.id);
+      const ipAsset = await getIpAssetByCid(ref.id);
       if (!ipAsset || !ipAsset[0]) {
         console.error(`IP asset not found for ID: ${ref.id}`);
         continue;
@@ -137,7 +134,7 @@ export async function POST(request: Request) {
       spgNftContract: process.env.STORY_SPG_NFT_CONTRACT as `0x${string}`,
       licenseTokenIds: licenseTokenIds,
       ipMetadata: {
-        ipMetadataURI: aiAgentResponse.cid
+        ipMetadataURI: savedCoverletterId.toString()
       },
       maxRts: 100_000_000,
       txOptions: { waitForTransaction: true },
@@ -149,7 +146,7 @@ export async function POST(request: Request) {
       Number(userId),
       Number(child.tokenId),
       Number(ipAssets[0].licenseTermId),
-      aiAgentResponse.cid,
+      savedCoverletterId.toString(),
       child.ipId || '',
       child.txHash || ''
     );
