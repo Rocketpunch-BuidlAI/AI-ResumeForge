@@ -104,6 +104,8 @@ export async function GET(request: Request) {
       }
     }
 
+    console.log('completeDailyRoyalties', completeDailyRoyalties);
+
     return NextResponse.json({
       totalRewards: totalRewards,
       dailyRoyalties: completeDailyRoyalties,
