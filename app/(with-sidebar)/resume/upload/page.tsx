@@ -22,6 +22,7 @@ import {
   Briefcase,
   Clock,
   Tag,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +52,69 @@ import {
 import FilePreview from '@/lib/pdf/FilePreview';
 import Link from 'next/link';
 import getSession from '@/utils/getSession';
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+// Job role hierarchical data
+type JobRolesData = {
+  [category: string]: {
+    [subcategory: string]: string[];
+  };
+};
+
+const jobRolesData: JobRolesData = {
+  'Technical Roles': {
+    'Web/ Software Dev': [
+      'Backend Engineer',
+      'Frontend Developer',
+      'Full-Stack Developer',
+      'Web Developer',
+    ],
+    'Blockchain / Web3': ['Smart Contract', 'Protocol Engineer'],
+    'Data/ AI': ['Machine Learning', 'AI'],
+    'Security': ['Security Engineer'],
+  },
+  'Business Roles': {
+    'Marketing': ['Marketer', 'Brand Strategist', 'Content Creator'],
+    'Product/Strategy': ['Product Manager', 'Business Analyst'],
+    'Human Resources': ['People Operations', 'HR Manager', 'Talent Acquisition'],
+    'Customer / Operations': [
+      'Customer Success Manager',
+      'Customer Support Specialist',
+      'Operations Manager',
+    ],
+  },
+  'Creative Roles': {
+    'Design': [
+      'UI/UX Designer',
+      'Visual Designer',
+      'Illustrator',
+      'Video Editor',
+      '3D Artist',
+      'AI Artist',
+      'Copywriter',
+      'Sound Designer',
+      'VFX Artist',
+    ],
+    'Contents': ['Songwriter', 'Photographer'],
+  },
+  'Professional Services': {
+    '': [
+      'Consultant',
+      'Auditor',
+      'Lawyer/ Legal Counsel',
+      'Pharmacist',
+      'Clinical Researcher',
+      'Counselor',
+    ],
+  },
+};
 
 // Form validation schema
 const formSchema = z.object({
@@ -73,6 +137,12 @@ export default function ResumeUploadPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [currentStep, setCurrentStep] = useState<'upload' | 'metadata' | 'complete'>('upload');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string>('');
+  const [openJobCategory, setOpenJobCategory] = useState(false);
+  const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
+  const [openJobTitle, setOpenJobTitle] = useState(false);
 
   console.log(progressValue);
 
@@ -219,7 +289,7 @@ export default function ResumeUploadPage() {
           }
           return prev + 1;
         });
-      }, 70);
+      }, 20);
 
       const session = await getSession();
 
@@ -230,11 +300,18 @@ export default function ResumeUploadPage() {
       formData.append('file', file);
       formData.append('userId', session?.user?.id || '');
 
+      // 메타데이터에 선택된 직업 정보 추가
+      const fullJobTitle = selectedJobTitle ? 
+        (selectedCategory === 'Professional Services' ? 
+          selectedJobTitle : 
+          `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
+        ) : data.jobTitle;
+
       // 메타데이터 추가
       formData.append(
         'metadata',
         JSON.stringify({
-          jobTitle: data.jobTitle,
+          jobTitle: fullJobTitle,
           companyName: data.companyName,
           yearsOfExperience: data.yearsOfExperience,
           skills: data.skills,
@@ -243,8 +320,19 @@ export default function ResumeUploadPage() {
           fileSize: file.size,
           fileType: file.type,
           uploadDate: new Date().toISOString(),
+          // 계층적 직업 정보 추가
+          jobCategory: selectedCategory || '',
+          jobSubcategory: selectedSubcategory || '',
+          jobSpecific: selectedJobTitle || '',
         })
       );
+
+      console.log('Submitting with job info:', {
+        jobTitle: fullJobTitle,
+        category: selectedCategory,
+        subcategory: selectedSubcategory,
+        specific: selectedJobTitle,
+      });
 
       // API 호출하여 파일 업로드
       const uploadResponse = await fetch('/api/resumes', {
@@ -452,16 +540,157 @@ export default function ResumeUploadPage() {
                     <FormField
                       control={form.control}
                       name="jobTitle"
-                      render={({ field }) => (
-                        <FormItem>
+                      render={() => (
+                        <FormItem className="space-y-4">
                           <FormLabel className="flex items-center gap-2">
                             <Briefcase className="text-muted-foreground h-4 w-4" />
                             Job Title
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Frontend Developer" {...field} />
+                            <div className="flex flex-col space-y-4">
+                              {/* 직업 카테고리 선택 */}
+                              <Popover open={openJobCategory} onOpenChange={setOpenJobCategory}>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openJobCategory}
+                                    className="w-full justify-between"
+                                  >
+                                    {selectedCategory || "Select job category..."}
+                                    <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedCategory ? 'text-primary' : ''}`} />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                  <Command className="w-full">
+                                    <CommandList className="w-full">
+                                      <CommandInput placeholder="Search job category..." />
+                                      <CommandEmpty>No category found.</CommandEmpty>
+                                      {Object.keys(jobRolesData).map((category) => (
+                                        <CommandItem
+                                          key={category}
+                                          value={category}
+                                          onSelect={() => handleCategoryChange(category)}
+                                          className="cursor-pointer"
+                                        >
+                                          {category}
+                                          {selectedCategory === category && (
+                                            <Check className="ml-auto h-4 w-4 text-primary" />
+                                          )}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+
+                              {/* 직업 서브카테고리 선택 */}
+                              {selectedCategory && selectedCategory !== 'Professional Services' && (
+                                <Popover open={openJobSubcategory} onOpenChange={setOpenJobSubcategory}>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      aria-expanded={openJobSubcategory}
+                                      className="w-full justify-between"
+                                    >
+                                      {selectedSubcategory || "Select subcategory..."}
+                                      <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedSubcategory ? 'text-primary' : ''}`} />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                    <Command className="w-full">
+                                      <CommandList className="w-full">
+                                        <CommandInput placeholder="Search subcategory..." />
+                                        <CommandEmpty>No subcategory found.</CommandEmpty>
+                                        {selectedCategory && 
+                                          Object.keys(jobRolesData[selectedCategory as keyof typeof jobRolesData]).map((subcategory) => (
+                                            <CommandItem
+                                              key={subcategory}
+                                              value={subcategory}
+                                              onSelect={() => handleSubcategoryChange(subcategory)}
+                                              className="cursor-pointer"
+                                            >
+                                              {subcategory}
+                                              {selectedSubcategory === subcategory && (
+                                                <Check className="ml-auto h-4 w-4 text-primary" />
+                                              )}
+                                            </CommandItem>
+                                          ))}
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+
+                              {/* 직업 타이틀 선택 */}
+                              {((selectedCategory === 'Professional Services') || 
+                                (selectedCategory && selectedSubcategory)) && (
+                                <Popover open={openJobTitle} onOpenChange={setOpenJobTitle}>
+                                  <PopoverTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      aria-expanded={openJobTitle}
+                                      className="w-full justify-between"
+                                    >
+                                      {selectedJobTitle || "Select job title..."}
+                                      <ChevronRight className={`ml-2 h-4 w-4 shrink-0 opacity-50 ${selectedJobTitle ? 'text-primary' : ''}`} />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)', minWidth: '100%' }}>
+                                    <Command className="w-full">
+                                      <CommandList className="w-full">
+                                        <CommandInput placeholder="Search job title..." />
+                                        <CommandEmpty>No job title found.</CommandEmpty>
+                                        {selectedCategory === 'Professional Services' ? (
+                                          jobRolesData['Professional Services'][''].map((jobTitle) => (
+                                            <CommandItem
+                                              key={jobTitle}
+                                              value={jobTitle}
+                                              onSelect={() => handleJobTitleChange(jobTitle)}
+                                              className="cursor-pointer"
+                                            >
+                                              {jobTitle}
+                                              {selectedJobTitle === jobTitle && (
+                                                <Check className="ml-auto h-4 w-4 text-primary" />
+                                              )}
+                                            </CommandItem>
+                                          ))
+                                        ) : (
+                                          selectedCategory && selectedSubcategory &&
+                                          jobRolesData[selectedCategory as keyof typeof jobRolesData][selectedSubcategory]?.map((jobTitle) => (
+                                            <CommandItem
+                                              key={jobTitle}
+                                              value={jobTitle}
+                                              onSelect={() => handleJobTitleChange(jobTitle)}
+                                              className="cursor-pointer"
+                                            >
+                                              {jobTitle}
+                                              {selectedJobTitle === jobTitle && (
+                                                <Check className="ml-auto h-4 w-4 text-primary" />
+                                              )}
+                                            </CommandItem>
+                                          ))
+                                        )}
+                                      </CommandList>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+
+                              {/* 선택된 직업 표시 */}
+                              {selectedJobTitle && (
+                                <div className="mt-2 flex items-center">
+                                  <Badge variant="outline" className="bg-primary/10 text-primary">
+                                    {selectedJobTitle}
+                                    <Check className="ml-1 h-3 w-3" />
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
                           </FormControl>
-                          <FormDescription>The position you&apos;re applying for</FormDescription>
+                          {/* <FormDescription>Select the job posi&apos;re applying for</FormDescription> */}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -649,9 +878,7 @@ export default function ResumeUploadPage() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setFile(null);
-                    setCurrentStep('upload');
-                    form.reset();
+                    window.location.reload();
                   }}
                   className="cursor-pointer"
                 >
@@ -710,6 +937,35 @@ export default function ResumeUploadPage() {
       default:
         return 'Step 1/3';
     }
+  };
+
+  // 직업 카테고리 변경 시 서브카테고리와 직업 초기화
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedSubcategory('');
+    setSelectedJobTitle('');
+    setOpenJobCategory(false);
+
+    // 폼에 직업 타이틀 값 설정
+    if (category === 'Professional Services') {
+      // Professional Services는 서브카테고리가 없으므로 바로 직업 선택 가능
+      setOpenJobTitle(true);
+    }
+  };
+
+  // 서브카테고리 변경 시 직업 초기화
+  const handleSubcategoryChange = (subcategory: string) => {
+    setSelectedSubcategory(subcategory);
+    setSelectedJobTitle('');
+    setOpenJobSubcategory(false);
+    setOpenJobTitle(true);
+  };
+
+  // 직업 선택 시
+  const handleJobTitleChange = (jobTitle: string) => {
+    setSelectedJobTitle(jobTitle);
+    setOpenJobTitle(false);
+    form.setValue('jobTitle', jobTitle, { shouldValidate: true });
   };
 
   return (

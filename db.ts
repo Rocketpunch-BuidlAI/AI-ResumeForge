@@ -24,6 +24,9 @@ interface ResumeMetadata {
   fileSize?: number;
   fileType?: string;
   uploadDate?: string;
+  jobCategory?: string;
+  jobSubcategory?: string;
+  jobSpecific?: string;
 }
 
 // Table schema definitions
@@ -47,6 +50,9 @@ const coverletters = pgTable('Coverletter', {
   fileName: varchar('file_name', { length: 255 }),
   fileSize: bigint('file_size', { mode: 'number' }),
   fileType: varchar('file_type', { length: 100 }),
+  jobCategory: varchar('job_category', { length: 255 }),
+  jobSubcategory: varchar('job_subcategory', { length: 255 }),
+  jobSpecific: varchar('job_specific', { length: 255 }),
   metadata: json('metadata'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
@@ -100,11 +106,22 @@ export async function saveCoverletter(
     }
   }
 
+  // 계층적 직업 정보 로깅
+  console.log('Saving job info to database:', {
+    jobTitle: metadataObj.jobTitle || null,
+    jobCategory: metadataObj.jobCategory || null,
+    jobSubcategory: metadataObj.jobSubcategory || null,
+    jobSpecific: metadataObj.jobSpecific || null,
+  });
+
   return await db.insert(coverletters).values({
     userId,
     cid,
     filePath,
     jobTitle: metadataObj.jobTitle || null,
+    jobCategory: metadataObj.jobCategory || null,
+    jobSubcategory: metadataObj.jobSubcategory || null,
+    jobSpecific: metadataObj.jobSpecific || null,
     companyName: metadataObj.companyName || null,
     yearsOfExperience: metadataObj.yearsOfExperience || null,
     skills: metadataObj.skills || null,
@@ -210,6 +227,9 @@ async function ensureTablesExist() {
         file_name VARCHAR(255),
         file_size BIGINT,
         file_type VARCHAR(100),
+        job_category VARCHAR(255),
+        job_subcategory VARCHAR(255),
+        job_specific VARCHAR(255),
         metadata JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -226,6 +246,9 @@ async function ensureTablesExist() {
       'file_name',
       'file_size',
       'file_type',
+      'job_category',
+      'job_subcategory',
+      'job_specific',
       'metadata',
     ];
 
@@ -251,6 +274,8 @@ async function ensureTablesExist() {
         await client`
           ALTER TABLE "Coverletter"
           ADD COLUMN ${client.unsafe(column)} ${client.unsafe(columnType)};`;
+        
+        console.log(`Added column ${column} to Coverletter table`);
       }
     }
   }
