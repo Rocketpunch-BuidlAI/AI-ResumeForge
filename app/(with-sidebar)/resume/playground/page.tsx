@@ -1,9 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { RotateCcw, BarChart, ChevronRight, FileText, Briefcase, Check, X } from 'lucide-react';
+import { RotateCcw, BarChart, ChevronRight, FileText, Briefcase, Check, X, Tag, Clock, Building2, Users, FileEdit } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -68,6 +69,8 @@ const formSchema = z.object({
   department: z.string().optional(),
   position: z.string().optional(),
   customPrompt: z.string().optional(),
+  skills: z.string().optional(),
+  yearsOfExperience: z.string().optional(),
 });
 
 // Define type for form values
@@ -171,6 +174,8 @@ export default function PlaygroundPage() {
       department: '',
       position: '',
       customPrompt: '',
+      skills: '',
+      yearsOfExperience: '',
     },
   });
 
@@ -216,6 +221,12 @@ export default function PlaygroundPage() {
     setResultText('');
     setParsedResult(null);
     
+    // 경력에 따라 S(시니어) 또는 J(주니어) 결정
+    let experienceLevel = "J";
+    if (values.yearsOfExperience === "5-10 years" || values.yearsOfExperience === "10+ years") {
+      experienceLevel = "S";
+    }
+    
     try {
       const response = await fetch('/api/edit', {
         method: 'POST',
@@ -231,6 +242,8 @@ export default function PlaygroundPage() {
           department: values.department || null,
           position: values.jobTitle || null,
           customPrompt: values.customPrompt || '',
+          skills: values.skills || '',
+          experience: experienceLevel,
         }),
       });
       
@@ -303,10 +316,23 @@ export default function PlaygroundPage() {
       formattedText = formattedText.replace(/\[specific department\]/g, department);
     }
     
-    // Split by paragraphs and map to styled components
+    // Function to convert markdown-style bold (**text**) to HTML strong tags
+    const convertBoldText = (text: string) => {
+      // Use a regex to find all occurrences of **text**
+      return text.split(/(\*\*[^*]+\*\*)/).map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          // Remove the ** markers and wrap the content in <strong> tag
+          const boldContent = part.slice(2, -2);
+          return <strong key={i}>{boldContent}</strong>;
+        }
+        return part;
+      });
+    };
+    
+    // Split by paragraphs and map to styled components with bold text handling
     return formattedText.split('\n\n').map((paragraph, index) => (
       <p key={index} className="mb-4">
-        {paragraph}
+        {convertBoldText(paragraph)}
       </p>
     ));
   };
@@ -770,6 +796,76 @@ export default function PlaygroundPage() {
 
                                     <FormField
                                       control={form.control}
+                                      name="skills"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'skills'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center gap-2">
+                                            <Tag className="text-muted-foreground h-4 w-4" />
+                                            Skills & Keywords
+                                          </FormLabel>
+                                          <FormControl>
+                                            <Input
+                                              placeholder="e.g. React, TypeScript, UI Design, Project Management"
+                                              {...field}
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="yearsOfExperience"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'yearsOfExperience'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center gap-2">
+                                            <Clock className="text-muted-foreground h-4 w-4" />
+                                            Years of Experience
+                                          </FormLabel>
+                                          <div>
+                                            <div className="mt-1 flex flex-wrap gap-2">
+                                              {['Less than 1 year', '1-2 years', '3-5 years', '5-10 years', '10+ years'].map((option) => (
+                                                <Badge
+                                                  key={option}
+                                                  variant={field.value === option ? 'default' : 'outline'}
+                                                  className={cn(
+                                                    'hover:bg-primary/20 cursor-pointer transition-colors',
+                                                    field.value === option
+                                                      ? 'bg-primary text-primary-foreground'
+                                                      : ''
+                                                  )}
+                                                  onClick={() =>
+                                                    form.setValue('yearsOfExperience', option, {
+                                                      shouldValidate: true,
+                                                    })
+                                                  }
+                                                >
+                                                  {option}
+                                                  {field.value === option && <Check className="ml-1 h-3 w-3" />}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                            {form.formState.errors.yearsOfExperience && (
+                                              <p className="text-destructive mt-2 text-sm">
+                                                {form.formState.errors.yearsOfExperience.message}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
                                       name="company"
                                       render={({
                                         field,
@@ -777,7 +873,10 @@ export default function PlaygroundPage() {
                                         field: ControllerRenderProps<FormValues, 'company'>;
                                       }) => (
                                         <FormItem>
-                                          <FormLabel>Target Company</FormLabel>
+                                          <FormLabel className="flex items-center gap-2">
+                                            <Building2 className="text-muted-foreground h-4 w-4" />
+                                            Target Company
+                                          </FormLabel>
                                           <FormControl>
                                             <Input placeholder="Company name" {...field} />
                                           </FormControl>
@@ -795,7 +894,10 @@ export default function PlaygroundPage() {
                                         field: ControllerRenderProps<FormValues, 'department'>;
                                       }) => (
                                         <FormItem>
-                                          <FormLabel>Department</FormLabel>
+                                          <FormLabel className="flex items-center gap-2">
+                                            <Users className="text-muted-foreground h-4 w-4" />
+                                            Department
+                                          </FormLabel>
                                           <FormControl>
                                             <Input placeholder="Department" {...field} />
                                           </FormControl>
@@ -813,7 +915,10 @@ export default function PlaygroundPage() {
                                         field: ControllerRenderProps<FormValues, 'customPrompt'>;
                                       }) => (
                                         <FormItem>
-                                          <FormLabel>Custom Instructions (Optional)</FormLabel>
+                                          <FormLabel className="flex items-center gap-2">
+                                            <FileEdit className="text-muted-foreground h-4 w-4" />
+                                            Custom Instructions
+                                          </FormLabel>
                                           <FormControl>
                                             <Textarea
                                               placeholder="Any specific instructions for generating your resume"
@@ -846,7 +951,7 @@ export default function PlaygroundPage() {
                               {formatCoverLetter(parsedResult.text)}
                             </div>
                             
-                            {parsedResult.sources && parsedResult.sources.length > 0 && (
+                            {parsedResult.sources && parsedResult.sources.length > 0 && parsedResult?.sources?.[0]?.id !== 'unknown' && (
                               <div className="mt-8 pt-4 border-t border-border">
                                 <h4 className="text-sm font-semibold mb-2">참고 소스</h4>
                                 <div className="text-sm text-muted-foreground">
