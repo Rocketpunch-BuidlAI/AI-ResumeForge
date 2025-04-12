@@ -130,12 +130,6 @@ const mockAIGeneratedResumes: AIGeneratedResume[] = [
   },
 ];
 
-const mockRewardData = [
-  { date: '2024-04-01', amount: 0.5 },
-  { date: '2024-04-05', amount: 0.3 },
-  { date: '2024-04-10', amount: 0.2 },
-];
-
 export default function Page() {
   const [selectedResume, setSelectedResume] = useState<UploadedResume | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -145,6 +139,11 @@ export default function Page() {
   const [totalReward, setTotalReward] = useState<number>(0);
   const [chartData, setChartData] = useState([]);
   const [rewardChangePercent, setRewardChangePercent] = useState<number>(0);
+  const [uploadedResumeCount, setUploadedResumeCount] = useState<number>(0);
+  const [aiGeneratedResumeCount, setAiGeneratedResumeCount] = useState<number>(0);
+  const [recentRewards, setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
+    []
+  );
 
   const { wallets } = useWallets();
 
@@ -204,6 +203,9 @@ export default function Page() {
 
         setUploadedResumes(transformedResumes);
 
+        const resumeStat = await fetch(`/api/home/resume-stat?userId=${userId}`);
+        const resumeStatData = await resumeStat.json();
+
         const rewardHistories = await fetch(`/api/home/rewards?userId=${userId}`);
         const rewardHistoriesData = await rewardHistories.json();
 
@@ -217,6 +219,9 @@ export default function Page() {
         );
         setTotalReward(rewardHistoriesData.totalRewards);
         setRewardChangePercent(rewardHistoriesData.rewardChangePercent);
+        setUploadedResumeCount(resumeStatData.uploadedResumeCount);
+        setAiGeneratedResumeCount(resumeStatData.aiGeneratedResumeCount);
+        setRecentRewards(resumeStatData.recentRewards);
       } catch (err) {
         console.error('Error fetching resumes:', err);
         setError('Failed to load resumes. Using fallback data.');
@@ -379,18 +384,18 @@ export default function Page() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
                   <p className="text-muted-foreground text-sm">Uploaded Resumes</p>
-                  <p className="text-3xl font-bold">{resumes.length}</p>
+                  <p className="text-3xl font-bold">{uploadedResumeCount}</p>
                 </div>
                 <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
                   <p className="text-muted-foreground text-sm">AI Generated Resumes</p>
-                  <p className="text-3xl font-bold">{mockAIGeneratedResumes.length}</p>
+                  <p className="text-3xl font-bold">{aiGeneratedResumeCount}</p>
                 </div>
               </div>
 
               <div className="mt-4 flex-grow space-y-2">
                 <h4 className="text-sm font-medium">Recent Reward History</h4>
                 <div className="flex-grow space-y-2">
-                  {mockRewardData.map((reward, index) => (
+                  {recentRewards.map((reward, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between rounded-lg border p-2"
@@ -401,7 +406,7 @@ export default function Page() {
                         </div>
                         <div>
                           <p className="text-sm font-medium">
-                            {new Date(reward.date).toLocaleDateString('en-US', {
+                            {new Date(reward.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'long',
                               day: 'numeric',

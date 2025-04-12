@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     .slice(0, 3)
     .map(r => ({
       amount: Number(r.amount) * 0.001,
-      createdAt: r.created_at || new Date().toISOString(),
+      createdAt: r.created_at ? new Date(r.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     }));
 
   return NextResponse.json({ 
