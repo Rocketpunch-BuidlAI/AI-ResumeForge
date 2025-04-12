@@ -60,23 +60,23 @@ type FormValues = z.infer<typeof formSchema>;
 
 // 참고 이력서 데이터
 const referencedResumes = [
-  { 
-    name: "Software Developer Resume", 
+  {
+    name: 'Software Developer Resume',
     reference: 65,
-    icon: "💻",
-    description: "Resume focused on technical stack and development experience."
+    icon: '💻',
+    description: 'Resume focused on technical stack and development experience.',
   },
-  { 
-    name: "Frontend Expert Resume", 
+  {
+    name: 'Frontend Expert Resume',
     reference: 25,
-    icon: "🎨",
-    description: "Resume emphasizing UI/UX design experience and frontend technologies."
+    icon: '🎨',
+    description: 'Resume emphasizing UI/UX design experience and frontend technologies.',
   },
-  { 
-    name: "UX/UI Designer Resume", 
+  {
+    name: 'UX/UI Designer Resume',
     reference: 10,
-    icon: "🖌️",
-    description: "Resume highlighting user experience and design philosophy." 
+    icon: '🖌️',
+    description: 'Resume highlighting user experience and design philosophy.',
   },
 ];
 
@@ -139,10 +139,10 @@ export default function PlaygroundPage() {
                 <TemperatureSelector defaultValue={[0.56]} />
                 <MaxLengthSelector defaultValue={[256]} />
                 <TopPSelector defaultValue={[0.9]} />
-                
+
                 {/* 참고한 이력서 목록 */}
-                <div className="space-y-2 mt-10">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="mt-10 space-y-2">
+                  <div className="mb-2 flex items-center gap-2">
                     <BarChart className="h-4 w-4" />
                     <h3 className="text-sm font-medium">Referenced Resumes</h3>
                   </div>
@@ -150,24 +150,26 @@ export default function PlaygroundPage() {
                     {referencedResumes.map((resume, index) => (
                       <HoverCard key={index}>
                         <HoverCardTrigger asChild>
-                          <Card className="overflow-hidden p-3 cursor-pointer hover:bg-accent/40 transition-colors">
+                          <Card className="hover:bg-accent/40 cursor-pointer overflow-hidden p-3 transition-colors">
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9 border">
                                 <AvatarFallback className="text-sm">{resume.icon}</AvatarFallback>
                               </Avatar>
                               <div className="flex-1 space-y-1">
                                 <div className="flex items-center">
-                                  <p className="text-sm font-medium flex-1">{resume.name}</p>
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                  <p className="flex-1 text-sm font-medium">{resume.name}</p>
+                                  <ChevronRight className="text-muted-foreground h-4 w-4" />
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                  <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full bg-primary rounded-full" 
+                                  <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
+                                    <div
+                                      className="bg-primary h-full rounded-full"
                                       style={{ width: `${resume.reference}%` }}
                                     />
                                   </div>
-                                  <span className="text-xs text-muted-foreground">{resume.reference}%</span>
+                                  <span className="text-muted-foreground text-xs">
+                                    {resume.reference}%
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -177,12 +179,12 @@ export default function PlaygroundPage() {
                           <div className="flex justify-between space-x-4">
                             <div className="space-y-1">
                               <h4 className="text-sm font-semibold">{resume.name}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {resume.description}
-                              </p>
+                              <p className="text-muted-foreground text-sm">{resume.description}</p>
                               <div className="flex items-center pt-2">
-                                <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground">Reference Rate: {resume.reference}%</span>
+                                <FileText className="text-muted-foreground mr-2 h-4 w-4" />
+                                <span className="text-muted-foreground text-xs">
+                                  Reference Rate: {resume.reference}%
+                                </span>
                               </div>
                             </div>
                           </div>

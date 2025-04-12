@@ -34,7 +34,7 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <a 
+                <a
                   href={item.url}
                   onClick={(e) => {
                     if (onItemClick) {

@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { client } from "@/utils/config";
-import { creativeCommonsAttribution } from "@/utils/terms";
+import { NextResponse } from 'next/server';
+import { client } from '@/utils/config';
+import { creativeCommonsAttribution } from '@/utils/terms';
 
 export async function POST(request: Request) {
   try {
@@ -11,14 +11,14 @@ export async function POST(request: Request) {
     }
 
     // Log each step for debugging
-    console.log("Attempting to register IP with CID:", cid, "for wallet:", walletAddress);
+    console.log('Attempting to register IP with CID:', cid, 'for wallet:', walletAddress);
 
     // Register IP asset with Creative Commons license
     try {
       const spgNftContract = process.env.STORY_SPG_NFT_CONTRACT;
-      
-      console.log("Using SPG contract:", spgNftContract);
-      
+
+      console.log('Using SPG contract:', spgNftContract);
+
       // Call mintAndRegisterIpAssetWithPilTerms function
       // - Mints NFT, registers IP, and connects license terms
       // - SDK handles mintFeeToken function call
@@ -29,53 +29,62 @@ export async function POST(request: Request) {
         },
         recipient: walletAddress as `0x${string}`,
         licenseTermsData: [
-          { 
-            terms: creativeCommonsAttribution.terms
-          }
+          {
+            terms: creativeCommonsAttribution.terms,
+          },
         ],
         allowDuplicates: true,
         txOptions: {
-          waitForTransaction: true // Wait for transaction completion
-        }
+          waitForTransaction: true, // Wait for transaction completion
+        },
       });
 
       // Log detailed response structure
-      console.log("Successfully registered IP. Full response:", JSON.stringify(response, (key, value) => 
-        typeof value === 'bigint' ? value.toString() : value
-      , 2));
-      console.log("ipId:", response.ipId);
-      console.log("tokenId:", response.tokenId);
-      console.log("txHash:", response.txHash);
-      console.log("licenseTermsIds:", response.licenseTermsIds);
+      console.log(
+        'Successfully registered IP. Full response:',
+        JSON.stringify(
+          response,
+          (key, value) => (typeof value === 'bigint' ? value.toString() : value),
+          2
+        )
+      );
+      console.log('ipId:', response.ipId);
+      console.log('tokenId:', response.tokenId);
+      console.log('txHash:', response.txHash);
+      console.log('licenseTermsIds:', response.licenseTermsIds);
 
       // Response structure for client
       const clientResponse = {
         ipId: response.ipId,
         tokenId: response.tokenId ? response.tokenId.toString() : undefined,
         txHash: response.txHash,
-        licenseTermsIds: response.licenseTermsIds ? 
-          response.licenseTermsIds.map(id => id.toString()) : undefined
+        licenseTermsIds: response.licenseTermsIds
+          ? response.licenseTermsIds.map((id) => id.toString())
+          : undefined,
       };
 
       return NextResponse.json(clientResponse);
     } catch (mintError) {
-      console.error("Error in mint process:", mintError);
-      
+      console.error('Error in mint process:', mintError);
+
       // Log detailed error information
       if (mintError instanceof Error) {
-        console.error("Error details:", mintError.message);
-        console.error("Error stack:", mintError.stack);
+        console.error('Error details:', mintError.message);
+        console.error('Error stack:', mintError.stack);
       }
-      
+
       return NextResponse.json(
-        { error: mintError instanceof Error ? mintError.message : "Failed to mint and register IP asset" },
+        {
+          error:
+            mintError instanceof Error ? mintError.message : 'Failed to mint and register IP asset',
+        },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error("Error registering IP asset:", error);
+    console.error('Error registering IP asset:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to register IP asset" },
+      { error: error instanceof Error ? error.message : 'Failed to register IP asset' },
       { status: 500 }
     );
   }

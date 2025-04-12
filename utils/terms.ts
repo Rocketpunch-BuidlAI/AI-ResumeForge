@@ -1,4 +1,4 @@
-import { zeroAddress } from "viem";
+import { zeroAddress } from 'viem';
 
 export const creativeCommonsAttribution = {
   terms: {
@@ -18,6 +18,6 @@ export const creativeCommonsAttribution = {
     derivativesReciprocal: true,
     derivativeRevCeiling: BigInt(0),
     currency: process.env.STORY_CURRENCY as `0x${string}`,
-    uri: "https://github.com/piplabs/pil-document/blob/998c13e6ee1d04eb817aefd1fe16dfe8be3cd7a2/off-chain-terms/CC-BY.json",
-  }
+    uri: 'https://github.com/piplabs/pil-document/blob/998c13e6ee1d04eb817aefd1fe16dfe8be3cd7a2/off-chain-terms/CC-BY.json',
+  },
 };

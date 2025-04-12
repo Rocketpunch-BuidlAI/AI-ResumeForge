@@ -16,14 +16,19 @@ interface LicenseResponse {
 }
 
 export default function LicensePage() {
-  const [licenseInputs, setLicenseInputs] = useState<LicenseInput[]>([{ licenseTermsId: '', licensorIpId: '', maxMintingFee: '' }]);
+  const [licenseInputs, setLicenseInputs] = useState<LicenseInput[]>([
+    { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' },
+  ]);
   const [receiverEmail, setReceiverEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [responseData, setResponseData] = useState<LicenseResponse | null>(null);
 
   const addLicenseInput = () => {
-    setLicenseInputs([...licenseInputs, { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' }]);
+    setLicenseInputs([
+      ...licenseInputs,
+      { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' },
+    ]);
   };
 
   const removeLicenseInput = (index: number) => {
@@ -51,7 +56,7 @@ export default function LicensePage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          licenses: licenseInputs.map(input => ({
+          licenses: licenseInputs.map((input) => ({
             licenseTermsId: input.licenseTermsId,
             licensorIpId: input.licensorIpId,
             maxMintingFee: input.maxMintingFee || '0',
@@ -75,14 +80,14 @@ export default function LicensePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Issue Licenses</h1>
-        
+    <div className="min-h-screen bg-gray-100 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-md overflow-hidden rounded-xl bg-white p-6 shadow-md md:max-w-2xl">
+        <h1 className="mb-6 text-2xl font-bold text-gray-900">Issue Licenses</h1>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {licenseInputs.map((input, index) => (
             <div key={index} className="border-b pb-4">
-              <div className="flex justify-between items-center mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-700">License #{index + 1}</h3>
                 {licenseInputs.length > 1 && (
                   <button
@@ -94,10 +99,13 @@ export default function LicensePage() {
                   </button>
                 )}
               </div>
-              
+
               <div className="space-y-4">
                 <div>
-                  <label htmlFor={`licenseTermsId-${index}`} className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor={`licenseTermsId-${index}`}
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     License Terms ID
                   </label>
                   <input
@@ -111,7 +119,10 @@ export default function LicensePage() {
                 </div>
 
                 <div>
-                  <label htmlFor={`licensorIpId-${index}`} className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor={`licensorIpId-${index}`}
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     IP Asset ID
                   </label>
                   <input
@@ -125,7 +136,10 @@ export default function LicensePage() {
                 </div>
 
                 <div>
-                  <label htmlFor={`maxMintingFee-${index}`} className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor={`maxMintingFee-${index}`}
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Maximum Minting Fee (Optional)
                   </label>
                   <input
@@ -144,7 +158,7 @@ export default function LicensePage() {
           <button
             type="button"
             onClick={addLicenseInput}
-            className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
           >
             Add Another License
           </button>
@@ -163,42 +177,38 @@ export default function LicensePage() {
             />
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm">
-              {error}
-            </div>
-          )}
+          {error && <div className="text-sm text-red-500">{error}</div>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
           >
             {loading ? 'Processing...' : 'Issue Licenses'}
           </button>
         </form>
 
         {responseData && (
-          <div className="mt-8 p-4 bg-green-50 rounded-lg">
-            <h2 className="text-lg font-semibold text-green-800 mb-2">Licenses Issued Successfully</h2>
+          <div className="mt-8 rounded-lg bg-green-50 p-4">
+            <h2 className="mb-2 text-lg font-semibold text-green-800">
+              Licenses Issued Successfully
+            </h2>
             <div className="space-y-4">
               <div>
-                <h3 className="text-md font-medium text-green-700 mb-1">Transaction Hash</h3>
-                <pre className="text-sm text-green-700 overflow-auto">
-                  {responseData.txHash}
-                </pre>
+                <h3 className="text-md mb-1 font-medium text-green-700">Transaction Hash</h3>
+                <pre className="overflow-auto text-sm text-green-700">{responseData.txHash}</pre>
               </div>
-              
+
               <div>
-                <h3 className="text-md font-medium text-green-700 mb-1">License Token IDs</h3>
-                <pre className="text-sm text-green-700 overflow-auto">
+                <h3 className="text-md mb-1 font-medium text-green-700">License Token IDs</h3>
+                <pre className="overflow-auto text-sm text-green-700">
                   {JSON.stringify(responseData.licenseTokenIds, null, 2)}
                 </pre>
               </div>
 
               <div>
-                <h3 className="text-md font-medium text-green-700 mb-1">Transaction Receipt</h3>
-                <pre className="text-sm text-green-700 overflow-auto">
+                <h3 className="text-md mb-1 font-medium text-green-700">Transaction Receipt</h3>
+                <pre className="overflow-auto text-sm text-green-700">
                   {JSON.stringify(responseData.receipt, null, 2)}
                 </pre>
               </div>
@@ -208,4 +218,4 @@ export default function LicensePage() {
       </div>
     </div>
   );
-} 
+}

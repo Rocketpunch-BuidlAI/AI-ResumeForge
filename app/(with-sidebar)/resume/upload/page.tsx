@@ -2,25 +2,43 @@
 
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Upload, FileText, X, Check, CloudUpload, AlertTriangle, FileIcon, Briefcase, Clock, Tag } from 'lucide-react';
+import {
+  Upload,
+  FileText,
+  X,
+  Check,
+  CloudUpload,
+  AlertTriangle,
+  FileIcon,
+  Briefcase,
+  Clock,
+  Tag,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetDescription,
-  SheetFooter
+  SheetFooter,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { z } from 'zod';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Form,
   FormControl,
@@ -29,29 +47,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import FilePreview from '@/lib/pdf/FilePreview';
 import Link from 'next/link';
 import getSession from '@/utils/getSession';
 
 // Form validation schema
 const formSchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
-  yearsOfExperience: z.string().min(1, "Years of experience is required"),
-  skills: z.string().min(3, "Skills are required"),
-  jobTitle: z.string().min(1, "Job title is required"),
+  companyName: z.string().min(1, 'Company name is required'),
+  yearsOfExperience: z.string().min(1, 'Years of experience is required'),
+  skills: z.string().min(3, 'Skills are required'),
+  jobTitle: z.string().min(1, 'Job title is required'),
   additionalInfo: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const experienceOptions = [
-  "Less than 1 year",
-  "1-2 years", 
-  "3-5 years", 
-  "5-10 years", 
-  "10+ years"
-];
+const experienceOptions = ['Less than 1 year', '1-2 years', '3-5 years', '5-10 years', '10+ years'];
 
 export default function ResumeUploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -63,46 +75,46 @@ export default function ResumeUploadPage() {
   const [currentStep, setCurrentStep] = useState<'upload' | 'metadata' | 'complete'>('upload');
 
   console.log(progressValue);
-  
+
   // Form setup with react-hook-form and zod validation
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      companyName: "",
-      yearsOfExperience: "",
-      skills: "",
-      jobTitle: "",
-      additionalInfo: "",
+      companyName: '',
+      yearsOfExperience: '',
+      skills: '',
+      jobTitle: '',
+      additionalInfo: '',
     },
   });
-  
+
   // Track form completion status
   const isFormComplete = form.formState.isValid;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      
+
       // Check if file is PDF, DOC or DOCX
       const fileType = selectedFile.type;
       const validTypes = [
-        'application/pdf', 
-        'application/msword', 
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       ];
-      
+
       if (!validTypes.includes(fileType)) {
-        toast("Invalid file type", {
-          description: "Please upload a PDF, DOC, or DOCX file",
+        toast('Invalid file type', {
+          description: 'Please upload a PDF, DOC, or DOCX file',
           style: { backgroundColor: 'hsl(var(--destructive))' },
           icon: <X className="h-4 w-4 text-white" />,
         });
         return;
       }
-      
+
       setFile(selectedFile);
       setCurrentStep('metadata');
-      toast("File selected", {
+      toast('File selected', {
         description: `${selectedFile.name}`,
         icon: <Check className="h-4 w-4 text-green-500" />,
       });
@@ -125,27 +137,27 @@ export default function ResumeUploadPage() {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
-      
+
       // Check if file is PDF, DOC or DOCX
       const fileType = droppedFile.type;
       const validTypes = [
-        'application/pdf', 
-        'application/msword', 
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       ];
-      
+
       if (!validTypes.includes(fileType)) {
-        toast("Invalid file type", {
-          description: "Please upload a PDF, DOC, or DOCX file",
+        toast('Invalid file type', {
+          description: 'Please upload a PDF, DOC, or DOCX file',
           style: { backgroundColor: 'hsl(var(--destructive))' },
           icon: <X className="h-4 w-4 text-white" />,
         });
         return;
       }
-      
+
       setFile(droppedFile);
       setCurrentStep('metadata');
-      toast("File uploaded", {
+      toast('File uploaded', {
         description: `${droppedFile.name}`,
         icon: <Check className="h-4 w-4 text-green-500" />,
       });
@@ -157,7 +169,7 @@ export default function ResumeUploadPage() {
     setProgressValue(0);
     setCurrentStep('upload');
     form.reset();
-    toast("File removed", {
+    toast('File removed', {
       style: { backgroundColor: 'hsl(var(--destructive))' },
       icon: <X className="h-4 w-4 text-white" />,
     });
@@ -193,14 +205,14 @@ export default function ResumeUploadPage() {
 
   const onSubmit = async (data: FormValues) => {
     if (!file) return;
-    
+
     setIsUploading(true);
     setProgressValue(0);
 
     try {
       // 진행률 표시를 위한 시뮬레이션 (실제 업로드와 병행)
       const interval = setInterval(() => {
-        setProgressValue(prev => {
+        setProgressValue((prev) => {
           if (prev >= 90) {
             clearInterval(interval);
             return 90; // 90%에서 대기 (실제 업로드가 완료될 때까지)
@@ -217,19 +229,22 @@ export default function ResumeUploadPage() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('userId', session?.user?.id || '');
-      
+
       // 메타데이터 추가
-      formData.append('metadata', JSON.stringify({
-        jobTitle: data.jobTitle,
-        companyName: data.companyName,
-        yearsOfExperience: data.yearsOfExperience,
-        skills: data.skills,
-        additionalInfo: data.additionalInfo || '',
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        uploadDate: new Date().toISOString()
-      }));
+      formData.append(
+        'metadata',
+        JSON.stringify({
+          jobTitle: data.jobTitle,
+          companyName: data.companyName,
+          yearsOfExperience: data.yearsOfExperience,
+          skills: data.skills,
+          additionalInfo: data.additionalInfo || '',
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          uploadDate: new Date().toISOString(),
+        })
+      );
 
       // API 호출하여 파일 업로드
       const uploadResponse = await fetch('/api/pinata', {
@@ -243,34 +258,34 @@ export default function ResumeUploadPage() {
       }
 
       const result = await uploadResponse.json();
-      
+
       // 업로드 완료 후 진행률 100%로 설정
       clearInterval(interval);
       setProgressValue(100);
-      
+
       // 업로드 완료 후 상태 업데이트
       setIsUploading(false);
       setCurrentStep('complete');
-      
-      toast("Upload Complete!", {
-        description: "Your resume and metadata have been successfully uploaded.",
+
+      toast('Upload Complete!', {
+        description: 'Your resume and metadata have been successfully uploaded.',
         icon: <Check className="h-4 w-4 text-green-500" />,
       });
-      
+
       // 콘솔에 결과 로깅 (디버깅용)
       console.log('Upload result:', result);
       console.log('File uploaded:', file);
       console.log('Form data:', data);
-      
     } catch (error) {
       console.error('Upload error:', error);
-      
+
       // 에러 발생 시 업로드 상태 초기화
       setIsUploading(false);
       setProgressValue(0);
-      
-      toast("Upload Failed", {
-        description: error instanceof Error ? error.message : "An error occurred while uploading the file.",
+
+      toast('Upload Failed', {
+        description:
+          error instanceof Error ? error.message : 'An error occurred while uploading the file.',
         style: { backgroundColor: 'hsl(var(--destructive))' },
         icon: <X className="h-4 w-4 text-white" />,
       });
@@ -280,7 +295,7 @@ export default function ResumeUploadPage() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 'upload':
-  return (
+        return (
           <AnimatePresence mode="wait">
             <motion.div
               key="upload-area"
@@ -288,58 +303,71 @@ export default function ResumeUploadPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-            <div
-              className={cn(
+              <div
+                className={cn(
                   'rounded-lg border-2 border-dashed p-8 text-center transition-all duration-300',
-                  isDragging 
-                    ? 'border-primary bg-primary/10 scale-[1.02] shadow-lg' 
+                  isDragging
+                    ? 'border-primary bg-primary/10 scale-[1.02] shadow-lg'
                     : 'border-muted',
                   isHovering && 'border-primary/60 bg-primary/5',
-                  'hover:border-primary/70 cursor-pointer group'
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
+                  'hover:border-primary/70 group cursor-pointer'
+                )}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
               >
                 <div className="flex flex-col items-center gap-4">
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     whileTap={{ scale: 0.95 }}
-                    className="bg-gray-100 dark:bg-gray-800 p-5 rounded-full cursor-pointer"
+                    className="cursor-pointer rounded-full bg-gray-100 p-5 dark:bg-gray-800"
                   >
                     <CloudUpload className="text-primary h-10 w-10" />
                   </motion.div>
-                  <div className="text-muted-foreground text-sm space-y-1">
-                    <motion.p 
-                      className="font-medium group-hover:text-primary transition-colors"
+                  <div className="text-muted-foreground space-y-1 text-sm">
+                    <motion.p
+                      className="group-hover:text-primary font-medium transition-colors"
                       animate={{ scale: isDragging ? 1.05 : 1 }}
                     >
                       {isDragging ? 'Drop your file here!' : 'Drag and drop your file here'}
                     </motion.p>
                     <p>or click the button below to upload</p>
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-900">DOC</Badge>
-                    <Badge variant="outline" className="bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 dark:border-blue-900">DOCX</Badge>
-                    <Badge variant="outline" className="bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900">PDF</Badge>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-50 text-blue-600 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-400"
+                    >
+                      DOC
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-50 text-blue-600 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-400"
+                    >
+                      DOCX
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/50 dark:text-red-400"
+                    >
+                      PDF
+                    </Badge>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Maximum file size: 10MB
-                  </div>
-                <Input
-                  id="file"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
+                  <div className="text-muted-foreground mt-1 text-xs">Maximum file size: 10MB</div>
+                  <Input
+                    id="file"
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                   <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => document.getElementById('file')?.click()}
-                      className="mt-2 group-hover:bg-primary group-hover:text-primary-foreground transition-colors cursor-pointer"
+                      className="group-hover:bg-primary group-hover:text-primary-foreground mt-2 cursor-pointer transition-colors"
                     >
                       <Upload className="mr-2 h-4 w-4" />
                       Select File
@@ -350,7 +378,7 @@ export default function ResumeUploadPage() {
             </motion.div>
           </AnimatePresence>
         );
-      
+
       case 'metadata':
         return (
           <AnimatePresence>
@@ -366,28 +394,35 @@ export default function ResumeUploadPage() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="rounded-lg border border-border bg-card shadow-sm p-4 mb-6"
+                  className="border-border bg-card mb-6 rounded-lg border p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={cn("p-3 rounded-lg", getFileTypeColor(getFileExtension(file.name)))}>
+                      <div
+                        className={cn(
+                          'rounded-lg p-3',
+                          getFileTypeColor(getFileExtension(file.name))
+                        )}
+                      >
                         {getFileTypeIcon(getFileExtension(file.name))}
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium truncate max-w-[240px]">{file.name}</span>
+                          <span className="max-w-[240px] truncate text-sm font-medium">
+                            {file.name}
+                          </span>
                           <Badge variant="outline" className="font-mono">
                             {getFileExtension(file.name)}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-3">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             {(file.size / 1024 / 1024).toFixed(2)} MB
                           </p>
-                          <Button 
-                            variant="link" 
-                            size="sm" 
-                            className="p-0 h-auto text-xs text-primary cursor-pointer"
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="text-primary h-auto cursor-pointer p-0 text-xs"
                             onClick={() => setShowPreview(true)}
                           >
                             Preview
@@ -399,17 +434,17 @@ export default function ResumeUploadPage() {
                       variant="ghost"
                       size="sm"
                       onClick={handleRemoveFile}
-                      className="h-8 w-8 rounded-full opacity-70 hover:opacity-100 cursor-pointer"
+                      className="h-8 w-8 cursor-pointer rounded-full opacity-70 hover:opacity-100"
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 </motion.div>
               )}
-              
+
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
@@ -420,22 +455,20 @@ export default function ResumeUploadPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
-                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                            <Briefcase className="text-muted-foreground h-4 w-4" />
                             Job Title
                           </FormLabel>
                           <FormControl>
                             <Input placeholder="e.g. Frontend Developer" {...field} />
                           </FormControl>
-                          <FormDescription>
-                            The position you&apos;re applying for
-                          </FormDescription>
+                          <FormDescription>The position you&apos;re applying for</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </motion.div>
 
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
@@ -446,22 +479,20 @@ export default function ResumeUploadPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
-                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                            <Briefcase className="text-muted-foreground h-4 w-4" />
                             Company Name
                           </FormLabel>
                           <FormControl>
                             <Input placeholder="e.g. Acme Inc." {...field} />
                           </FormControl>
-                          <FormDescription>
-                            Company you&apos;re applying to
-                          </FormDescription>
+                          <FormDescription>Company you&apos;re applying to</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </motion.div>
 
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
@@ -472,22 +503,26 @@ export default function ResumeUploadPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <Clock className="text-muted-foreground h-4 w-4" />
                             Years of Experience
                           </FormLabel>
                           <div>
-                            <div className="flex flex-wrap gap-2 mt-1">
+                            <div className="mt-1 flex flex-wrap gap-2">
                               {experienceOptions.map((option) => (
                                 <Badge
                                   key={option}
-                                  variant={field.value === option ? "default" : "outline"}
+                                  variant={field.value === option ? 'default' : 'outline'}
                                   className={cn(
-                                    "cursor-pointer hover:bg-primary/20 transition-colors",
-                                    field.value === option 
-                                      ? "bg-primary text-primary-foreground"
-                                      : ""
+                                    'hover:bg-primary/20 cursor-pointer transition-colors',
+                                    field.value === option
+                                      ? 'bg-primary text-primary-foreground'
+                                      : ''
                                   )}
-                                  onClick={() => form.setValue("yearsOfExperience", option, { shouldValidate: true })}
+                                  onClick={() =>
+                                    form.setValue('yearsOfExperience', option, {
+                                      shouldValidate: true,
+                                    })
+                                  }
                                 >
                                   {option}
                                   {field.value === option && <Check className="ml-1 h-3 w-3" />}
@@ -495,7 +530,7 @@ export default function ResumeUploadPage() {
                               ))}
                             </div>
                             {form.formState.errors.yearsOfExperience && (
-                              <p className="text-sm text-destructive mt-2">
+                              <p className="text-destructive mt-2 text-sm">
                                 {form.formState.errors.yearsOfExperience.message}
                               </p>
                             )}
@@ -505,7 +540,7 @@ export default function ResumeUploadPage() {
                     />
                   </motion.div>
 
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
@@ -516,26 +551,24 @@ export default function ResumeUploadPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center gap-2">
-                            <Tag className="h-4 w-4 text-muted-foreground" />
+                            <Tag className="text-muted-foreground h-4 w-4" />
                             Skills & Keywords
                           </FormLabel>
                           <FormControl>
-                            <Textarea 
+                            <Textarea
                               placeholder="e.g. React, TypeScript, UI Design, Project Management"
                               className="min-h-[100px] resize-none"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
-                          <FormDescription>
-                            Separate skills with commas
-                          </FormDescription>
+                          <FormDescription>Separate skills with commas</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </motion.div>
 
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
@@ -547,10 +580,10 @@ export default function ResumeUploadPage() {
                         <FormItem>
                           <FormLabel>Additional Information (Optional)</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="Any other details you&apos;d like to share..."
+                            <Textarea
+                              placeholder="Any other details you'd like to share..."
                               className="min-h-[80px] resize-none"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
@@ -564,15 +597,15 @@ export default function ResumeUploadPage() {
                     whileTap={{ scale: 0.98 }}
                     className="pt-2"
                   >
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full cursor-pointer"
                       disabled={!isFormComplete || isUploading}
                     >
                       {isUploading ? (
                         <>
                           <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin"></div>
+                            <div className="border-primary/30 border-t-primary h-4 w-4 animate-spin rounded-full border-2"></div>
                             <span>Uploading: {progressValue}%</span>
                           </div>
                         </>
@@ -589,7 +622,7 @@ export default function ResumeUploadPage() {
             </motion.div>
           </AnimatePresence>
         );
-        
+
       case 'complete':
         return (
           <AnimatePresence>
@@ -597,23 +630,24 @@ export default function ResumeUploadPage() {
               key="complete"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-8 text-center space-y-4"
+              className="flex flex-col items-center justify-center space-y-4 py-8 text-center"
             >
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                className="bg-green-100 dark:bg-green-900/30 p-4 rounded-full"
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                className="rounded-full bg-green-100 p-4 dark:bg-green-900/30"
               >
                 <Check className="h-12 w-12 text-green-600 dark:text-green-500" />
               </motion.div>
               <h3 className="text-xl font-bold">Upload Complete!</h3>
               <p className="text-muted-foreground max-w-md">
-                Your resume and information have been successfully uploaded. We&apos;ll analyze your resume and provide feedback soon.
+                Your resume and information have been successfully uploaded. We&apos;ll analyze your
+                resume and provide feedback soon.
               </p>
-              <div className="flex gap-3 mt-4">
-                <Button 
-                  variant="outline" 
+              <div className="mt-4 flex gap-3">
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setFile(null);
                     setCurrentStep('upload');
@@ -624,9 +658,7 @@ export default function ResumeUploadPage() {
                   Upload Another
                 </Button>
                 <Link href="/">
-                <Button className="cursor-pointer">
-                  View Dashboard
-                </Button>
+                  <Button className="cursor-pointer">View Dashboard</Button>
                 </Link>
               </div>
             </motion.div>
@@ -638,34 +670,45 @@ export default function ResumeUploadPage() {
   // Calculate progress percentage based on current step
   const getProgressPercentage = () => {
     switch (currentStep) {
-      case 'upload': return 0;
-      case 'metadata': 
+      case 'upload':
+        return 0;
+      case 'metadata':
         if (isUploading) {
-          return 33 + (progressValue * 0.67 / 100); // Scale upload progress to remaining 67%
+          return 33 + (progressValue * 0.67) / 100; // Scale upload progress to remaining 67%
         }
         return file ? 33 : 0;
-      case 'complete': return 100;
-      default: return 0;
+      case 'complete':
+        return 100;
+      default:
+        return 0;
     }
   };
 
   // Get step title based on current step
   const getStepTitle = () => {
     switch (currentStep) {
-      case 'upload': return 'Resume Upload';
-      case 'metadata': return 'Resume Information';
-      case 'complete': return 'Upload Complete';
-      default: return 'Resume Upload';
+      case 'upload':
+        return 'Resume Upload';
+      case 'metadata':
+        return 'Resume Information';
+      case 'complete':
+        return 'Upload Complete';
+      default:
+        return 'Resume Upload';
     }
   };
 
   // Get status badge text based on current step
   const getStepBadge = () => {
     switch (currentStep) {
-      case 'upload': return 'Step 1/3';
-      case 'metadata': return 'Step 2/3'; 
-      case 'complete': return 'Complete';
-      default: return 'Step 1/3';
+      case 'upload':
+        return 'Step 1/3';
+      case 'metadata':
+        return 'Step 2/3';
+      case 'complete':
+        return 'Complete';
+      default:
+        return 'Step 1/3';
     }
   };
 
@@ -676,11 +719,11 @@ export default function ResumeUploadPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="overflow-hidden dark:bg-slate-900/60 backdrop-blur-sm">
+        <Card className="overflow-hidden backdrop-blur-sm dark:bg-slate-900/60">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="bg-primary p-2 rounded-full text-primary-foreground ring-4 ring-primary/20">
+                <div className="bg-primary text-primary-foreground ring-primary/20 rounded-full p-2 ring-4">
                   {currentStep === 'complete' ? (
                     <Check className="h-6 w-6" />
                   ) : (
@@ -689,17 +732,22 @@ export default function ResumeUploadPage() {
                 </div>
                 <div>
                   <CardTitle className="text-2xl font-bold">{getStepTitle()}</CardTitle>
-                  <CardDescription className="text-base mt-1">
-                    {currentStep === 'upload' && "Upload your existing resume to receive AI analysis"}
-                    {currentStep === 'metadata' && "Add details to help us analyze your resume better"}
-                    {currentStep === 'complete' && "Your resume has been uploaded successfully"}
+                  <CardDescription className="mt-1 text-base">
+                    {currentStep === 'upload' &&
+                      'Upload your existing resume to receive AI analysis'}
+                    {currentStep === 'metadata' &&
+                      'Add details to help us analyze your resume better'}
+                    {currentStep === 'complete' && 'Your resume has been uploaded successfully'}
                   </CardDescription>
                 </div>
               </div>
-              <Badge variant={currentStep === 'complete' ? "default" : "outline"} className={cn(
-                currentStep === 'complete' ? "bg-green-500" : "bg-primary/10 text-primary",
-                "font-medium"
-              )}>
+              <Badge
+                variant={currentStep === 'complete' ? 'default' : 'outline'}
+                className={cn(
+                  currentStep === 'complete' ? 'bg-green-500' : 'bg-primary/10 text-primary',
+                  'font-medium'
+                )}
+              >
                 {getStepBadge()}
               </Badge>
             </div>
@@ -707,56 +755,60 @@ export default function ResumeUploadPage() {
 
           <CardContent className="pt-6">
             <div className="mb-6 space-y-1">
-              <div className="flex justify-between mb-2">
+              <div className="mb-2 flex justify-between">
                 <h3 className="text-sm font-medium">Upload Progress</h3>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {currentStep === 'upload' && 'Select a file to get started'}
                   {currentStep === 'metadata' && 'Fill in resume details'}
                   {currentStep === 'complete' && 'All steps complete'}
                 </span>
               </div>
-              <div className="bg-muted rounded-full h-2.5 w-full overflow-hidden">
-                <div 
-                  className="bg-primary h-full transition-all duration-500 rounded-full"
+              <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-500"
                   style={{ width: `${getProgressPercentage()}%` }}
                 />
               </div>
-              <div className="flex justify-between mt-2">
-                <div className="flex flex-col items-center text-center w-1/3">
-                  <div 
+              <div className="mt-2 flex justify-between">
+                <div className="flex w-1/3 flex-col items-center text-center">
+                  <div
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-colors",
-                      (currentStep === 'metadata' || currentStep === 'complete')
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-muted text-muted-foreground"
+                      'mb-1 flex h-8 w-8 items-center justify-center rounded-full transition-colors',
+                      currentStep === 'metadata' || currentStep === 'complete'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
                     )}
                   >
-                    {(currentStep === 'metadata' || currentStep === 'complete') ? <Check className="h-4 w-4" /> : 1}
+                    {currentStep === 'metadata' || currentStep === 'complete' ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      1
+                    )}
                   </div>
                   <span className="text-xs font-medium">Select File</span>
                 </div>
-                <div className="flex flex-col items-center text-center w-1/3">
-                  <div 
+                <div className="flex w-1/3 flex-col items-center text-center">
+                  <div
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-colors",
+                      'mb-1 flex h-8 w-8 items-center justify-center rounded-full transition-colors',
                       currentStep === 'metadata' && isFormComplete
-                        ? "bg-primary text-primary-foreground"
+                        ? 'bg-primary text-primary-foreground'
                         : currentStep === 'complete'
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground'
                     )}
                   >
                     {currentStep === 'complete' ? <Check className="h-4 w-4" /> : 2}
                   </div>
                   <span className="text-xs font-medium">Add Details</span>
                 </div>
-                <div className="flex flex-col items-center text-center w-1/3">
-                  <div 
+                <div className="flex w-1/3 flex-col items-center text-center">
+                  <div
                     className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-colors",
-                      currentStep === 'complete' 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-muted text-muted-foreground"
+                      'mb-1 flex h-8 w-8 items-center justify-center rounded-full transition-colors',
+                      currentStep === 'complete'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
                     )}
                   >
                     {currentStep === 'complete' ? <Check className="h-4 w-4" /> : 3}
@@ -768,22 +820,26 @@ export default function ResumeUploadPage() {
 
             {renderStepContent()}
           </CardContent>
-          <CardFooter className="flex flex-col border-t pt-4 text-sm text-muted-foreground space-y-2">
-            <div className="flex justify-between w-full text-xs items-center">
+          <CardFooter className="text-muted-foreground flex flex-col space-y-2 border-t pt-4 text-sm">
+            <div className="flex w-full items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
                 <span>Supported file formats: PDF, DOC, DOCX</span>
               </div>
-              <Badge variant="secondary" className="font-mono text-[10px]">v1.0</Badge>
+              <Badge variant="secondary" className="font-mono text-[10px]">
+                v1.0
+              </Badge>
             </div>
-            <p className="text-xs text-center">Files are used only for AI analysis and your security is maintained.</p>
+            <p className="text-center text-xs">
+              Files are used only for AI analysis and your security is maintained.
+            </p>
           </CardFooter>
         </Card>
       </motion.div>
 
       <Sheet open={showPreview} onOpenChange={setShowPreview}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           style={{
             position: 'absolute',
             width: '100%',
@@ -794,9 +850,9 @@ export default function ResumeUploadPage() {
             top: 0,
             right: 0,
             border: 0,
-            boxShadow: 'none'
+            boxShadow: 'none',
           }}
-          className="w-screen max-w-none border-none m-0 p-6 !right-0 !left-0"
+          className="!right-0 !left-0 m-0 w-screen max-w-none border-none p-6"
         >
           <SheetHeader className="mb-6">
             <SheetTitle className="flex items-center gap-2">
@@ -805,16 +861,20 @@ export default function ResumeUploadPage() {
             </SheetTitle>
             <SheetDescription className="flex items-center justify-between">
               <span>{file?.name}</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 {file && `${(file.size / 1024 / 1024).toFixed(2)} MB`}
               </span>
             </SheetDescription>
           </SheetHeader>
-          <div className="h-[70vh] overflow-hidden rounded-md border border-muted">
+          <div className="border-muted h-[70vh] overflow-hidden rounded-md border">
             <FilePreview file={file} />
           </div>
           <SheetFooter className="mt-6">
-            <Button variant="outline" onClick={() => setShowPreview(false)} className="cursor-pointer">
+            <Button
+              variant="outline"
+              onClick={() => setShowPreview(false)}
+              className="cursor-pointer"
+            >
               Close
             </Button>
           </SheetFooter>

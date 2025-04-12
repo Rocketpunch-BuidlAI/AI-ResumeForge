@@ -5,7 +5,7 @@ import { SignupForm } from '@/components/signup-form';
 export default function SignupPage() {
   return (
     <div className="grid min-h-svh w-full lg:grid-cols-2">
-      <div className=" relative hidden lg:block">
+      <div className="relative hidden lg:block">
         <video
           src="/media.mp4"
           autoPlay

@@ -7,6 +7,9 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const userId = formData.get('userId') as string;
+    const metadata = formData.get('metadata') as string;
+
+    console.log('metadata', metadata);
 
     if (!file || !userId) {
       return NextResponse.json('File and user ID are required.', { status: 400 });
@@ -14,11 +17,14 @@ export async function POST(request: Request) {
 
     // Get the complete response object
     const uploadResponse = await pinata.upload.public.file(file);
+    console.log('uploadResponse', uploadResponse);
     const { cid } = uploadResponse;
     const url = await pinata.gateways.public.convert(cid);
 
-    // Save to database
-    await saveCoverletter(Number(userId), cid, url);
+    console.log('url', url);
+
+    // Save to database with metadata
+    await saveCoverletter(Number(userId), cid, url, metadata);
 
     // Return both CID and complete uploadResponse
     return NextResponse.json({ url, cid, uploadResponse });

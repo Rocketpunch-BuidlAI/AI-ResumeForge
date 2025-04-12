@@ -17,26 +17,26 @@ interface RegisterResult {
 
 export default function ConnectPage() {
   const { user } = usePrivy();
-  
+
   // Step management
   const [step, setStep] = useState(1); // 1: License creation, 2: Derivative IP registration
-  
+
   // License creation step state
   const [licenseFormData, setLicenseFormData] = useState({
     licensorEmail: '',
     receiverEmail: '',
     licenseTermsId: '',
-    maxMintingFee: ''
+    maxMintingFee: '',
   });
-  
+
   // Derivative IP registration step state
   const [registerFormData, setRegisterFormData] = useState({
     licensorIpId: '',
     receiver: '',
     licenseTokenIds: '',
-    cid: ''
+    cid: '',
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [licenseResult, setLicenseResult] = useState<LicenseResult | null>(null);
@@ -47,7 +47,7 @@ export default function ConnectPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
       const response = await fetch('/api/story/license', {
         method: 'POST',
@@ -64,15 +64,15 @@ export default function ConnectPage() {
       }
 
       setLicenseResult(data);
-      
+
       // Pre-set form data for next step
-      setRegisterFormData(prev => ({
+      setRegisterFormData((prev) => ({
         ...prev,
         licensorIpId: data.licensorIpId || '',
         licenseTokenIds: data.licenseTokenIds?.join(',') || '',
-        receiver: data.receiver || ''
+        receiver: data.receiver || '',
       }));
-      
+
       // Move to next step
       setStep(2);
     } catch (err) {
@@ -87,7 +87,7 @@ export default function ConnectPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
       const response = await fetch('/api/story/register', {
         method: 'POST',
@@ -96,7 +96,7 @@ export default function ConnectPage() {
         },
         body: JSON.stringify({
           ...registerFormData,
-          licenseTermsIds: registerFormData.licenseTokenIds.split(',').map(id => id.trim())
+          licenseTermsIds: registerFormData.licenseTokenIds.split(',').map((id) => id.trim()),
         }),
       });
 
@@ -124,161 +124,179 @@ export default function ConnectPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">AI Contribution License and Derivative IP Registration</h1>
-      
+      <h1 className="mb-6 text-3xl font-bold">
+        AI Contribution License and Derivative IP Registration
+      </h1>
+
       {/* Step indicator */}
-      <div className="flex mb-8">
-        <div className={`flex-1 p-4 text-center ${step === 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+      <div className="mb-8 flex">
+        <div
+          className={`flex-1 p-4 text-center ${step === 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        >
           1. License Token Creation
         </div>
-        <div className={`flex-1 p-4 text-center ${step === 2 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
+        <div
+          className={`flex-1 p-4 text-center ${step === 2 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        >
           2. Derivative IP Registration
         </div>
       </div>
-      
+
       {/* Error message */}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
           {error}
         </div>
       )}
-      
+
       {/* Step 1: License Token Creation */}
       {step === 1 && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">License Token Creation</h2>
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <h2 className="mb-4 text-xl font-bold">License Token Creation</h2>
           <form onSubmit={handleLicenseSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Licensor Email
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Licensor Email</label>
               <input
                 type="email"
                 value={licenseFormData.licensorEmail}
-                onChange={(e) => setLicenseFormData({ ...licenseFormData, licensorEmail: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) =>
+                  setLicenseFormData({ ...licenseFormData, licensorEmail: e.target.value })
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
                 placeholder="Enter licensor's email"
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Receiver Email
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Receiver Email</label>
               <input
                 type="email"
                 value={licenseFormData.receiverEmail}
-                onChange={(e) => setLicenseFormData({ ...licenseFormData, receiverEmail: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) =>
+                  setLicenseFormData({ ...licenseFormData, receiverEmail: e.target.value })
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
                 placeholder="Enter receiver's email"
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 License Terms ID
               </label>
               <input
                 type="text"
                 value={licenseFormData.licenseTermsId}
-                onChange={(e) => setLicenseFormData({ ...licenseFormData, licenseTermsId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) =>
+                  setLicenseFormData({ ...licenseFormData, licenseTermsId: e.target.value })
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
                 placeholder="Enter license terms ID"
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 Max Minting Fee
               </label>
               <input
                 type="text"
                 value={licenseFormData.maxMintingFee}
-                onChange={(e) => setLicenseFormData({ ...licenseFormData, maxMintingFee: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) =>
+                  setLicenseFormData({ ...licenseFormData, maxMintingFee: e.target.value })
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
                 placeholder="Enter max minting fee (default: 0)"
               />
             </div>
-            
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 disabled:bg-blue-300"
+              className="w-full rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:bg-blue-300"
             >
               {loading ? 'Processing...' : 'Create License Token'}
             </button>
           </form>
         </div>
       )}
-      
+
       {/* Step 2: Derivative IP Registration */}
       {step === 2 && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">Derivative IP Registration</h2>
-          
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <h2 className="mb-4 text-xl font-bold">Derivative IP Registration</h2>
+
           {/* License creation result display */}
           {licenseResult && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-              <p><strong>License Token ID:</strong> {licenseResult.licenseTokenIds?.join(', ')}</p>
-              <p><strong>Transaction Hash:</strong> {licenseResult.txHash}</p>
+            <div className="mb-4 rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700">
+              <p>
+                <strong>License Token ID:</strong> {licenseResult.licenseTokenIds?.join(', ')}
+              </p>
+              <p>
+                <strong>Transaction Hash:</strong> {licenseResult.txHash}
+              </p>
             </div>
           )}
-          
+
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 Original IP ID (Token ID)
               </label>
               <input
                 type="text"
                 value={registerFormData.licensorIpId}
-                onChange={(e) => setRegisterFormData({ ...registerFormData, licensorIpId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) =>
+                  setRegisterFormData({ ...registerFormData, licensorIpId: e.target.value })
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
                 placeholder="Enter original IP ID (Token ID)"
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 Recipient Wallet Address
               </label>
               <input
                 type="text"
                 value={registerFormData.receiver}
-                onChange={(e) => setRegisterFormData({ ...registerFormData, receiver: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) =>
+                  setRegisterFormData({ ...registerFormData, receiver: e.target.value })
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
                 placeholder="Enter recipient wallet address"
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 License Token IDs (comma-separated)
               </label>
               <input
                 type="text"
                 value={registerFormData.licenseTokenIds}
-                onChange={(e) => setRegisterFormData({ ...registerFormData, licenseTokenIds: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                onChange={(e) =>
+                  setRegisterFormData({ ...registerFormData, licenseTokenIds: e.target.value })
+                }
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
                 placeholder="Enter license token IDs separated by commas"
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                IPFS CID
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">IPFS CID</label>
               <input
                 type="text"
                 value={registerFormData.cid}
                 onChange={(e) => setRegisterFormData({ ...registerFormData, cid: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
                 placeholder="Enter IPFS CID"
                 required
               />
@@ -286,19 +304,19 @@ export default function ConnectPage() {
                 The entered CID will be stored in the mediaHash field of the IPA metadata.
               </p>
             </div>
-            
+
             <div className="flex space-x-4">
               <button
                 type="button"
                 onClick={handleReset}
-                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600"
+                className="flex-1 rounded-md bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
               >
                 Back to Start
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 disabled:bg-blue-300"
+                className="flex-1 rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:bg-blue-300"
               >
                 {loading ? 'Processing...' : 'Register Derivative IP'}
               </button>
@@ -306,19 +324,25 @@ export default function ConnectPage() {
           </form>
         </div>
       )}
-      
+
       {/* Derivative IP registration result */}
       {registerResult && (
-        <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-bold mb-4">Registration Result</h2>
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-            <p><strong>IP ID:</strong> {registerResult.ipId}</p>
-            <p><strong>Token ID:</strong> {registerResult.tokenId}</p>
-            <p><strong>Transaction Hash:</strong> {registerResult.txHash}</p>
+        <div className="mt-6 rounded-lg bg-white p-6 shadow-md">
+          <h2 className="mb-4 text-xl font-bold">Registration Result</h2>
+          <div className="rounded border border-green-400 bg-green-100 px-4 py-3 text-green-700">
+            <p>
+              <strong>IP ID:</strong> {registerResult.ipId}
+            </p>
+            <p>
+              <strong>Token ID:</strong> {registerResult.tokenId}
+            </p>
+            <p>
+              <strong>Transaction Hash:</strong> {registerResult.txHash}
+            </p>
           </div>
           <button
             onClick={handleReset}
-            className="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+            className="mt-4 w-full rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
           >
             Start Over
           </button>
@@ -326,4 +350,4 @@ export default function ConnectPage() {
       )}
     </div>
   );
-} 
+}

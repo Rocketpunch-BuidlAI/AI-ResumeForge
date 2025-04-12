@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 // PDF.js 워커 설정 - 로컬 패키지에서 불러오도록 변경
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url,
+  import.meta.url
 ).toString();
 
 interface PDFViewerProps {
@@ -81,7 +81,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
 
   if (!file) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <p className="text-muted-foreground">PDF 파일을 선택해주세요</p>
       </div>
     );
@@ -89,7 +89,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full space-y-4 p-8 text-center">
+      <div className="flex h-full flex-col items-center justify-center space-y-4 p-8 text-center">
         <p className="text-red-500">{error}</p>
         <Button onClick={downloadFile}>
           <Download className="mr-2 h-4 w-4" />
@@ -100,15 +100,10 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
   }
 
   return (
-    <div className={cn("flex flex-col items-center w-full h-full", className)}>
-      <div className="flex items-center justify-between w-full mb-4 p-2 bg-muted/30 rounded-md">
+    <div className={cn('flex h-full w-full flex-col items-center', className)}>
+      <div className="bg-muted/30 mb-4 flex w-full items-center justify-between rounded-md p-2">
         <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={previousPage}
-            disabled={pageNumber <= 1}
-          >
+          <Button variant="outline" size="icon" onClick={previousPage} disabled={pageNumber <= 1}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm">
@@ -138,14 +133,18 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto w-full">
-        <div className="min-h-full flex justify-center">
+      <div className="w-full flex-1 overflow-auto">
+        <div className="flex min-h-full justify-center">
           <Document
             file={file}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
-            loading={<div className="flex justify-center py-12"><Skeleton className="h-[600px] w-[450px]" /></div>}
-            error={<p className="text-center text-red-500 py-12">PDF 로딩에 실패했습니다</p>}
+            loading={
+              <div className="flex justify-center py-12">
+                <Skeleton className="h-[600px] w-[450px]" />
+              </div>
+            }
+            error={<p className="py-12 text-center text-red-500">PDF 로딩에 실패했습니다</p>}
             className="max-w-full"
           >
             {loading ? (
@@ -170,4 +169,4 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
   );
 };
 
-export default PDFViewer; 
+export default PDFViewer;

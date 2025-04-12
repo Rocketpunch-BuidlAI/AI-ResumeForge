@@ -1,15 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  AudioWaveform,
-  Command,
-  Home,
-  Inbox,
-  LogOut,
-  Settings2,
-  Sparkles,
-} from 'lucide-react';
+import { AudioWaveform, Command, Home, Inbox, LogOut, Settings2, Sparkles } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 import { NavFavorites } from '@/components/nav-favorites';
@@ -24,8 +16,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { type LucideIcon } from 'lucide-react';
 
 // 네비게이션 아이템 타입 정의
@@ -159,31 +151,30 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
   const pathname = usePathname();
-  
+
   // URL에 따라 활성 메뉴 항목 설정
   const mainNavItems = React.useMemo(() => {
-    return data.navMain.map(item => ({
+    return data.navMain.map((item) => ({
       ...item,
-      isActive: pathname === item.url || 
-                (item.url !== '/' && pathname.startsWith(item.url))
+      isActive: pathname === item.url || (item.url !== '/' && pathname.startsWith(item.url)),
     }));
   }, [pathname]);
-  
+
   // 보조 메뉴 항목에도 활성 상태 설정
   const secondaryNavItems = React.useMemo(() => {
-    return data.navSecondary.map(item => ({
+    return data.navSecondary.map((item) => ({
       ...item,
-      isActive: !item.isLogout && pathname === item.url
+      isActive: !item.isLogout && pathname === item.url,
     }));
   }, [pathname]);
-  
+
   const handleLogout = () => {
     // 로그아웃 로직 구현
-    console.log("로그아웃 처리중...");
+    console.log('로그아웃 처리중...');
     // 여기에 실제 로그아웃 API 호출 등을 추가할 수 있습니다
     setLogoutDialogOpen(false);
   };
-  
+
   // navSecondary 아이템 클릭 핸들러
   const handleNavItemClick = (item: NavItem) => {
     if (item.isLogout) {
@@ -204,20 +195,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavFavorites favorites={data.aiResumes} title="AI Generated Resumes" />
-        <NavSecondary 
-          items={secondaryNavItems} 
+        <NavSecondary
+          items={secondaryNavItems}
           className="mt-auto"
           onItemClick={handleNavItemClick}
         />
-        
+
         {/* 로그아웃 확인 다이얼로그 */}
         <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>로그아웃 확인</DialogTitle>
-              <DialogDescription>
-                정말 로그아웃 하시겠습니까?
-              </DialogDescription>
+              <DialogDescription>정말 로그아웃 하시겠습니까?</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setLogoutDialogOpen(false)}>

@@ -31,4 +31,3 @@ const config: StoryConfig = {
   chainId: 'aeneid', // Aeneid testnet
 };
 export const client = StoryClient.newClient(config);
-

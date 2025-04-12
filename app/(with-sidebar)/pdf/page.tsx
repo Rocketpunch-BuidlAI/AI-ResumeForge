@@ -73,7 +73,7 @@ export default function Home() {
             {uploadResponse && (
               <div className="mt-4 text-left">
                 <p className="mb-2 text-sm font-semibold text-gray-500">메타 정보:</p>
-                <pre className="whitespace-pre-wrap rounded bg-gray-100 p-4 text-xs">
+                <pre className="rounded bg-gray-100 p-4 text-xs whitespace-pre-wrap">
                   {JSON.stringify(uploadResponse, null, 2)}
                 </pre>
               </div>

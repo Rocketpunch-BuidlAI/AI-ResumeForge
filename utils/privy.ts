@@ -19,11 +19,11 @@ export async function getWalletAddressByEmail(email: string): Promise<string | n
     if (!user) {
       return null;
     }
-    
+
     const wallet = user.linkedAccounts?.find((account) => account.type === 'wallet');
     return wallet?.address || null;
   } catch (error) {
     console.error('Error getting wallet address:', error);
     return null;
   }
-} 
+}

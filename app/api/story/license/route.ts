@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { client } from "@/utils/config";
-import { getWalletAddressByEmail } from "@/utils/privy";
+import { NextResponse } from 'next/server';
+import { client } from '@/utils/config';
+import { getWalletAddressByEmail } from '@/utils/privy';
 
 // Convert BigInt to string for JSON serialization
 function replaceBigInt(key: string, value: any) {
@@ -25,10 +25,7 @@ export async function POST(request: Request) {
     const receiverWallet = await getWalletAddressByEmail(receiverEmail);
 
     if (!receiverWallet) {
-      return NextResponse.json(
-        { error: 'Receiver wallet address not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Receiver wallet address not found' }, { status: 404 });
     }
 
     // Process licenses sequentially
@@ -52,22 +49,22 @@ export async function POST(request: Request) {
           amount: 1, // default to 1
           maxMintingFee: maxMintingFee ? BigInt(maxMintingFee) : BigInt(0),
           maxRevenueShare: 100, // default
-          txOptions: { 
+          txOptions: {
             waitForTransaction: true,
           },
         });
 
         // Convert BigInt values to strings to prevent serialization errors
         const responseData = JSON.parse(JSON.stringify(response, replaceBigInt));
-        
+
         // Collect license token IDs
         if (responseData.licenseTokenIds && Array.isArray(responseData.licenseTokenIds)) {
           allLicenseTokenIds.push(...responseData.licenseTokenIds);
         }
-        
+
         lastTxHash = responseData.txHash;
         lastReceipt = responseData.receipt;
-        
+
         responses.push(responseData);
       } catch (err) {
         console.error(`Failed to mint license for terms ${licenseTermsId}:`, err);
@@ -84,11 +81,10 @@ export async function POST(request: Request) {
       txHash: lastTxHash,
       licenseTokenIds: allLicenseTokenIds,
       receipt: lastReceipt,
-      individualResponses: responses
+      individualResponses: responses,
     };
 
     return NextResponse.json(combinedResponse);
-
   } catch (error) {
     console.error('License token creation error:', error);
     return NextResponse.json(
@@ -96,4 +92,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

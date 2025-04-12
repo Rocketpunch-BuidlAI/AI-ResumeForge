@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
@@ -17,17 +17,17 @@ export async function POST(request: Request) {
           message: `IP ID ${value}에 대한 정보는 Story Protocol 서버에서 직접 확인할 수 있습니다.`,
           verificationLinks: [
             {
-              name: "Story Protocol 웹사이트",
-              url: "https://story.xyz"
+              name: 'Story Protocol 웹사이트',
+              url: 'https://story.xyz',
             },
             {
-              name: "Story Protocol Docs",
-              url: "https://docs.story.xyz"
-            }
-          ]
+              name: 'Story Protocol Docs',
+              url: 'https://docs.story.xyz',
+            },
+          ],
         });
       } catch (ipError) {
-        console.error("Error getting IP info:", ipError);
+        console.error('Error getting IP info:', ipError);
         return NextResponse.json(
           { error: '해당 IP ID에 대한 정보를 찾을 수 없습니다' },
           { status: 404 }
@@ -40,26 +40,23 @@ export async function POST(request: Request) {
         message: `트랜잭션 해시 ${value}에 대한 정보는 Story Protocol 서버에서 직접 확인할 수 있습니다.`,
         verificationLinks: [
           {
-            name: "Story Protocol 웹사이트",
-            url: "https://story.xyz"
+            name: 'Story Protocol 웹사이트',
+            url: 'https://story.xyz',
           },
           {
-            name: "Story Protocol Docs",
-            url: "https://docs.story.xyz"
-          }
-        ]
+            name: 'Story Protocol Docs',
+            url: 'https://docs.story.xyz',
+          },
+        ],
       });
     } else {
-      return NextResponse.json(
-        { error: '지원하지 않는 검색 유형입니다' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '지원하지 않는 검색 유형입니다' }, { status: 400 });
     }
   } catch (error) {
-    console.error("Error querying IP asset:", error);
+    console.error('Error querying IP asset:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "정보 조회 중 오류가 발생했습니다" },
+      { error: error instanceof Error ? error.message : '정보 조회 중 오류가 발생했습니다' },
       { status: 500 }
     );
   }
-} 
+}
