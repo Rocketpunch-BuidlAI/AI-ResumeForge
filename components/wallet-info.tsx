@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, Copy, ExternalLink, Clock, CheckCircle2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Wallet, Copy, ExternalLink, CheckCircle2, ArrowDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
