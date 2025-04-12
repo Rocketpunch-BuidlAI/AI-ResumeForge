@@ -90,7 +90,7 @@ export async function GET(request: Request) {
       };
     });
 
-    const totalRewards = completeDailyRoyalties.reduce((acc, daily) => acc + daily.total_amount, 0);
+    const totalRewards = parseFloat(completeDailyRoyalties.reduce((acc, daily) => acc + daily.total_amount, 0).toFixed(3));
 
     // Calculate the difference between the last day and the previous day's rewards
     let rewardChangePercent = 0;
