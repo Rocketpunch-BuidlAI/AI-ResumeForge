@@ -149,8 +149,6 @@ export default function Page() {
     []
   );
 
-  console.log('recentRewards', recentRewards);
-
   const { wallets } = useWallets();
 
   console.log('useruser', wallets);
