@@ -45,7 +45,7 @@ export function ResumeTable({ resumes }: ResumeTableProps) {
                   {resume.fileName}
                 </div>
               </TableCell>
-              <TableCell>{resume.rewardAmount} ETH</TableCell>
+              <TableCell>{resume.rewardAmount} WIP</TableCell>
               <TableCell>{resume.referenceCount}</TableCell>
               <TableCell>
                 <div className="flex flex-col">

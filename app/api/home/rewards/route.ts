@@ -10,16 +10,16 @@ export async function GET(request: Request) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    // 사용자의 IP 목록 조회
+    // Get user's IP list
     const userIPs = await getUserIPs(Number(userId));
 
-    // IP ID 목록 추출
+    // Extract IP IDs
     const ipIds = userIPs.map((ip) => ip.id);
 
-    // 모든 IP에 대한 로열티 정보를 한 번에 조회
+    // Get all royalty information for IPs at once
     const royalties = await getRoyaltiesByIpIds(ipIds);
 
-    // 일자별 로열티 데이터 생성
+    // Create daily royalty data
     const dailyRoyalties = royalties.reduce(
       (acc, royalty) => {
         const date = royalty.created_at
@@ -53,22 +53,22 @@ export async function GET(request: Request) {
       count: number;
     };
 
-    // 날짜순으로 정렬
+    // Sort by date
     const sortedDailyRoyalties = (Object.values(dailyRoyalties) as DailyRoyalty[]).sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
-    // 오늘로부터 3일 이전 날짜 계산
+    // Calculate date from 3 days ago
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
     const threeDaysAgoStr = threeDaysAgo.toISOString().split('T')[0];
 
-    // 3일 이전 날짜까지만 필터링
+    // Filter until 3 days ago
     const filteredDailyRoyalties = sortedDailyRoyalties.filter(
       (daily) => daily.date >= threeDaysAgoStr
     );
 
-    // 누락된 날짜 추가
+    // Add missing dates
     const dates = [];
     const currentDate = new Date(threeDaysAgo);
 
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // 모든 날짜에 대해 데이터가 있는지 확인하고 없는 경우 0으로 추가
+    // Check if data exists for all dates and add 0 for missing dates
     const completeDailyRoyalties = dates.map((date) => {
       const existingData = filteredDailyRoyalties.find((daily) => daily.date === date);
       if (existingData) {
@@ -92,13 +92,16 @@ export async function GET(request: Request) {
 
     const totalRewards = completeDailyRoyalties.reduce((acc, daily) => acc + daily.total_amount, 0);
 
-    // 마지막 날과 그 전날의 보상 차이 계산
+    // Calculate the difference between the last day and the previous day's rewards
     let rewardChangePercent = 0;
     if (completeDailyRoyalties.length >= 2) {
       const lastDay = completeDailyRoyalties[completeDailyRoyalties.length - 1];
       const previousDay = completeDailyRoyalties[completeDailyRoyalties.length - 2];
 
-      if (previousDay.total_amount > 0) {
+      if (previousDay.total_amount === 0) {
+        // When previous day is 0, show the actual increase amount
+        rewardChangePercent = lastDay.total_amount * 100;
+      } else {
         rewardChangePercent =
           ((lastDay.total_amount - previousDay.total_amount) / previousDay.total_amount) * 100;
       }
