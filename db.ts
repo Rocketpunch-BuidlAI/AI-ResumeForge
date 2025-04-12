@@ -215,6 +215,10 @@ export async function getIpAssetById(id: number) {
   return await db.select().from(ipAssets).where(eq(ipAssets.id, id));
 }
 
+export async function getIpAssetByCid(cid: string) {
+  return await db.select().from(ipAssets).where(eq(ipAssets.cid, cid));
+}
+
 export async function getCoverletterByCid(cid: string) {
   return await db.select().from(coverletters).where(eq(coverletters.cid, cid));
 }

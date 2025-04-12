@@ -14,7 +14,6 @@ import { PdfManager } from '@/utils/PdfManager';
 import { AI_AGENT_URL, client } from '@/utils/config';
 import console from 'console';
 import { creativeCommonsAttribution } from '@/utils/terms';
-import { encryptCID } from '@/utils/encryption';
 
 export async function GET(request: Request) {
   try {
@@ -124,7 +123,7 @@ export async function POST(request: Request) {
       const response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
         spgNftContract: process.env.STORY_SPG_NFT_CONTRACT as `0x${string}`,
         ipMetadata: {
-          ipMetadataURI: encryptCID(blob.url),
+          ipMetadataURI: savedCoverletter.id.toString(),
         },
         recipient: walletAddress as `0x${string}`,
         licenseTermsData: [
@@ -145,7 +144,7 @@ export async function POST(request: Request) {
         response.licenseTermsIds && response.licenseTermsIds.length > 0 
           ? Number(response.licenseTermsIds[0]) 
           : 0,
-        cid,
+        savedCoverletter.id.toString(),
         response.ipId || '',
         response.txHash || ''
       );
