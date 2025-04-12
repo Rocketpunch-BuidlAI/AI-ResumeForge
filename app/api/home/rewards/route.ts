@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         };
       }
       
-      acc[date].total_amount += Number(royalty.amount);
+      acc[date].total_amount += Number(royalty.amount) * 0.001;
       acc[date].count += 1;
       acc[date].royalties.push(royalty);
       

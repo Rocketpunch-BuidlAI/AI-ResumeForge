@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { pgTable, serial, varchar, bigint, timestamp, text, json, integer, doublePrecision } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, bigint, timestamp, text, json, integer, doublePrecision, boolean } from 'drizzle-orm/pg-core';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
@@ -56,6 +56,7 @@ const coverletters = pgTable('Coverletter', {
   jobSubcategory: varchar('job_subcategory', { length: 255 }),
   jobSpecific: varchar('job_specific', { length: 255 }),
   metadata: json('metadata'),
+  aiGenerated: boolean('ai_generated').default(false),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -133,7 +134,8 @@ export async function saveCoverletter(
   userId: number,
   cid: string,
   filePath: string,
-  metadataStr?: string
+  metadataStr?: string,
+  aiGenerated?: boolean
 ) {
   // Check if a record with the same CID exists
   const existingRecord = await db.select().from(coverletters).where(eq(coverletters.cid, cid));
@@ -177,6 +179,7 @@ export async function saveCoverletter(
     fileSize: metadataObj.fileSize || null,
     fileType: metadataObj.fileType || null,
     metadata: metadata,
+    aiGenerated: aiGenerated || false,
   }).returning({ id: coverletters.id });
 
   return result[0].id;
@@ -320,16 +323,20 @@ export async function saveCoverletterReference(
 export async function saveCoverletterWithReferences(
   coverletterId: number,
   text: string,
-  references: Array<{ referencedId: number; contribution: number }>
+  references: Array<{ id: number; contribution: number }>
 ) {
   // 이력서 텍스트 저장
   await saveCoverletterText(coverletterId, text);
 
   // 참조하는 이력서들 저장
   for (const ref of references) {
-    await saveCoverletterReference(coverletterId, ref.referencedId, ref.contribution);
+    await saveCoverletterReference(coverletterId, ref.id, ref.contribution);
   }
 }
+
+export const getResume = async (userId: number) => {
+  return await db.select().from(coverletters).where(eq(coverletters.userId, userId));
+};
 
 export async function getUserIPs(userId: number) {
   return await db.select().from(ipAssets).where(eq(ipAssets.userId, userId));
@@ -403,6 +410,7 @@ async function ensureTablesExist() {
         job_subcategory VARCHAR(255),
         job_specific VARCHAR(255),
         metadata JSONB,
+        ai_generated BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES "User" (id)
@@ -422,6 +430,7 @@ async function ensureTablesExist() {
       'job_subcategory',
       'job_specific',
       'metadata',
+      'ai_generated',
     ];
 
     for (const column of columns) {
