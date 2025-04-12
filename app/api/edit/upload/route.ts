@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getIpAssetByIpId, saveCoverletter, saveCoverletterWithReferences, saveIpAsset, saveIpReference, saveRoyalty } from '@/db';
+import { getIpAssetByCid, getIpAssetByIpId, saveCoverletter, saveCoverletterWithReferences, saveIpAsset, saveIpReference, saveRoyalty } from '@/db';
 import { AI_AGENT_URL, client, publicClient, stroyAccount, walletClient } from '@/utils/config';
 import { put } from '@vercel/blob';
 import axios from 'axios';
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const referencesJson = formData.get('references') as string;
     const metadata = formData.get('metadata') as string;
 
-    if (!pdf || !text || !referencesJson || !metadata) {
+    if (!pdf || !text || !walletAddress || !userId || !referencesJson || !metadata) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     // Get all IP asset information for references
     const ipAssets = [];
     for (const ref of references) {
-      const ipAsset = await getIpAssetByIpId(ref.id);
+      const ipAsset = await getIpAssetByCid(ref.id);
       if (!ipAsset || !ipAsset[0]) {
         console.error(`IP asset not found for ID: ${ref.id}`);
         continue;
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
       spgNftContract: process.env.STORY_SPG_NFT_CONTRACT as `0x${string}`,
       licenseTokenIds: licenseTokenIds,
       ipMetadata: {
-        ipMetadataURI: aiAgentResponse.cid
+        ipMetadataURI: savedCoverletterId.toString()
       },
       maxRts: 100_000_000,
       txOptions: { waitForTransaction: true },
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
       Number(userId),
       Number(child.tokenId),
       Number(ipAssets[0].licenseTermId),
-      aiAgentResponse.cid,
+      savedCoverletterId.toString(),
       child.ipId || '',
       child.txHash || ''
     );

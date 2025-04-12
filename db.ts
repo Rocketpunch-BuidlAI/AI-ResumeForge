@@ -75,11 +75,12 @@ const ipAssets = pgTable('Ip', {
 
 // IP Asset Reference Information Table
 const ipReferences = pgTable('IpReferences', {
-  ip_id: integer('ip_id').primaryKey(),
+  id: serial('id').primaryKey().notNull(),
+  owner_ip_id: bigint('owner_ip_id', { mode: 'number' }).notNull(),
   reference_ip_id: bigint('reference_ip_id', { mode: 'number' }).notNull(),
-  created_at: timestamp('created_at').defaultNow(),
-  updated_at: timestamp('updated_at').defaultNow(),
-});
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}); 
 
 // 이력서 텍스트 저장 테이블
 const coverletterTexts = pgTable('CoverletterText', {
@@ -254,21 +255,16 @@ export async function getCoverletterTextByCoverletterId(coverletterId: number) {
 }
 
 // Function to save IP asset reference information
-export async function saveIpReference(ipId: number, referenceIpId: number) {
+export async function saveIpReference(ownerIpId: number, referenceIpId: number) {
   return await db.insert(ipReferences).values({
-    ip_id: ipId,
+    owner_ip_id: ownerIpId,
     reference_ip_id: referenceIpId,
   });
 }
 
-// Function to retrieve IP asset reference information
-export async function getIpReferences(ipId: number) {
-  return await db.select().from(ipReferences).where(eq(ipReferences.ip_id, ipId));
-}
-
 // Function to retrieve IP asset reference information by ID
 export async function getIpReferenceById(id: number) {
-  return await db.select().from(ipReferences).where(eq(ipReferences.ip_id, id));
+  return await db.select().from(ipReferences).where(eq(ipReferences.owner_ip_id, id));
 }
 
 // Function to retrieve IP asset registration information by IP ID
@@ -497,12 +493,11 @@ async function ensureTablesExist() {
   if (!ipReferenceResult[0].exists) {
     await client`
       CREATE TABLE "IpReferences" (
-        ip_id INTEGER,
+        id SERIAL PRIMARY KEY,
+        owner_ip_id BIGINT NOT NULL,
         reference_ip_id BIGINT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT IpReferences_pkey PRIMARY KEY (ip_id),
-        CONSTRAINT id FOREIGN KEY (ip_id) REFERENCES public.Ip (id)
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );`;
   }
 
