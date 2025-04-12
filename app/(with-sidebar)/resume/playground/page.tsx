@@ -58,19 +58,13 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 
-import { CodeViewer } from './components/code-viewer';
 import { MaxLengthSelector } from './components/maxlength-selector';
 import { ModelSelector } from './components/model-selector';
-import { PresetActions } from './components/preset-actions';
-import { PresetSave } from './components/preset-save';
-import { PresetSelector } from './components/preset-selector';
-import { PresetShare } from './components/preset-share';
 import { TemperatureSelector } from './components/temperature-selector';
 import { TopPSelector } from './components/top-p-selector';
 import { models, types } from './data/models';
-import { presets } from './data/presets';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, ControllerRenderProps } from 'react-hook-form';
+import { useForm, type ControllerRenderProps } from 'react-hook-form';
 import { useWallets } from '@privy-io/react-auth';
 import getSession from '@/utils/getSession';
 import { useRouter } from 'next/navigation';
@@ -670,7 +664,7 @@ export default function PlaygroundPage() {
         />
       </div>
       <div className="hidden h-full flex-col items-center justify-center md:flex">
-        <div className="container flex flex-col items-start justify-between space-y-2 py-4 sm:flex-row sm:items-center sm:space-y-0 md:h-16">
+        {/* <div className="container flex flex-col items-start justify-between space-y-2 py-4 sm:flex-row sm:items-center sm:space-y-0 md:h-16">
           <h2 className="text-lg font-semibold">Playground</h2>
           <div className="ml-auto flex w-full space-x-2 sm:justify-end">
             <PresetSelector presets={presets} />
@@ -681,7 +675,7 @@ export default function PlaygroundPage() {
             </div>
             <PresetActions />
           </div>
-        </div>
+        </div> */}
         <Separator />
         <Tabs defaultValue="edit" className="w-full flex-1 items-center">
           <div className="container h-full py-6">
