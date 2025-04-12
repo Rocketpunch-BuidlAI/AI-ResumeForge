@@ -17,6 +17,8 @@ type CoverLetterSection = {
   customPrompt: string;
 };
 
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     // 요청 데이터 파싱
