@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { pgTable, serial, varchar, bigint, timestamp, text, json, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, bigint, timestamp, text, json, integer, doublePrecision } from 'drizzle-orm/pg-core';
 import { eq, and, desc } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
@@ -90,11 +90,22 @@ const coverletterTexts = pgTable('CoverletterText', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
+
+// Royalty Information Table
+const royalties = pgTable('Royalty', {
+  id: serial('id').primaryKey(),
+  parentIpId: bigint('parent_ip_id', { mode: 'number' }).notNull(),
+  childIpId: bigint('child_ip_id', { mode: 'number' }).notNull(),
+  amount: doublePrecision('amount'),
+  txHash: varchar('tx_hash', { length: 255 }).notNull(),
+  revenueReceipt: varchar('revenue_receipt', { length: 255 }),
+
 const coverletterReferences = pgTable('CoverletterReferences', {
   id: serial('id').primaryKey(),
   coverletterId: integer('coverletter_id').notNull().references(() => coverletters.id),
   referencedCoverletterId: integer('referenced_coverletter_id').notNull().references(() => coverletters.id),
   contribution: integer('contribution').notNull(),
+
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -251,6 +262,36 @@ export async function getIpReferenceById(id: number) {
 export async function getIpAssetByIpId(ipId: string) {
   return await db.select().from(ipAssets).where(eq(ipAssets.ipId, ipId));
 }
+
+// Function to save royalty information
+export async function saveRoyalty(
+  parentIpId: number,
+  childIpId: number,
+  amount: number,
+  txHash: string,
+  revenueReceipt?: string
+) {
+  return await db.insert(royalties).values({
+    parentIpId,
+    childIpId,
+    amount,
+    txHash,
+    revenueReceipt,
+  });
+}
+
+// Function to retrieve royalties by user ID
+export async function getRoyaltiesByUserId(userId: number) {
+  return await db
+    .select()
+    .from(royalties)
+    .innerJoin(ipAssets, eq(royalties.parentIpId, ipAssets.id))
+    .where(eq(ipAssets.userId, userId));
+}
+
+// Function to retrieve royalties by child IP ID
+export async function getRoyaltiesByChildIpId(childIpId: number) {
+  return await db.select().from(royalties).where(eq(royalties.childIpId, childIpId));
 
 // 이력서 참조 정보 저장 함수
 export async function saveCoverletterReference(
@@ -448,6 +489,29 @@ async function ensureTablesExist() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT IpReferences_pkey PRIMARY KEY (ip_id),
         CONSTRAINT id FOREIGN KEY (ip_id) REFERENCES public.Ip (id)
+      );`;
+  }
+
+  // Check if Royalty table exists
+  const royaltyResult = await client`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'Royalty'
+    );`;
+
+  if (!royaltyResult[0].exists) {
+    await client`
+      CREATE TABLE "Royalty" (
+        id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+        parent_ip_id BIGINT NOT NULL,
+        child_ip_id BIGINT NOT NULL,
+        amount DOUBLE PRECISION,
+        tx_hash VARCHAR(255) NOT NULL,
+        revenue_receipt VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES "User" (id)
       );`;
   }
 }
