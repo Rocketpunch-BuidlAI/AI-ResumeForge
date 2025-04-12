@@ -130,30 +130,20 @@ const mockAIGeneratedResumes: AIGeneratedResume[] = [
   },
 ];
 
-const mockRewardData = [
-  { date: '2024-04-01', amount: 0.5 },
-  { date: '2024-04-05', amount: 0.3 },
-  { date: '2024-04-10', amount: 0.2 },
-];
-
-// Mock data for reward history chart (past 6 months)
-const mockChartData = [
-  { month: 'Nov', reward: 0.05 },
-  { month: 'Dec', reward: 0.15 },
-  { month: 'Jan', reward: 0.1 },
-  { month: 'Feb', reward: 0.08 },
-  { month: 'Mar', reward: 0.12 },
-  { month: 'Apr', reward: 0.5 },
-];
-
 export default function Page() {
   const [selectedResume, setSelectedResume] = useState<UploadedResume | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [uploadedResumes, setUploadedResumes] = useState<UploadedResume[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  // Define total reward as a constant instead of a state since it's not changing for now
-  const totalReward = 1.0; // Default value
+  const [totalReward, setTotalReward] = useState<number>(0);
+  const [chartData, setChartData] = useState([]);
+  const [rewardChangePercent, setRewardChangePercent] = useState<number>(0);
+  const [uploadedResumeCount, setUploadedResumeCount] = useState<number>(0);
+  const [aiGeneratedResumeCount, setAiGeneratedResumeCount] = useState<number>(0);
+  const [recentRewards, setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
+    []
+  );
 
   const { wallets } = useWallets();
 
@@ -212,6 +202,26 @@ export default function Page() {
         );
 
         setUploadedResumes(transformedResumes);
+
+        const resumeStat = await fetch(`/api/home/resume-stat?userId=${userId}`);
+        const resumeStatData = await resumeStat.json();
+
+        const rewardHistories = await fetch(`/api/home/rewards?userId=${userId}`);
+        const rewardHistoriesData = await rewardHistories.json();
+
+        setChartData(
+          rewardHistoriesData.dailyRoyalties.map(
+            (daily: { date: string; total_amount: number }) => ({
+              month: daily.date,
+              reward: daily.total_amount,
+            })
+          )
+        );
+        setTotalReward(rewardHistoriesData.totalRewards);
+        setRewardChangePercent(rewardHistoriesData.rewardChangePercent);
+        setUploadedResumeCount(resumeStatData.uploadedResumeCount);
+        setAiGeneratedResumeCount(resumeStatData.aiGeneratedResumeCount);
+        setRecentRewards(resumeStatData.recentRewards);
       } catch (err) {
         console.error('Error fetching resumes:', err);
         setError('Failed to load resumes. Using fallback data.');
@@ -275,7 +285,7 @@ export default function Page() {
                     <BarChart className="text-primary h-5 w-5" />
                   </div>
                   <div className="flex items-end">
-                    <span className="text-2xl font-bold">1.0</span>
+                    <span className="text-2xl font-bold">{totalReward}</span>
                     <span className="text-muted-foreground ml-1 text-sm">ETH</span>
                   </div>
                 </div>
@@ -287,16 +297,16 @@ export default function Page() {
                     <p className="text-muted-foreground text-xs">Last 6 months reward history</p>
                   </div>
                   <div className="bg-primary/10 flex items-center gap-1 rounded-md px-2 py-1">
-                    <span className="text-primary text-xs font-medium">+20.1%</span>
+                    <span className="text-primary text-xs font-medium">
+                      {rewardChangePercent >= 0 ? '+' : ''}
+                      {rewardChangePercent}%
+                    </span>
                     <span className="text-muted-foreground text-xs">vs last month</span>
                   </div>
                 </div>
                 <div className="h-[180px] flex-grow">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={mockChartData}
-                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                    >
+                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="rewardGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2} />
@@ -374,18 +384,18 @@ export default function Page() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
                   <p className="text-muted-foreground text-sm">Uploaded Resumes</p>
-                  <p className="text-3xl font-bold">{resumes.length}</p>
+                  <p className="text-3xl font-bold">{uploadedResumeCount}</p>
                 </div>
                 <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
                   <p className="text-muted-foreground text-sm">AI Generated Resumes</p>
-                  <p className="text-3xl font-bold">{mockAIGeneratedResumes.length}</p>
+                  <p className="text-3xl font-bold">{aiGeneratedResumeCount}</p>
                 </div>
               </div>
 
               <div className="mt-4 flex-grow space-y-2">
                 <h4 className="text-sm font-medium">Recent Reward History</h4>
                 <div className="flex-grow space-y-2">
-                  {mockRewardData.map((reward, index) => (
+                  {recentRewards.map((reward, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between rounded-lg border p-2"
@@ -396,7 +406,7 @@ export default function Page() {
                         </div>
                         <div>
                           <p className="text-sm font-medium">
-                            {new Date(reward.date).toLocaleDateString('en-US', {
+                            {new Date(reward.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'long',
                               day: 'numeric',
