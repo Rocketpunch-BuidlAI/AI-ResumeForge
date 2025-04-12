@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
     // Save to database with metadata
     console.log('Saving to database...');
-    await saveCoverletter(Number(userId), cid, blob.url, metadata);
+    await saveCoverletter(Number(userId), cid, blob.url, metadata, false);
 
     const savedCoverletter = await getLatestCoverletterByCidAndUserId(Number(userId));
     console.log('Saved to database, coverletter id:', savedCoverletter?.id);

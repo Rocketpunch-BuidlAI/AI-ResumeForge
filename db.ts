@@ -56,7 +56,7 @@ const coverletters = pgTable('Coverletter', {
   jobSubcategory: varchar('job_subcategory', { length: 255 }),
   jobSpecific: varchar('job_specific', { length: 255 }),
   metadata: json('metadata'),
-  isAIGenerated: boolean('ai_generated').default(false),
+  aiGenerated: boolean('ai_generated').default(false),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -134,7 +134,8 @@ export async function saveCoverletter(
   userId: number,
   cid: string,
   filePath: string,
-  metadataStr?: string
+  metadataStr?: string,
+  aiGenerated?: boolean
 ) {
   // Check if a record with the same CID exists
   const existingRecord = await db.select().from(coverletters).where(eq(coverletters.cid, cid));
@@ -178,6 +179,7 @@ export async function saveCoverletter(
     fileSize: metadataObj.fileSize || null,
     fileType: metadataObj.fileType || null,
     metadata: metadata,
+    aiGenerated: aiGenerated || false,
   }).returning({ id: coverletters.id });
 
   return result[0].id;
@@ -408,6 +410,7 @@ async function ensureTablesExist() {
         job_subcategory VARCHAR(255),
         job_specific VARCHAR(255),
         metadata JSONB,
+        ai_generated BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES "User" (id)
@@ -427,6 +430,7 @@ async function ensureTablesExist() {
       'job_subcategory',
       'job_specific',
       'metadata',
+      'ai_generated',
     ];
 
     for (const column of columns) {
