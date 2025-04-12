@@ -10,9 +10,10 @@ import { toast } from 'sonner';
 export default function DerivativePage() {
   const [formData, setFormData] = useState({
     email: '',
-    tokenId: '',
-    licenseTokenIds: '',
+    licenseTermsId: '',
+    licensorIpId: '',
     cid: '',
+    maxMintingFee: '',
   });
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +66,47 @@ export default function DerivativePage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="licenseTermsId">License Terms ID</Label>
+              <Input
+                id="licenseTermsId"
+                name="licenseTermsId"
+                value={formData.licenseTermsId}
+                onChange={handleChange}
+                placeholder="1300"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="licensorIpId">Licensor IP ID</Label>
+              <Input
+                id="licensorIpId"
+                name="licensorIpId"
+                value={formData.licensorIpId}
+                onChange={handleChange}
+                placeholder="0x7A348A2d734C30c7D2abEe6FBaA3C0dF73a407a2"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maxMintingFee">Max Minting Fee (in ETH)</Label>
+              <Input
+                id="maxMintingFee"
+                name="maxMintingFee"
+                type="number"
+                value={formData.maxMintingFee}
+                onChange={handleChange}
+                placeholder="0"
+                required
+              />
+              <p className="text-muted-foreground text-sm">
+                Enter the maximum minting fee in wei. Set to 0 to disable.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Recipient Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -75,32 +116,8 @@ export default function DerivativePage() {
                 placeholder="user@example.com"
                 required
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tokenId">Token ID</Label>
-              <Input
-                id="tokenId"
-                name="tokenId"
-                value={formData.tokenId}
-                onChange={handleChange}
-                placeholder="1"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="licenseTokenIds">License Token IDs</Label>
-              <Input
-                id="licenseTokenIds"
-                name="licenseTokenIds"
-                value={formData.licenseTokenIds}
-                onChange={handleChange}
-                placeholder="1,2,3"
-                required
-              />
               <p className="text-muted-foreground text-sm">
-                Enter multiple license token IDs separated by commas.
+                Enter the email address of the recipient who will receive the license token.
               </p>
             </div>
 
