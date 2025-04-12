@@ -288,7 +288,7 @@ export default function ResumeUploadPage() {
           }
           return prev + 1;
         });
-      }, 20);
+      }, 100);
 
       const session = await getSession();
 

@@ -1,6 +1,6 @@
 // app/api/resumes/route.ts
 import { NextResponse } from 'next/server';
-import { getCoverletter, saveCoverletter, getLatestCoverletterByCidAndUserId, type ResumeMetadata } from '@/db';
+import { getCoverletter, saveCoverletter, getLatestCoverletterByCidAndUserId, saveCoverletterText, type ResumeMetadata } from '@/db';
 import { put } from '@vercel/blob';
 import axios from 'axios';
 import { PdfManager } from '@/utils/PdfManager';
@@ -73,6 +73,11 @@ export async function POST(request: Request) {
       console.log('PdfManager.extractTextFromBytes', pdfBytes);
       const extractedText = await PdfManager.extractTextFromBytes(pdfBytes);
       console.log('Text extracted successfully', extractedText);
+      
+      // 추출된 텍스트를 새 테이블에 저장
+      console.log('Saving extracted text to database...');
+      await saveCoverletterText(savedCoverletter.id, extractedText);
+      console.log('Text saved to database successfully');
       
       // upload cover letter to pinecone
       console.log('Uploading to AI agent:', AI_AGENT_URL);
