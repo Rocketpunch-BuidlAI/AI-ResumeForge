@@ -1026,7 +1026,7 @@ export default function ResumeUploadPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="overflow-hidden backdrop-blur-sm dark:bg-slate-900/60">
+        <Card className="overflow-hidden backdrop-blur-sm">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
