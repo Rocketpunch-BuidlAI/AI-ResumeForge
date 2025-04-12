@@ -3,7 +3,7 @@ import { client } from '@/utils/config';
 import { creativeCommonsAttribution } from '@/utils/terms';
 import { saveIpAsset } from '@/db';
 import { MintAndRegisterIpAssetWithPilTermsResponse } from '@story-protocol/core-sdk';
-
+import { encryptCID } from '@/utils/encryption';
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +16,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // Encrypt CID
+    const encryptedCID = encryptCID(cid);
+
     // Log each step for debugging
     console.log('Attempting to register IP with CID:', cid, 'for wallet:', walletAddress);
 
@@ -25,11 +28,11 @@ export async function POST(request: Request) {
 
       let response: MintAndRegisterIpAssetWithPilTermsResponse;
       if (withoutLicense) {
-        // 라이선스 없이 IP 자산 등록
+        // Register IP asset without license
         response = await client.ipAsset.mintAndRegisterIp({
           spgNftContract: spgNftContract as `0x${string}`,
           ipMetadata: {
-            ipMetadataURI: cid,
+            ipMetadataURI: encryptedCID,
           },
           recipient: walletAddress as `0x${string}`,
           allowDuplicates: true,
@@ -38,21 +41,21 @@ export async function POST(request: Request) {
           },
         });
 
-        // 라이선스 없이 등록된 경우 licenseTermId는 0으로 저장
+        // Save with licenseTermId as 0 when registered without license
         await saveIpAsset(
           userId,
           Number(response.tokenId),
           0,
-          cid,
+          encryptedCID, // Save encrypted CID
           response.ipId || '',
           response.txHash || ''
         );
       } else {
-        // 라이선스와 함께 IP 자산 등록
+        // Register IP asset with license
         response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
           spgNftContract: spgNftContract as `0x${string}`,
           ipMetadata: {
-            ipMetadataURI: cid,
+            ipMetadataURI: encryptedCID,
           },
           recipient: walletAddress as `0x${string}`,
           licenseTermsData: [
@@ -66,14 +69,14 @@ export async function POST(request: Request) {
           },
         });
 
-        // 라이선스와 함께 등록된 경우 licenseTermId 저장
+        // Save with licenseTermId when registered with license
         await saveIpAsset(
           userId,
           Number(response.tokenId),
           response.licenseTermsIds && response.licenseTermsIds.length > 0 
             ? Number(response.licenseTermsIds[0]) 
             : 0,
-          cid,
+          encryptedCID, // Save encrypted CID
           response.ipId || '',
           response.txHash || ''
         );
