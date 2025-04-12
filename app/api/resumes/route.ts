@@ -7,6 +7,8 @@ import {
   saveCoverletterText,
   type ResumeMetadata,
   saveIpAsset,
+  getRoyaltiesByIpIds,
+  getUserIPs,
 } from '@/db';
 import { put } from '@vercel/blob';
 import axios from 'axios';
@@ -15,9 +17,21 @@ import { AI_AGENT_URL, client } from '@/utils/config';
 import console from 'console';
 import { creativeCommonsAttribution } from '@/utils/terms';
 
+// Royalty 인터페이스 정의
+interface Royalty {
+  id: number;
+  parentIpId: number;
+  childIpId: number;
+  amount: number | string | null;
+  txHash: string;
+  revenueReceipt: string | null;
+  created_at?: Date | string | null;
+  updated_at?: Date | string | null;
+}
+
 export async function GET(request: Request) {
   try {
-    // URL에서 쿼리 파라미터 가져오기
+    // Get query parameters from URL
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId');
 
@@ -25,11 +39,70 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // 데이터베이스에서 해당 사용자의 이력서 가져오기
+    // Get resumes from database for the user
     const resumes = await getCoverletter(Number(userId));
+    
+    // Get user's IP list
+    const userIPs = await getUserIPs(Number(userId));
 
-    // 응답 데이터 구성
-    return NextResponse.json({ resumes });
+    // Extract IP ID list
+    const ipIds = userIPs.map(ip => ip.id);
+
+    // Get royalty information for all IPs at once
+    const royalties = await getRoyaltiesByIpIds(ipIds);
+    
+    // IP ID를 키로 하고 royalty 리스트를 값으로 하는 Map 생성
+    const ipRoyaltiesMap = new Map<number, Royalty[]>();
+    
+    // royalty 데이터를 IP ID 별로 분류하여 Map에 저장
+    royalties.forEach(royalty => {
+      const ipId = royalty.parentIpId;
+      if (!ipRoyaltiesMap.has(ipId)) {
+        ipRoyaltiesMap.set(ipId, []);
+      }
+      ipRoyaltiesMap.get(ipId)?.push(royalty);
+    });
+    
+    // 각 IP ID별 rewardAmount와 referenceCount 계산
+    const ipStatsMap = new Map<number, { rewardAmount: number, referenceCount: number }>();
+    
+    ipRoyaltiesMap.forEach((royalties, ipId) => {
+      // rewardAmount: royalty 총합 계산 (amount * 0.001)
+      const rewardAmount = royalties.reduce((sum, royalty) => sum + Number(royalty.amount) * 0.001, 0);
+      
+      // referenceCount: royalty 개수 계산
+      const referenceCount = royalties.length;
+      
+      ipStatsMap.set(ipId, { rewardAmount, referenceCount });
+    });
+    
+    // 이력서 데이터에 각 IP의 rewardAmount와 referenceCount 추가
+    const decoratedResumes = resumes.map(resume => {
+      // 이력서와 관련된 IP ID 찾기
+      const relatedIPs = userIPs.filter(ip => ip.userId === resume.userId);
+      const relatedIpIds = relatedIPs.map(ip => ip.id);
+      
+      // 관련 IP들의 rewardAmount와 referenceCount 합계 계산
+      let totalRewardAmount = 0;
+      let totalReferenceCount = 0;
+      
+      relatedIpIds.forEach(ipId => {
+        const stats = ipStatsMap.get(ipId);
+        if (stats) {
+          totalRewardAmount += stats.rewardAmount;
+          totalReferenceCount += stats.referenceCount;
+        }
+      });
+      
+      return {
+        ...resume,
+        referenceCount: totalReferenceCount,
+        rewardAmount: totalRewardAmount
+      };
+    });
+
+    // Compose response data
+    return NextResponse.json({ resumes: decoratedResumes });
   } catch (error) {
     console.error('Error fetching resumes:', error);
     return NextResponse.json({ error: 'Failed to fetch resumes' }, { status: 500 });
@@ -81,7 +154,6 @@ export async function POST(request: Request) {
       const extractedText = await PdfManager.extractTextFromBytes(pdfBytes);
       console.log('Text extracted successfully', extractedText);
 
-      // 추출된 텍스트를 새 테이블에 저장
       console.log('Saving extracted text to database...');
       await saveCoverletterText(savedCoverletter.id, extractedText);
       console.log('Text saved to database successfully');
