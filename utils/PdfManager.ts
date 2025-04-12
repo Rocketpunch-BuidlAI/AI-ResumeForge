@@ -1,5 +1,6 @@
 import * as fs from 'fs';
-import pdfTextExtract from 'pdf-text-extract';
+// @ts-expect-error pdf-parse 모듈은 CommonJS 모듈이지만 ESM 스타일로 import 해야 합니다.
+import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib';
 import * as path from 'path';
 import * as fontkit from 'fontkit';
@@ -12,20 +13,13 @@ export class PdfManager {
    */
   public static async extractText(filePath: string): Promise<string> {
     try {
-      // pdf-text-extract를 사용하여 PDF 파일에서 텍스트 추출
-      return new Promise((resolve, reject) => {
-        pdfTextExtract(filePath, (error: Error | null, pages: string[]) => {
-          if (error) {
-            console.error('PDF 텍스트 추출 중 오류 발생:', error);
-            reject(new Error('PDF 텍스트 추출에 실패했습니다.'));
-            return;
-          }
-
-          // 모든 페이지의 텍스트를 하나의 문자열로 결합
-          const extractedText = pages.join('\n\n');
-          resolve(extractedText.trim());
-        });
-      });
+      // 파일 데이터 읽기
+      const dataBuffer = await fs.promises.readFile(filePath);
+      
+      // pdf-parse 사용하여 PDF 파일에서 텍스트 추출
+      const data = await pdfParse(dataBuffer);
+      
+      return data.text.trim();
     } catch (error) {
       console.error('PDF 텍스트 추출 중 오류 발생:', error);
       throw new Error('PDF 텍스트 추출에 실패했습니다.');
@@ -40,25 +34,18 @@ export class PdfManager {
    */
   public static async extractTextFromPage(filePath: string, pageNumber: number): Promise<string> {
     try {
-      // pdf-text-extract를 사용하여 PDF 파일에서 텍스트 추출
-      return new Promise((resolve, reject) => {
-        pdfTextExtract(filePath, (error: Error | null, pages: string[]) => {
-          if (error) {
-            console.error('PDF 페이지 텍스트 추출 중 오류 발생:', error);
-            reject(new Error('PDF 페이지 텍스트 추출에 실패했습니다.'));
-            return;
-          }
-
-          // 페이지 번호 유효성 검사
-          if (pageNumber < 1 || pageNumber > pages.length) {
-            reject(new Error(`유효하지 않은 페이지 번호입니다. (1-${pages.length})`));
-            return;
-          }
-
-          // 특정 페이지의 텍스트 반환
-          resolve(pages[pageNumber - 1].trim());
-        });
-      });
+      const dataBuffer = await fs.promises.readFile(filePath);
+      
+      // pdf-parse의 옵션을 사용하여 특정 페이지만 처리
+      const options = {
+        max: pageNumber, // 최대 이 페이지까지 처리
+        min: pageNumber, // 최소 이 페이지부터 처리
+      };
+      
+      const data = await pdfParse(dataBuffer, options);
+      
+      // 페이지 텍스트 반환
+      return data.text.trim();
     } catch (error) {
       console.error('PDF 페이지 텍스트 추출 중 오류 발생:', error);
       throw new Error('PDF 페이지 텍스트 추출에 실패했습니다.');
@@ -73,32 +60,33 @@ export class PdfManager {
   public static async extractTextFromBytes(pdfBytes: Uint8Array): Promise<string> {
     try {
       // 임시 파일 생성
-      const tempFilePath = `/tmp/pdf-${Date.now()}.pdf`;
-      await fs.promises.writeFile(tempFilePath, pdfBytes);
-
+      const tempDir = path.join(process.cwd(), 'tmp');
+      
+      // 임시 디렉토리가 없으면 생성
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const tempFilePath = path.join(tempDir, `pdf-${Date.now()}.pdf`);
+      
       try {
-        // 임시 파일에서 텍스트 추출
-        const extractedText = await this.extractText(tempFilePath);
-        return extractedText;
+        // 바이너리 데이터를 임시 파일로 저장
+        await fs.promises.writeFile(tempFilePath, Buffer.from(pdfBytes));
+        
+        // 파일에서 텍스트 추출
+        const result = await this.extractText(tempFilePath);
+        
+        return result;
       } finally {
         // 임시 파일 삭제
-        await fs.promises.unlink(tempFilePath).catch((err) => {
-          console.error('임시 파일 삭제 중 오류 발생:', err);
-        });
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
       }
     } catch (error) {
       console.error('PDF 텍스트 추출 중 오류 발생:', error);
-      throw new Error('PDF 텍스트 추출에 실패했습니다.');
+      throw new Error(`PDF 텍스트 추출에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }
-
-  /**
-   * PDF 파일 경로에서 텍스트를 추출합니다.
-   * @param filePath PDF 파일 경로
-   * @returns 추출된 텍스트 문자열
-   */
-  public static async extractTextFromFile(filePath: string): Promise<string> {
-    return this.extractText(filePath);
   }
 
   /**
@@ -113,36 +101,33 @@ export class PdfManager {
   ): Promise<string> {
     try {
       // 임시 파일 생성
-      const tempFilePath = `/tmp/pdf-${Date.now()}.pdf`;
-      await fs.promises.writeFile(tempFilePath, pdfBytes);
-
+      const tempDir = path.join(process.cwd(), 'tmp');
+      
+      // 임시 디렉토리가 없으면 생성
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const tempFilePath = path.join(tempDir, `pdf-page-${Date.now()}.pdf`);
+      
       try {
-        // 임시 파일에서 특정 페이지 텍스트 추출
-        const extractedText = await this.extractTextFromPage(tempFilePath, pageNumber);
-        return extractedText;
+        // 바이너리 데이터를 임시 파일로 저장
+        await fs.promises.writeFile(tempFilePath, Buffer.from(pdfBytes));
+        
+        // 특정 페이지 텍스트 추출
+        const result = await this.extractTextFromPage(tempFilePath, pageNumber);
+        
+        return result;
       } finally {
         // 임시 파일 삭제
-        await fs.promises.unlink(tempFilePath).catch((err) => {
-          console.error('임시 파일 삭제 중 오류 발생:', err);
-        });
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
       }
     } catch (error) {
       console.error('PDF 페이지 텍스트 추출 중 오류 발생:', error);
-      throw new Error('PDF 페이지 텍스트 추출에 실패했습니다.');
+      throw new Error(`PDF 페이지 텍스트 추출에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }
-
-  /**
-   * PDF 파일 경로에서 특정 페이지의 텍스트를 추출합니다.
-   * @param filePath PDF 파일 경로
-   * @param pageNumber 페이지 번호 (1부터 시작)
-   * @returns 추출된 텍스트 문자열
-   */
-  public static async extractTextFromPageFile(
-    filePath: string,
-    pageNumber: number
-  ): Promise<string> {
-    return this.extractTextFromPage(filePath, pageNumber);
   }
 
   /**

@@ -144,7 +144,6 @@ export default function ResumeUploadPage() {
   const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
   const [openJobTitle, setOpenJobTitle] = useState(false);
 
-  console.log(progressValue);
 
   // Form setup with react-hook-form and zod validation
   const form = useForm<FormValues>({
@@ -341,7 +340,23 @@ export default function ResumeUploadPage() {
       });
 
       if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
+        console.error('Upload failed with status:', uploadResponse.status);
+        console.error('Response headers:', Object.fromEntries([...uploadResponse.headers.entries()]));
+        
+        // 응답 타입 확인
+        const contentType = uploadResponse.headers.get('content-type');
+        console.error('Content-Type:', contentType);
+        
+        let errorData;
+        
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await uploadResponse.json();
+          console.error('Error response (JSON):', errorData);
+        } else {
+          errorData = { message: await uploadResponse.text() };
+          console.error('Error response (Text):', errorData.message);
+        }
+        
         throw new Error(errorData.message || 'An error occurred while uploading the file.');
       }
 
