@@ -60,6 +60,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useWallets } from '@privy-io/react-auth';
 
 // Job role hierarchical data
 type JobRolesData = {
@@ -297,6 +298,9 @@ export default function ResumeUploadPage() {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('userId', session?.user?.id || '');
+
+      // TODO : wallet address 넘기기
+      formData.append('walletAddress', wallets[0]?.address || '');
 
       // 메타데이터에 선택된 직업 정보 추가
       const fullJobTitle = selectedJobTitle

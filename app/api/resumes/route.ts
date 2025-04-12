@@ -6,12 +6,14 @@ import {
   getLatestCoverletterByCidAndUserId,
   saveCoverletterText,
   type ResumeMetadata,
+  saveIpAsset,
 } from '@/db';
 import { put } from '@vercel/blob';
 import axios from 'axios';
 import { PdfManager } from '@/utils/PdfManager';
-import { AI_AGENT_URL } from '@/utils/config';
+import { AI_AGENT_URL, client } from '@/utils/config';
 import console from 'console';
+import { creativeCommonsAttribution } from '@/utils/terms';
 
 export async function GET(request: Request) {
   try {
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File;
     const userId = formData.get('userId') as string;
     const metadata = formData.get('metadata') as string;
-
+    const walletAddress = formData.get('walletAddress') as string;
     console.log('Received upload request - userId:', userId);
     console.log('Received file:', file ? `${file.name} (${file.size} bytes)` : 'No file');
     console.log('metadata:', metadata);
@@ -117,6 +119,48 @@ export async function POST(request: Request) {
     }
 
     // Return both CID and complete uploadResponse
+    try {
+      const response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
+        spgNftContract: process.env.STORY_SPG_NFT_CONTRACT as `0x${string}`,
+        ipMetadata: {
+          ipMetadataURI: blob.url,
+        },
+        recipient: walletAddress as `0x${string}`,
+        licenseTermsData: [
+          {
+            terms: creativeCommonsAttribution.terms,
+          },
+        ],
+        allowDuplicates: true,
+        txOptions: {
+          waitForTransaction: true,
+        },
+      });
+
+      // 라이선스와 함께 등록된 경우 licenseTermId 저장
+      await saveIpAsset(
+        Number(userId),
+        Number(response.tokenId),
+        response.licenseTermsIds && response.licenseTermsIds.length > 0 
+          ? Number(response.licenseTermsIds[0]) 
+          : 0,
+        cid,
+        response.ipId || '',
+        response.txHash || ''
+      );
+    } catch (error) {
+      console.error('Error processing Story IP:', error);
+      return NextResponse.json(
+        {
+          status: 'error',
+          message:
+            'Error processing Story IP : ' +
+            (error instanceof Error ? error.message : String(error)),
+        },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json({ url: blob.url, cid });
   } catch (error) {
     console.error('Error uploading file:', error);
