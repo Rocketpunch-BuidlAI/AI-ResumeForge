@@ -630,23 +630,7 @@ export default function PlaygroundPage() {
                                       )}
                                     />
 
-                                    <FormField
-                                      control={form.control}
-                                      name="position"
-                                      render={({
-                                        field,
-                                      }: {
-                                        field: ControllerRenderProps<FormValues, 'position'>;
-                                      }) => (
-                                        <FormItem>
-                                          <FormLabel>Position</FormLabel>
-                                          <FormControl>
-                                            <Input placeholder="Position/Job title" {...field} />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
+                                   
                                   </div>
                                 </form>
                               </Form>
