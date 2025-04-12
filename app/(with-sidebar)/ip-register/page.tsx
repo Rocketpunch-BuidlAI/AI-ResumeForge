@@ -7,15 +7,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 
 export default function IpRegisterPage() {
   const { data: session } = useSession();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     cid: '',
+    withoutLicense: false,
   });
   const [response, setResponse] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +56,7 @@ export default function IpRegisterPage() {
           cid: formData.cid,
           walletAddress,
           userId: session.user.id,
+          withoutLicense: formData.withoutLicense,
         }),
       });
 
@@ -113,6 +116,19 @@ export default function IpRegisterPage() {
                 placeholder="Qm..."
                 required
               />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="withoutLicense"
+                checked={formData.withoutLicense}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({ ...prev, withoutLicense: checked }))
+                }
+              />
+              <Label htmlFor="withoutLicense">
+                {formData.withoutLicense ? 'Register without license' : 'Register with license'}
+              </Label>
             </div>
 
             <Button type="submit" disabled={isLoading || !session?.user?.id}>
