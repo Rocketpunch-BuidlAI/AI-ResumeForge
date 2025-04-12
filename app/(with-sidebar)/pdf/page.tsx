@@ -6,6 +6,7 @@ export default function Home() {
   const [file, setFile] = useState<File>();
   const [url, setUrl] = useState('');
   const [cid, setCid] = useState('');
+  const [uploadResponse, setUploadResponse] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
 
   const uploadFile = async () => {
@@ -26,6 +27,7 @@ export default function Home() {
       const response = await uploadRequest.json();
       setUrl(response.url);
       setCid(response.cid);
+      setUploadResponse(response.uploadResponse);
       setUploading(false);
     } catch (e) {
       console.log(e);
@@ -68,6 +70,14 @@ export default function Home() {
               {url}
             </a>
             <p className="mt-2 text-sm text-gray-500">CID: {cid}</p>
+            {uploadResponse && (
+              <div className="mt-4 text-left">
+                <p className="mb-2 text-sm font-semibold text-gray-500">메타 정보:</p>
+                <pre className="whitespace-pre-wrap rounded bg-gray-100 p-4 text-xs">
+                  {JSON.stringify(uploadResponse, null, 2)}
+                </pre>
+              </div>
+            )}
           </div>
         )}
       </main>

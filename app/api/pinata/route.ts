@@ -12,13 +12,16 @@ export async function POST(request: Request) {
       return NextResponse.json('File and user ID are required.', { status: 400 });
     }
 
-    const { cid } = await pinata.upload.public.file(file);
+    // Get the complete response object
+    const uploadResponse = await pinata.upload.public.file(file);
+    const { cid } = uploadResponse;
     const url = await pinata.gateways.public.convert(cid);
 
-    // save in database
+    // Save to database
     await saveCoverletter(Number(userId), cid, url);
 
-    return NextResponse.json({ url, cid });
+    // Return both CID and complete uploadResponse
+    return NextResponse.json({ url, cid, uploadResponse });
   } catch (error) {
     console.error('Error uploading file:', error);
     return NextResponse.json('An error occurred while uploading the file.', { status: 500 });
