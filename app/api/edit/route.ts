@@ -1,62 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PdfManager } from '@/utils/PdfManager';
 import axios from 'axios';
 
 const AI_AGENT_URL = process.env.AI_AGENT_BASE_URL;
 
-// 응답 타입 정의
-interface SourceContribution {
-  id: string;
-  contributions: number;
-}
+// note. 다른 자기소개서 IP를 활용하여 새로운 자기소개서 생성
 
-interface EditResponse {
-  enhanced_cover_letter: string;
-  used_sources: SourceContribution[];
-}
+// 요청 타입 정의
+type CoverLetterSection = {
+  selfIntroduction: string;
+  motivation: string;
+  relevantExperience: string;
+  futureAspirations: string;
+  targetCompany: string;
+  department: string;
+  position: string;
+  original_cover_letter: File;
+  metadata: string;
+};
 
 export async function POST(request: NextRequest) {
   try {
-    // FormData 파싱
-    const formData = await request.formData();
-    
-    // 파일 및 메타데이터 추출
-    const original_cover_letter = formData.get('original_cover_letter') as File;
-    const metadataStr = JSON.parse(formData.get('metadata') as string);
-    
-    // 필수 필드 검증
-    if (!original_cover_letter) {
-      return NextResponse.json(
-        { status: 'error', message: 'Original cover letter file is required' },
-        { status: 400 }
-      );
+    // 요청 데이터 파싱
+    const jsonData = await request.json() as CoverLetterSection;
+
+    // 필수 필드 non-blank 검증
+    const requiredFields = [
+      'selfIntroduction',
+      'motivation',
+      'relevantExperience',
+      'futureAspirations'
+    ] as const;
+
+    for (const field of requiredFields) {
+      const value = jsonData[field];
+      if (typeof value !== 'string' || !value.trim()) {
+        return NextResponse.json(
+          { status: 'error', message: `${field} is required and cannot be empty` },
+          { status: 400 }
+        );
+      }
     }
-    
-    if (!metadataStr) {
-      return NextResponse.json(
-        { status: 'error', message: 'Metadata is required' },
-        { status: 400 }
-      );
-    }
-    
-    // 메타데이터 파싱
-    try {
-      JSON.parse(metadataStr); // 메타데이터 유효성 검사만 수행
-    } catch {
-      return NextResponse.json(
-        { status: 'error', message: 'Invalid metadata format' },
-        { status: 400 }
-      );
-    }
-    
-    // PDF 텍스트 추출
-    const pdfBytes = new Uint8Array(await original_cover_letter.arrayBuffer());
-    const extractedText = await PdfManager.extractTextFromBytes(pdfBytes); // 텍스트 추출 확인
 
     const response = await axios.post(`${AI_AGENT_URL}/edit`, {
-      original_cover_letter: extractedText,
-      metadata: metadataStr
+      selfIntroduction: jsonData.selfIntroduction,
+      motivation: jsonData.motivation,
+      relevantExperience: jsonData.relevantExperience,
+      futureAspirations: jsonData.futureAspirations,
+      metadata: {
+        targetCompany: jsonData.targetCompany,
+        department: jsonData.department,
+        position: jsonData.position,
+      },
     });
+
+    const aiAgentResponse = response.data;
 
     if(response.status !== 200) {
       return NextResponse.json(
@@ -64,12 +61,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const aiAgentResponse = response.data;
-    
     
     // 성공 응답 반환
-    return NextResponse.json(response);
+    return NextResponse.json(aiAgentResponse, { status: 200 });
     
   } catch (error) {
     console.error('Edit error:', error);
