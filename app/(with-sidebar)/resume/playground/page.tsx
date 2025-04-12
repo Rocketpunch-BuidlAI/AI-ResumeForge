@@ -1,8 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { RotateCcw, BarChart, ChevronRight, FileText, Briefcase, Check } from 'lucide-react';
+import { RotateCcw, BarChart, ChevronRight, FileText, Briefcase, Check, X } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -66,6 +67,7 @@ const formSchema = z.object({
   company: z.string().optional(),
   department: z.string().optional(),
   position: z.string().optional(),
+  customPrompt: z.string().optional(),
 });
 
 // Define type for form values
@@ -149,6 +151,13 @@ const referencedResumes = [
 ];
 
 export default function PlaygroundPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [resultText, setResultText] = useState<string>('');
+  const [parsedResult, setParsedResult] = useState<{
+    text?: string;
+    sources?: Array<{ id: string; contributions: number }>;
+  } | null>(null);
+
   // Form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -161,6 +170,7 @@ export default function PlaygroundPage() {
       company: '',
       department: '',
       position: '',
+      customPrompt: '',
     },
   });
 
@@ -200,9 +210,106 @@ export default function PlaygroundPage() {
     form.setValue('jobTitle', jobTitle, { shouldValidate: true });
   };
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log('values', values);
+    setIsLoading(true);
+    setResultText('');
+    setParsedResult(null);
+    
+    try {
+      const response = await fetch('/api/edit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          selfIntroduction: values.introduction,
+          motivation: values.motivation,
+          relevantExperience: values.experience,
+          futureAspirations: values.aspirations,
+          targetCompany: values.company || null,
+          department: values.department || null,
+          position: values.jobTitle || null,
+          customPrompt: values.customPrompt || '',
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || '자기소개서 생성에 실패했습니다.');
+      }
+      
+      // Store the raw text
+      setResultText(data.result || data.coverLetter || JSON.stringify(data, null, 2));
+      
+      // Try to parse the JSON response if it's a string
+      try {
+        // Check if data is already an object with text property
+        if (typeof data.text === 'string') {
+          setParsedResult(data);
+        } 
+        // Check if data has result/coverLetter as a string that might be JSON
+        else if (typeof data.result === 'string' || typeof data.coverLetter === 'string') {
+          const textContent = data.result || data.coverLetter;
+          try {
+            const parsed = JSON.parse(textContent);
+            setParsedResult(parsed);
+          } catch {
+            // If it's not valid JSON, use it as plain text
+            setParsedResult({ text: textContent });
+          }
+        } 
+        // If we just have raw data
+        else {
+          setParsedResult(data);
+        }
+      } catch (e) {
+        // If parsing fails, we'll fall back to the raw text display
+        console.error("Failed to parse result:", e);
+      }
+      
+      toast('자기소개서 생성 완료', {
+        description: '자기소개서가 성공적으로 생성되었습니다.',
+        icon: <Check className="h-4 w-4 text-green-500" />,
+      });
+    } catch (error) {
+      console.error('제출 오류:', error);
+      toast('오류 발생', {
+        description: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+        style: { backgroundColor: 'hsl(var(--destructive))' },
+        icon: <X className="h-4 w-4 text-white" />,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
+
+  // Helper function to format paragraphs with spacing and styling
+  const formatCoverLetter = (text: string) => {
+    // Replace placeholders with actual values if available
+    let formattedText = text;
+    const company = form.getValues('company');
+    const jobTitle = form.getValues('jobTitle');
+    const department = form.getValues('department');
+    
+    if (company) {
+      formattedText = formattedText.replace(/\[targetCompany\]/g, company);
+    }
+    if (jobTitle) {
+      formattedText = formattedText.replace(/\[position\]/g, jobTitle);
+    }
+    if (department) {
+      formattedText = formattedText.replace(/\[specific department\]/g, department);
+    }
+    
+    // Split by paragraphs and map to styled components
+    return formattedText.split('\n\n').map((paragraph, index) => (
+      <p key={index} className="mb-4">
+        {paragraph}
+      </p>
+    ));
+  };
 
   return (
     <div className="h-full w-full flex-1 px-15">
@@ -696,27 +803,89 @@ export default function PlaygroundPage() {
                                         </FormItem>
                                       )}
                                     />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="customPrompt"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'customPrompt'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel>Custom Instructions (Optional)</FormLabel>
+                                          <FormControl>
+                                            <Textarea
+                                              placeholder="Any specific instructions for generating your resume"
+                                              className="min-h-[80px]"
+                                              {...field}
+                                            />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
                                   </div>
                                 </form>
                               </Form>
                             </CardContent>
                           </Card>
                         </div>
-                        <div className="flex flex-col space-y-2">
-                          <Label htmlFor="instructions">Instructions</Label>
-                          <Textarea
-                            id="instructions"
-                            placeholder="Generate a professional resume based on the information provided above."
-                          />
-                        </div>
                       </div>
-                      <div className="bg-muted mt-[21px] min-h-[400px] rounded-md border lg:min-h-[700px]" />
+                      <div className="bg-muted mt-[21px] min-h-[400px] rounded-md border lg:min-h-[700px] p-4 overflow-auto">
+                        {isLoading ? (
+                          <div className="flex h-full items-center justify-center">
+                            <div className="text-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                              <p className="text-muted-foreground">자기소개서 생성 중...</p>
+                            </div>
+                          </div>
+                        ) : parsedResult?.text ? (
+                          <div className="max-w-3xl mx-auto bg-card p-6 rounded-lg shadow-sm">
+                            <div className="prose prose-sm dark:prose-invert">
+                              {formatCoverLetter(parsedResult.text)}
+                            </div>
+                            
+                            {parsedResult.sources && parsedResult.sources.length > 0 && (
+                              <div className="mt-8 pt-4 border-t border-border">
+                                <h4 className="text-sm font-semibold mb-2">참고 소스</h4>
+                                <div className="text-sm text-muted-foreground">
+                                  {parsedResult.sources.map((source, index) => (
+                                    <div key={index} className="flex justify-between items-center mb-1">
+                                      <span>{source.id || '기본 템플릿'}</span>
+                                      <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                                        {source.contributions}%
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : resultText ? (
+                          <div className="whitespace-pre-wrap">{resultText}</div>
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-muted-foreground">
+                            <p>폼을 작성하고 Submit 버튼을 클릭하면 결과가 여기에 표시됩니다.</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button onClick={form.handleSubmit(onSubmit)}>Submit</Button>
-                      <Button variant="secondary">
-                        <span className="sr-only">Show history</span>
-                        <RotateCcw />
+                      <Button 
+                        onClick={form.handleSubmit(onSubmit)} 
+                        disabled={isLoading}
+                      >
+                        {isLoading ? '처리 중...' : 'Submit'}
+                      </Button>
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => setResultText('')}
+                        disabled={isLoading || !resultText}
+                      >
+                        <span className="sr-only">Clear result</span>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        초기화
                       </Button>
                     </div>
                   </div>
