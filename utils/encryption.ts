@@ -26,14 +26,14 @@ export function decryptCID(encryptedCID: string): string {
   try {
     const bytes = CryptoJS.AES.decrypt(encryptedCID, ENCRYPTION_KEY);
     const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-    
+
     if (!decrypted) {
       throw new Error('Decrypted CID is empty');
     }
-    
+
     return decrypted;
   } catch (error) {
     console.error('Error during CID decryption:', error);
     throw new Error('Failed to decrypt CID');
   }
-} 
+}

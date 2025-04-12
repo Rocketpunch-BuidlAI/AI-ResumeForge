@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getIpAssetByCid, getIpAssetByIpId, saveCoverletter, saveCoverletterWithReferences, saveIpAsset, saveIpReference, saveRoyalty } from '@/db';
+import {
+  getIpAssetByCid,
+  getIpAssetByIpId,
+  saveCoverletter,
+  saveCoverletterWithReferences,
+  saveIpAsset,
+  saveIpReference,
+  saveRoyalty,
+} from '@/db';
 import { AI_AGENT_URL, client, publicClient, stroyAccount, walletClient } from '@/utils/config';
 import { put } from '@vercel/blob';
 import axios from 'axios';
@@ -20,18 +28,18 @@ export async function POST(request: Request) {
     const metadata = formData.get('metadata') as string;
 
     if (!pdf || !text || !walletAddress || !userId || !referencesJson || !metadata) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // references JSON 파싱
     const references = JSON.parse(referencesJson);
-    
+
     // contributions 값이 높은 상위 3개만 선택
     const topReferences = references
-      .sort((a: { contributions: number }, b: { contributions: number }) => b.contributions - a.contributions)
+      .sort(
+        (a: { contributions: number }, b: { contributions: number }) =>
+          b.contributions - a.contributions
+      )
       .slice(0, 3);
 
     // TODO: Story IP 등록
@@ -45,7 +53,7 @@ export async function POST(request: Request) {
     // CID와 파일 경로 추출
     const cid = blob.url.split('/').pop() ?? blob.url;
     const filePath = blob.url;
-    
+
     // 데이터베이스에 Coverletter 정보 저장
     const savedCoverletterId = await saveCoverletter(Number(userId), cid, filePath, metadata, true);
 
@@ -79,11 +87,7 @@ export async function POST(request: Request) {
     }
 
     // 이력서 텍스트와 참조 정보 저장
-    await saveCoverletterWithReferences(
-      savedCoverletterId,
-      text,
-      topReferences
-    );
+    await saveCoverletterWithReferences(savedCoverletterId, text, topReferences);
 
     // Get all IP asset information for references
     const ipAssets = [];
@@ -95,7 +99,7 @@ export async function POST(request: Request) {
       }
       ipAssets.push({
         ...ipAsset[0],
-        contribution: ref.contributions
+        contribution: ref.contributions,
       });
     }
 
@@ -150,7 +154,7 @@ export async function POST(request: Request) {
         spgNftContract: process.env.STORY_SPG_NFT_CONTRACT as `0x${string}`,
         licenseTokenIds: licenseTokenIds,
         ipMetadata: {
-          ipMetadataURI: savedCoverletterId.toString()
+          ipMetadataURI: savedCoverletterId.toString(),
         },
         maxRts: 100_000_000,
         txOptions: { waitForTransaction: true },
@@ -173,10 +177,7 @@ export async function POST(request: Request) {
           // Get parent IP asset ID from database
           const parentIpAsset = await getIpAssetByIpId(ipAsset.ipId);
           if (parentIpAsset && parentIpAsset.length > 0) {
-            await saveIpReference(
-              savedIpAsset[0].id,
-              parentIpAsset[0].id
-            );
+            await saveIpReference(savedIpAsset[0].id, parentIpAsset[0].id);
           }
         }
       }
@@ -199,7 +200,7 @@ export async function POST(request: Request) {
           ancestorIpId: ipAsset.ipId as `0x${string}`,
           claimer: ipAsset.ipId as `0x${string}`,
           childIpIds: [],
-          royaltyPolicies: ["0xBe54FB168b3c982b7AaE60dB6CF75Bd8447b390E"],
+          royaltyPolicies: ['0xBe54FB168b3c982b7AaE60dB6CF75Bd8447b390E'],
           currencyTokens: [WIP_TOKEN_ADDRESS],
         });
 
@@ -212,7 +213,7 @@ export async function POST(request: Request) {
           savedIpAsset[0].id,
           Number(ipAsset.contribution),
           payRoyalty.txHash || '',
-          parentClaimRevenue.txHashes[0] || '',
+          parentClaimRevenue.txHashes[0] || ''
         );
       }
     } else {
@@ -237,8 +238,8 @@ export async function POST(request: Request) {
       await saveIpAsset(
         Number(userId),
         Number(response.tokenId),
-        response.licenseTermsIds && response.licenseTermsIds.length > 0 
-          ? Number(response.licenseTermsIds[0]) 
+        response.licenseTermsIds && response.licenseTermsIds.length > 0
+          ? Number(response.licenseTermsIds[0])
           : 0,
         savedCoverletterId.toString(),
         response.ipId || '',

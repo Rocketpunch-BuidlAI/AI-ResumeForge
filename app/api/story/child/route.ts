@@ -3,16 +3,23 @@ import { getWalletAddressByEmail } from '@/utils/privy';
 import { client, stroyAccount } from '@/utils/config';
 import { publicClient, walletClient } from '@/utils/config';
 import { defaultNftContractAbi } from '@/utils/defaultNftContractAbi';
-import { WIP_TOKEN_ADDRESS } from '@story-protocol/core-sdk'
+import { WIP_TOKEN_ADDRESS } from '@story-protocol/core-sdk';
 import { saveIpAsset, saveIpReference, getIpAssetByIpId, saveRoyalty } from '@/db';
-import { zeroAddress } from 'viem'
+import { zeroAddress } from 'viem';
 import { encryptCID } from '@/utils/encryption';
 
 export async function POST(request: Request) {
   try {
     const { email, licenseInfos, cid, userId } = await request.json();
 
-    if (!email || !licenseInfos || !Array.isArray(licenseInfos) || licenseInfos.length === 0 || !cid || !userId) {
+    if (
+      !email ||
+      !licenseInfos ||
+      !Array.isArray(licenseInfos) ||
+      licenseInfos.length === 0 ||
+      !cid ||
+      !userId
+    ) {
       return NextResponse.json({ error: 'Required parameters are missing' }, { status: 400 });
     }
 
@@ -71,7 +78,7 @@ export async function POST(request: Request) {
       spgNftContract: process.env.STORY_SPG_NFT_CONTRACT as `0x${string}`,
       licenseTokenIds: licenseTokenIds,
       ipMetadata: {
-        ipMetadataURI: encryptCID(cid)
+        ipMetadataURI: encryptCID(cid),
       },
       maxRts: 100_000_000,
       txOptions: { waitForTransaction: true },
@@ -94,46 +101,43 @@ export async function POST(request: Request) {
         // Get parent IP asset ID from database
         const parentIpAsset = await getIpAssetByIpId(licenseInfo.licensorIpId);
         if (parentIpAsset && parentIpAsset.length > 0) {
-          await saveIpReference(
-            savedIpAsset[0].id,
-            parentIpAsset[0].id
-          );
+          await saveIpReference(savedIpAsset[0].id, parentIpAsset[0].id);
         }
       }
     }
 
     for (const licenseInfo of licenseInfos) {
-        const payRoyalty = await client.royalty.payRoyaltyOnBehalf({
-              receiverIpId: licenseInfo.licensorIpId as `0x${string}`,
-              payerIpId: zeroAddress,
-              token: WIP_TOKEN_ADDRESS,
-              amount: licenseInfo.maxMintingFee,
-              txOptions: { waitForTransaction: true },
-        })
+      const payRoyalty = await client.royalty.payRoyaltyOnBehalf({
+        receiverIpId: licenseInfo.licensorIpId as `0x${string}`,
+        payerIpId: zeroAddress,
+        token: WIP_TOKEN_ADDRESS,
+        amount: licenseInfo.maxMintingFee,
+        txOptions: { waitForTransaction: true },
+      });
 
-        console.log('Paid royalty:', {
-              'Transaction Hash': payRoyalty.txHash,
-        })
+      console.log('Paid royalty:', {
+        'Transaction Hash': payRoyalty.txHash,
+      });
 
-        const parentClaimRevenue = await client.royalty.claimAllRevenue({
-              ancestorIpId: licenseInfo.licensorIpId,
-              claimer: licenseInfo.licensorIpId,
-              childIpIds: [],
-              royaltyPolicies: ["0xBe54FB168b3c982b7AaE60dB6CF75Bd8447b390E"],
-              currencyTokens: [WIP_TOKEN_ADDRESS],
-        })
+      const parentClaimRevenue = await client.royalty.claimAllRevenue({
+        ancestorIpId: licenseInfo.licensorIpId,
+        claimer: licenseInfo.licensorIpId,
+        childIpIds: [],
+        royaltyPolicies: ['0xBe54FB168b3c982b7AaE60dB6CF75Bd8447b390E'],
+        currencyTokens: [WIP_TOKEN_ADDRESS],
+      });
 
-        console.log('Parent claimed revenue receipt:', parentClaimRevenue)
+      console.log('Parent claimed revenue receipt:', parentClaimRevenue);
 
-        const parentIpAsset = await getIpAssetByIpId(licenseInfo.licensorIpId);
-        // Save royalty information
-        await saveRoyalty(
-          parentIpAsset[0].id,
-          savedIpAsset[0].id,
-          Number(licenseInfo.maxMintingFee),
-          payRoyalty.txHash || '',
-          parentClaimRevenue.txHashes[0] || '',
-        );
+      const parentIpAsset = await getIpAssetByIpId(licenseInfo.licensorIpId);
+      // Save royalty information
+      await saveRoyalty(
+        parentIpAsset[0].id,
+        savedIpAsset[0].id,
+        Number(licenseInfo.maxMintingFee),
+        payRoyalty.txHash || '',
+        parentClaimRevenue.txHashes[0] || ''
+      );
     }
 
     return NextResponse.json({

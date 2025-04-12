@@ -8,7 +8,9 @@ import { aeneid } from '@story-protocol/core-sdk';
 const privateKey: Address = `0x${process.env.WALLET_PRIVATE_KEY}`;
 const account: Account = privateKeyToAccount(privateKey);
 
-export const stroyAccount: Account = privateKeyToAccount(`0x${process.env.WALLET_PRIVATE_KEY}` as Address)
+export const stroyAccount: Account = privateKeyToAccount(
+  `0x${process.env.WALLET_PRIVATE_KEY}` as Address
+);
 
 const config: StoryConfig = {
   account: account, // Account object from above

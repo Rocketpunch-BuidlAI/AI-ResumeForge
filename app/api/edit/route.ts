@@ -24,12 +24,15 @@ type CoverLetterSection = {
 // Response schema definition
 const coverLetterSchema = z.object({
   text: z.string().describe('Generated cover letter content'),
-  sources: z.array(
-    z.object({
-      id: z.string().describe('Referenced template ID'),
-      contributions: z.number().describe('Contribution percentage')
-    })
-  ).describe('Reference template information').optional()
+  sources: z
+    .array(
+      z.object({
+        id: z.string().describe('Referenced template ID'),
+        contributions: z.number().describe('Contribution percentage'),
+      })
+    )
+    .describe('Reference template information')
+    .optional(),
 });
 
 export const maxDuration = 300;
@@ -37,7 +40,7 @@ export const maxDuration = 300;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { payload, body: { role, experience } } = body;
+    const { payload, body: { role, experience }, modelParams } = body;
 
     const response = await axios.post(`${AI_AGENT_URL}/coverletters`, {
       role: role,
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const data = await response.data;
 
-    console.log("data", data)
+    console.log('data', data);
 
     // Parse request data
     const jsonData = payload as CoverLetterSection;
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log("data", data)
+    console.log('data', data);
 
     // Compose prompt
     let systemPrompt = `
@@ -147,18 +150,19 @@ ADDITIONAL REQUIREMENTS:
 ${jsonData.customPrompt}
 `;
     }
-    
+
     // JSON 형식 안내를 시스템 프롬프트에 추가
     const jsonFormat = JSON.stringify(zodToJsonSchema(coverLetterSchema));
     systemPrompt += `\nReturn your response only in this JSON format: ${jsonFormat}`;
-    
-    console.log("프롬프트", systemPrompt);
+
+    console.log('프롬프트', systemPrompt);
 
     // streamText 사용하여 응답 생성
     const result = streamText({
       model: anthropic('claude-3-7-sonnet-20250219'),
       prompt: systemPrompt,
-      temperature: 0.7,
+      temperature: modelParams?.temperature ?? 0.7,
+      maxTokens: modelParams?.max_tokens ?? 4000,
       onError({ error }) {
         console.error('Streaming error:', error);
       },

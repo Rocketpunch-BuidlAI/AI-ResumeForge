@@ -1,5 +1,16 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { pgTable, serial, varchar, bigint, timestamp, text, json, integer, doublePrecision, boolean } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  serial,
+  varchar,
+  bigint,
+  timestamp,
+  text,
+  json,
+  integer,
+  doublePrecision,
+  boolean,
+} from 'drizzle-orm/pg-core';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
@@ -81,7 +92,7 @@ const ipReferences = pgTable('IpReferences', {
   reference_ip_id: bigint('reference_ip_id', { mode: 'number' }).notNull(),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-}); 
+});
 
 // 이력서 텍스트 저장 테이블
 const coverletterTexts = pgTable('CoverletterText', {
@@ -91,7 +102,6 @@ const coverletterTexts = pgTable('CoverletterText', {
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
-
 
 // Royalty Information Table
 const royalties = pgTable('Royalty', {
@@ -107,8 +117,12 @@ const royalties = pgTable('Royalty', {
 
 const coverletterReferences = pgTable('CoverletterReferences', {
   id: serial('id').primaryKey(),
-  coverletterId: integer('coverletter_id').notNull().references(() => coverletters.id),
-  referencedCoverletterId: integer('referenced_coverletter_id').notNull().references(() => coverletters.id),
+  coverletterId: integer('coverletter_id')
+    .notNull()
+    .references(() => coverletters.id),
+  referencedCoverletterId: integer('referenced_coverletter_id')
+    .notNull()
+    .references(() => coverletters.id),
   contribution: integer('contribution').notNull(),
 
   created_at: timestamp('created_at').defaultNow(),
@@ -163,24 +177,27 @@ export async function saveCoverletter(
     jobSpecific: metadataObj.jobSpecific || null,
   });
 
-  const result = await db.insert(coverletters).values({
-    userId,
-    cid,
-    filePath,
-    jobTitle: metadataObj.jobTitle || null,
-    jobCategory: metadataObj.jobCategory || null,
-    jobSubcategory: metadataObj.jobSubcategory || null,
-    jobSpecific: metadataObj.jobSpecific || null,
-    companyName: metadataObj.companyName || null,
-    yearsOfExperience: metadataObj.yearsOfExperience || null,
-    skills: metadataObj.skills || null,
-    additionalInfo: metadataObj.additionalInfo || null,
-    fileName: metadataObj.fileName || null,
-    fileSize: metadataObj.fileSize || null,
-    fileType: metadataObj.fileType || null,
-    metadata: metadata,
-    aiGenerated: aiGenerated || false,
-  }).returning({ id: coverletters.id });
+  const result = await db
+    .insert(coverletters)
+    .values({
+      userId,
+      cid,
+      filePath,
+      jobTitle: metadataObj.jobTitle || null,
+      jobCategory: metadataObj.jobCategory || null,
+      jobSubcategory: metadataObj.jobSubcategory || null,
+      jobSpecific: metadataObj.jobSpecific || null,
+      companyName: metadataObj.companyName || null,
+      yearsOfExperience: metadataObj.yearsOfExperience || null,
+      skills: metadataObj.skills || null,
+      additionalInfo: metadataObj.additionalInfo || null,
+      fileName: metadataObj.fileName || null,
+      fileSize: metadataObj.fileSize || null,
+      fileType: metadataObj.fileType || null,
+      metadata: metadata,
+      aiGenerated: aiGenerated || false,
+    })
+    .returning({ id: coverletters.id });
 
   return result[0].id;
 }
@@ -202,14 +219,17 @@ export async function saveIpAsset(
   ipId: string,
   txHash: string
 ): Promise<{ id: number }[]> {
-  return await db.insert(ipAssets).values({
-    userId,
-    tokenId,
-    licenseTermId,
-    cid,
-    ipId,
-    txHash,
-  }).returning({ id: ipAssets.id });
+  return await db
+    .insert(ipAssets)
+    .values({
+      userId,
+      tokenId,
+      licenseTermId,
+      cid,
+      ipId,
+      txHash,
+    })
+    .returning({ id: ipAssets.id });
 }
 
 // Function to retrieve IP asset registration information
@@ -343,10 +363,7 @@ export async function getUserIPs(userId: number) {
 }
 
 export async function getRoyaltiesByIpIds(ipIds: number[]) {
-  return await db
-    .select()
-    .from(royalties)
-    .where(inArray(royalties.parentIpId, ipIds));
+  return await db.select().from(royalties).where(inArray(royalties.parentIpId, ipIds));
 }
 
 async function ensureTablesExist() {

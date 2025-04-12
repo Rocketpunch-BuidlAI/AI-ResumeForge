@@ -1,7 +1,20 @@
 'use client';
 
 import Image from 'next/image';
-import { RotateCcw, BarChart, ChevronRight, FileText, Briefcase, Check, X, Tag, Clock, Building2, Users, FileEdit } from 'lucide-react';
+import {
+  RotateCcw,
+  BarChart,
+  ChevronRight,
+  FileText,
+  Briefcase,
+  Check,
+  X,
+  Tag,
+  Clock,
+  Building2,
+  Users,
+  FileEdit,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -162,12 +175,14 @@ const referencedResumes = [
 // 스키마 정의
 const coverLetterSchema = z.object({
   text: z.string().describe('자기소개서 생성된 텍스트 내용'),
-  sources: z.array(
-    z.object({
-      id: z.string().describe('참고 소스 ID'),
-      contributions: z.number().describe('기여도 (백분율)'),
-    })
-  ).optional(),
+  sources: z
+    .array(
+      z.object({
+        id: z.string().describe('참고 소스 ID'),
+        contributions: z.number().describe('기여도 (백분율)'),
+      })
+    )
+    .optional(),
 });
 
 export default function PlaygroundPage() {
@@ -200,7 +215,7 @@ export default function PlaygroundPage() {
     schema: coverLetterSchema,
   });
 
-  console.log("object", object);
+  console.log('object', object);
 
   // 직업 선택 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -209,6 +224,10 @@ export default function PlaygroundPage() {
   const [openJobCategory, setOpenJobCategory] = useState(false);
   const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
   const [openJobTitle, setOpenJobTitle] = useState(false);
+
+  const [temperature, setTemperature] = useState<number[]>([0.7]);
+  const [maxLength, setMaxLength] = useState<number[]>([4000]);
+  const [topP, setTopP] = useState<number[]>([0.9]);
 
   // 직업 카테고리 변경 핸들러
   const handleCategoryChange = (category: string) => {
@@ -239,24 +258,21 @@ export default function PlaygroundPage() {
   };
 
   const fullJobTitle = selectedJobTitle
-        ? selectedCategory === 'Professional Services'
-          ? selectedJobTitle
-          : `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
-        : form.getValues('jobTitle');
-
-        // 경력에 따라 S(시니어) 또는 J(주니어) 결정
-    let experienceLevel = "J";
-    if (form.getValues('yearsOfExperience') === "5-10 years" || form.getValues('yearsOfExperience') === "10+ years") {
-      experienceLevel = "S";
-    }
+    ? selectedCategory === 'Professional Services'
+      ? selectedJobTitle
+      : `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
+    : form.getValues('jobTitle');
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log('폼 제출 시작', values);
     setError(null);
 
- 
-    
-    
+    // 경력에 따라 S(시니어) 또는 J(주니어) 결정
+    const experienceLevel =
+      form.getValues('yearsOfExperience') === '5-10 years' ||
+      form.getValues('yearsOfExperience') === '10+ years'
+        ? 'S'
+        : 'J';
 
     const payload = {
       selfIntroduction: values.introduction,
@@ -270,27 +286,34 @@ export default function PlaygroundPage() {
       skills: values.skills || '',
       experience: values.yearsOfExperience,
     };
-    
+
     console.log('API 요청 데이터:', payload);
-    
+
     try {
       // 작업 시작 알림
       toast('자기소개서 생성 시작', {
         description: '자기소개서가 생성되고 있습니다.',
         icon: <Check className="h-4 w-4 text-green-500" />,
       });
-      
+
       // useObject submit 메서드 사용하여 요청 전송
-      submit({payload, body: {
-        role: fullJobTitle,
-        experience: experienceLevel,
-      }});
-      
+      submit({
+        payload,
+        body: {
+          role: fullJobTitle,
+          experience: experienceLevel,
+        },
+        modelParams: {
+          temperature: temperature[0],
+          max_tokens: maxLength[0],
+          top_p: topP[0]
+        }
+      });
     } catch (err) {
       console.error('제출 오류:', err);
       const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
       setError(err instanceof Error ? err : new Error(errorMessage));
-      
+
       toast('오류 발생', {
         description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
@@ -306,7 +329,7 @@ export default function PlaygroundPage() {
     const company = form.getValues('company');
     const jobTitle = form.getValues('jobTitle');
     const department = form.getValues('department');
-    
+
     if (company) {
       formattedText = formattedText.replace(/\[targetCompany\]/g, company);
     }
@@ -316,7 +339,7 @@ export default function PlaygroundPage() {
     if (department) {
       formattedText = formattedText.replace(/\[specific department\]/g, department);
     }
-    
+
     // Function to convert markdown-style bold (**text**) to HTML strong tags
     const convertBoldText = (text: string) => {
       // Use a regex to find all occurrences of **text**
@@ -329,7 +352,7 @@ export default function PlaygroundPage() {
         return part;
       });
     };
-    
+
     // Split by paragraphs and map to styled components with bold text handling
     return formattedText.split('\n\n').map((paragraph, index) => (
       <p key={index} className="mb-4">
@@ -369,33 +392,33 @@ export default function PlaygroundPage() {
 
       // PDF 생성
       const pdf = new jsPDF();
-      
+
       const company = form.getValues('company') || '미지정';
-      
+
       // PDF 제목 및 메타데이터 설정
       pdf.setProperties({
         title: `${fullJobTitle} - 자기소개서`,
         subject: `${company}에 지원하는 자기소개서`,
         author: session?.user?.id,
-        creator: 'AI-ResumeForge'
+        creator: 'AI-ResumeForge',
       });
-      
+
       // PDF 폰트 및 스타일 설정
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(22);
       pdf.text(`${fullJobTitle} - 자기소개서`, 20, 20);
-      
+
       // 회사명 추가
       pdf.setFontSize(16);
       pdf.text(`회사: ${company}`, 20, 30);
-      
+
       // 구분선 추가
       pdf.setDrawColor(200, 200, 200);
       pdf.line(20, 35, 190, 35);
-      
+
       // 본문 내용 추가
       pdf.setFontSize(12);
-      
+
       // 텍스트 줄바꿈 처리 (PDF 페이지 너비에 맞게)
       const splitText = pdf.splitTextToSize(object.text, 170);
       pdf.text(splitText, 20, 45);
@@ -404,20 +427,25 @@ export default function PlaygroundPage() {
       const pdfBlob = pdf.output('blob');
 
       // 경력 수준 가져오기 (S 또는 J)
-      const experienceLevel = form.getValues('yearsOfExperience') === "5-10 years" || form.getValues('yearsOfExperience') === "10+ years" ? "S" : "J";
-      
+      const experienceLevel =
+        form.getValues('yearsOfExperience') === '5-10 years' ||
+        form.getValues('yearsOfExperience') === '10+ years'
+          ? 'S'
+          : 'J';
+
       // 현재 날짜 포맷팅
       const now = new Date();
       const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
-      
+
       // 회사명에서 특수문자 제거하고 짧게 처리
       const safeCompanyName = company.replace(/[^\w가-힣]/g, '').substring(0, 10);
-      
+
       // 직무명에서 특수문자 제거하고 짧게 처리
-      const safeJobTitle = selectedJobTitle ? selectedJobTitle.replace(/[^\w가-힣]/g, '') : 
-                          fullJobTitle.replace(/[^\w가-힣]/g, '');
+      const safeJobTitle = selectedJobTitle
+        ? selectedJobTitle.replace(/[^\w가-힣]/g, '')
+        : fullJobTitle.replace(/[^\w가-힣]/g, '');
       const shortJobTitle = safeJobTitle.substring(0, 15);
-      
+
       // 특별한 파일명 생성
       const specialFileName = `coverletter_${shortJobTitle}_${safeCompanyName}_${experienceLevel}_${dateStr}.pdf`;
 
@@ -428,20 +456,23 @@ export default function PlaygroundPage() {
       formData.append('walletAddress', wallets[0]?.address || '');
       formData.append('userId', session?.user?.id || '');
       formData.append('references', JSON.stringify(object.sources || []));
-      formData.append('metadata', JSON.stringify({
-        jobTitle: fullJobTitle,
-        role: fullJobTitle,
-        experience: experienceLevel,
-        companyName: company,
-        yearsOfExperience: experienceLevel,
-        skills: form.getValues('skills'),
-        fileName: specialFileName,
-        fileSize: pdfBlob.size,
-        fileType: 'application/pdf',
-        jobCategory: selectedCategory,
-        jobSubcategory: selectedSubcategory,
-        jobSpecific: selectedJobTitle,
-      }));
+      formData.append(
+        'metadata',
+        JSON.stringify({
+          jobTitle: fullJobTitle,
+          role: fullJobTitle,
+          experience: experienceLevel,
+          companyName: company,
+          yearsOfExperience: experienceLevel,
+          skills: form.getValues('skills'),
+          fileName: specialFileName,
+          fileSize: pdfBlob.size,
+          fileType: 'application/pdf',
+          jobCategory: selectedCategory,
+          jobSubcategory: selectedSubcategory,
+          jobSpecific: selectedJobTitle,
+        })
+      );
 
       const response = await fetch('/api/edit/upload', {
         method: 'POST',
@@ -462,7 +493,7 @@ export default function PlaygroundPage() {
     } catch (err) {
       console.error('저장 오류:', err);
       const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
-      
+
       toast('저장 오류', {
         description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
@@ -520,9 +551,15 @@ export default function PlaygroundPage() {
             <div className="grid h-full items-stretch gap-6 md:grid-cols-[1fr_200px]">
               <div className="hidden flex-col space-y-4 sm:flex md:order-2">
                 <ModelSelector types={types} models={models} />
-                <TemperatureSelector defaultValue={[0.56]} />
-                <MaxLengthSelector defaultValue={[256]} />
-                <TopPSelector defaultValue={[0.9]} />
+                <TemperatureSelector
+                  defaultValue={temperature}
+                  onValueChange={(value) => setTemperature(value)}
+                />
+                <MaxLengthSelector
+                  defaultValue={maxLength}
+                  onValueChange={(value) => setMaxLength(value)}
+                />
+                <TopPSelector defaultValue={topP} onValueChange={(value) => setTopP(value)} />
 
                 {/* 참고한 이력서 목록 */}
                 <div className="mt-10 space-y-2">
@@ -851,7 +888,10 @@ export default function PlaygroundPage() {
                                       render={({
                                         field,
                                       }: {
-                                        field: ControllerRenderProps<FormValues, 'yearsOfExperience'>;
+                                        field: ControllerRenderProps<
+                                          FormValues,
+                                          'yearsOfExperience'
+                                        >;
                                       }) => (
                                         <FormItem>
                                           <FormLabel className="flex items-center gap-2">
@@ -860,10 +900,18 @@ export default function PlaygroundPage() {
                                           </FormLabel>
                                           <div>
                                             <div className="mt-1 flex flex-wrap gap-2">
-                                              {['Less than 1 year', '1-2 years', '3-5 years', '5-10 years', '10+ years'].map((option) => (
+                                              {[
+                                                'Less than 1 year',
+                                                '1-2 years',
+                                                '3-5 years',
+                                                '5-10 years',
+                                                '10+ years',
+                                              ].map((option) => (
                                                 <Badge
                                                   key={option}
-                                                  variant={field.value === option ? 'default' : 'outline'}
+                                                  variant={
+                                                    field.value === option ? 'default' : 'outline'
+                                                  }
                                                   className={cn(
                                                     'hover:bg-primary/20 cursor-pointer transition-colors',
                                                     field.value === option
@@ -877,7 +925,9 @@ export default function PlaygroundPage() {
                                                   }
                                                 >
                                                   {option}
-                                                  {field.value === option && <Check className="ml-1 h-3 w-3" />}
+                                                  {field.value === option && (
+                                                    <Check className="ml-1 h-3 w-3" />
+                                                  )}
                                                 </Badge>
                                               ))}
                                             </div>
@@ -1051,7 +1101,7 @@ export default function PlaygroundPage() {
                                         </FormItem>
                                       )}
                                     />
-                                    
+
                                     <FormField
                                       control={form.control}
                                       name="customPrompt"
@@ -1083,21 +1133,24 @@ export default function PlaygroundPage() {
                           </Card>
                         </div>
                       </div>
-                      <div className="bg-muted mt-[21px] min-h-[400px] rounded-md border lg:min-h-[700px] p-4 overflow-auto">
+                      <div className="bg-muted mt-[21px] min-h-[400px] overflow-auto rounded-md border p-4 lg:min-h-[700px]">
                         {object?.text ? (
-                          <div className="max-w-3xl mx-auto bg-card p-6 rounded-lg shadow-sm">
+                          <div className="bg-card mx-auto max-w-3xl rounded-lg p-6 shadow-sm">
                             <div className="prose prose-sm dark:prose-invert">
                               {formatCoverLetter(object.text)}
                             </div>
-                            
+
                             {object.sources && object.sources[0]?.id !== 'unknown' && (
-                              <div className="mt-8 pt-4 border-t border-border">
-                                <h4 className="text-sm font-semibold mb-2">Reference Sources</h4>
-                                <div className="text-sm text-muted-foreground">
+                              <div className="border-border mt-8 border-t pt-4">
+                                <h4 className="mb-2 text-sm font-semibold">Reference Sources</h4>
+                                <div className="text-muted-foreground text-sm">
                                   {object.sources.map((source, index) => (
-                                    <div key={index} className="flex justify-between items-center mb-1">
+                                    <div
+                                      key={index}
+                                      className="mb-1 flex items-center justify-between"
+                                    >
                                       <span>{source?.id || 'Default Template'}</span>
-                                      <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                                      <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs">
                                         {source?.contributions || 0}%
                                       </span>
                                     </div>
@@ -1107,42 +1160,38 @@ export default function PlaygroundPage() {
                             )}
                           </div>
                         ) : error ? (
-                          <div className="p-4 bg-destructive/10 rounded-md text-destructive text-sm">
-                            <h4 className="font-medium mb-2">Error Occurred</h4>
-                            <pre className="whitespace-pre-wrap text-xs">{error.message}</pre>
+                          <div className="bg-destructive/10 text-destructive rounded-md p-4 text-sm">
+                            <h4 className="mb-2 font-medium">Error Occurred</h4>
+                            <pre className="text-xs whitespace-pre-wrap">{error.message}</pre>
                           </div>
                         ) : (
-                          <div className="flex h-full items-center justify-center text-muted-foreground">
+                          <div className="text-muted-foreground flex h-full items-center justify-center">
                             <p>Fill out the form and click Submit to see the results here.</p>
                           </div>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Button 
-                        onClick={form.handleSubmit(onSubmit)} 
-                        disabled={isLoading}
-                      >
+                      <Button onClick={form.handleSubmit(onSubmit)} disabled={isLoading}>
                         {isLoading ? 'Processing...' : 'Submit'}
                       </Button>
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => stop()}
-                        disabled={!isLoading}
-                      >
+                      <Button variant="secondary" onClick={() => stop()} disabled={!isLoading}>
                         <span className="sr-only">Stop generation</span>
-                        <X className="h-4 w-4 mr-2" />
+                        <X className="mr-2 h-4 w-4" />
                         Stop Generation
                       </Button>
                       {object?.text && !isLoading && (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           onClick={handleSaveResume}
                           disabled={savedToDatabase}
-                          className={cn(savedToDatabase && "border-green-500 text-green-500")}
+                          className={cn(
+                            savedToDatabase && 'border-green-500 text-green-500',
+                            'cursor-pointer'
+                          )}
                         >
-                          <FileText className="h-4 w-4 mr-2" />
-                          {savedToDatabase ? "Saved" : "Save"}
+                          <FileText className="mr-2 h-4 w-4" />
+                          {savedToDatabase ? 'Saved' : 'Save'}
                         </Button>
                       )}
                     </div>

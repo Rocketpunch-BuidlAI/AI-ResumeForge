@@ -9,10 +9,18 @@ import { Slider } from '@/components/ui/slider';
 
 interface MaxLengthSelectorProps {
   defaultValue: SliderProps['defaultValue'];
+  onValueChange?: (value: number[]) => void;
 }
 
-export function MaxLengthSelector({ defaultValue }: MaxLengthSelectorProps) {
+export function MaxLengthSelector({ defaultValue, onValueChange }: MaxLengthSelectorProps) {
   const [value, setValue] = React.useState(defaultValue);
+
+  const handleValueChange = (newValue: number[]) => {
+    setValue(newValue);
+    if (onValueChange) {
+      onValueChange(newValue);
+    }
+  };
 
   return (
     <div className="grid gap-2 pt-2">
@@ -30,7 +38,7 @@ export function MaxLengthSelector({ defaultValue }: MaxLengthSelectorProps) {
               max={4000}
               defaultValue={value}
               step={10}
-              onValueChange={setValue}
+              onValueChange={handleValueChange}
               className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
               aria-label="Maximum Length"
             />
