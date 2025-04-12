@@ -44,7 +44,6 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // Resume type definitions
 interface ResumeMetadata {
@@ -149,6 +148,8 @@ export default function Page() {
   const [recentRewards, setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
     []
   );
+
+  console.log('recentRewards', recentRewards);
 
   const { wallets } = useWallets();
 
@@ -444,20 +445,23 @@ export default function Page() {
                       <RechartsTooltip
                         formatter={(value: number) => [`${value}`, 'Resumes']}
                         contentStyle={{
-                          backgroundColor: 'var(--background)',
-                          border: '1px solid var(--border)',
+                          backgroundColor: '#000000',
+                          border: '1px solid hsl(var(--border))',
                           borderRadius: '8px',
                           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-                          color: 'var(--foreground)',
+                          color: '#ffffff',
                           fontSize: '12px',
                           padding: '8px 12px',
+                        }}
+                        itemStyle={{
+                          color: '#ffffff',
                         }}
                       />
                       <Legend 
                         formatter={(value) => value}
                         wrapperStyle={{
                           fontSize: '12px',
-                          color: 'var(--muted-foreground)',
+                          color: 'hsl(var(--popover-foreground))',
                           paddingTop: '8px',
                         }}
                         layout="horizontal"
