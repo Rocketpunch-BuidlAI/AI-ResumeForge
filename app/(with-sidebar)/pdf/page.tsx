@@ -6,7 +6,7 @@ export default function Home() {
   const [file, setFile] = useState<File>();
   const [url, setUrl] = useState('');
   const [cid, setCid] = useState('');
-  const [uploadResponse, setUploadResponse] = useState<any>(null);
+  const [uploadResponse, setUploadResponse] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   const uploadFile = async () => {

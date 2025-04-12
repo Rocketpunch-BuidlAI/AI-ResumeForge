@@ -11,8 +11,8 @@ interface LicenseInput {
 interface LicenseResponse {
   txHash: string;
   licenseTokenIds: string[];
-  receipt: any;
-  individualResponses: any[];
+  receipt: string;
+  individualResponses: string[];
 }
 
 export default function LicensePage() {

@@ -3,7 +3,7 @@ import { client } from '@/utils/config';
 import { getWalletAddressByEmail } from '@/utils/privy';
 
 // Convert BigInt to string for JSON serialization
-function replaceBigInt(key: string, value: any) {
+function replaceBigInt(key: string, value: unknown) {
   if (typeof value === 'bigint') {
     return value.toString();
   }

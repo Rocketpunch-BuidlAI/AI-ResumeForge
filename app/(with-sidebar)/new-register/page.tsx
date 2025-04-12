@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+// import { usePrivy } from '@privy-io/react-auth';
 
 // Type definitions
 interface LicenseResult {
@@ -16,7 +16,7 @@ interface RegisterResult {
 }
 
 export default function ConnectPage() {
-  const { user } = usePrivy();
+  // const { user } = usePrivy();
 
   // Step management
   const [step, setStep] = useState(1); // 1: License creation, 2: Derivative IP registration
