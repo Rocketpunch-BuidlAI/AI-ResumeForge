@@ -90,6 +90,15 @@ const coverletterTexts = pgTable('CoverletterText', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
+const coverletterReferences = pgTable('CoverletterReferences', {
+  id: serial('id').primaryKey(),
+  coverletterId: integer('coverletter_id').notNull().references(() => coverletters.id),
+  referencedCoverletterId: integer('referenced_coverletter_id').notNull().references(() => coverletters.id),
+  contribution: integer('contribution').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
 export async function getUser(email: string) {
   return await db.select().from(users).where(eq(users.email, email));
 }
@@ -241,6 +250,34 @@ export async function getIpReferenceById(id: number) {
 // Function to retrieve IP asset registration information by IP ID
 export async function getIpAssetByIpId(ipId: string) {
   return await db.select().from(ipAssets).where(eq(ipAssets.ipId, ipId));
+}
+
+// 이력서 참조 정보 저장 함수
+export async function saveCoverletterReference(
+  coverletterId: number,
+  referencedCoverletterId: number,
+  contribution: number
+) {
+  return await db.insert(coverletterReferences).values({
+    coverletterId,
+    referencedCoverletterId,
+    contribution,
+  });
+}
+
+// 이력서 텍스트와 참조 정보를 함께 저장하는 함수
+export async function saveCoverletterWithReferences(
+  coverletterId: number,
+  text: string,
+  references: Array<{ referencedId: number; contribution: number }>
+) {
+  // 이력서 텍스트 저장
+  await saveCoverletterText(coverletterId, text);
+
+  // 참조하는 이력서들 저장
+  for (const ref of references) {
+    await saveCoverletterReference(coverletterId, ref.referencedId, ref.contribution);
+  }
 }
 
 async function ensureTablesExist() {
