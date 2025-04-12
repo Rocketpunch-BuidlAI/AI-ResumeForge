@@ -172,17 +172,17 @@ export default function PlaygroundPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      jobTitle: 'Marketer',
-      introduction: 'I am a developer with over 5 years of experience in web frontend development, focusing on user experience. I primarily work with React and TypeScript, and have a deep understanding of accessibility and performance optimization.',
-      motivation: 'I was deeply impressed by your company\'s innovative products and user-centric philosophy. I am particularly interested in joining your team to work on frontend development combined with AI-based services.',
-      experience: 'I have experience developing large-scale web applications using React, NextJS, and TypeScript. Recently, I participated as a lead developer in an AI-based interface implementation project. I successfully reduced page loading time by 40% through performance optimization.',
-      aspirations: 'I want to contribute to creating innovative user experiences by combining cutting-edge web technologies with AI at your company. I also aim to grow together with team members and demonstrate technical leadership.',
-      company: 'Tech Innovation',
-      department: 'Frontend Development Team',
-      position: 'Frontend Developer',
-      customPrompt: 'Please write a cover letter that reflects creative and innovative thinking.',
-      skills: 'React, TypeScript, NextJS, Redux, TailwindCSS, Responsive Design',
-      yearsOfExperience: '5-10 years',
+      jobTitle: '',
+      introduction: '',
+      motivation: '',
+      experience: '',
+      aspirations: '',
+      company: '',
+      department: '',
+      position: '',
+      customPrompt: '',
+      skills: '',
+      yearsOfExperience: '',
     },
   });
 
@@ -193,9 +193,9 @@ export default function PlaygroundPage() {
   });
 
   // 직업 선택 상태
-  const [selectedCategory, setSelectedCategory] = useState<string>('Business Roles');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('Marketing');
-  const [selectedJobTitle, setSelectedJobTitle] = useState<string>('Marketer');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string>('');
   const [openJobCategory, setOpenJobCategory] = useState(false);
   const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
   const [openJobTitle, setOpenJobTitle] = useState(false);
@@ -240,7 +240,6 @@ export default function PlaygroundPage() {
       experienceLevel = "S";
     }
 
-    console.log("values2", values, experienceLevel)
 
     const fullJobTitle = selectedJobTitle
         ? selectedCategory === 'Professional Services'
@@ -248,22 +247,7 @@ export default function PlaygroundPage() {
           : `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
         : values.jobTitle;
 
-        console.log("fullJobTitle", fullJobTitle)
 
-    const response = await fetch('/api/coverletters', {
-      method: 'POST',
-      body: JSON.stringify({
-        role: fullJobTitle,
-        experience: experienceLevel,
-      }),
-    });
-
-    console.log("response", response)
-
-    const data = await response.json();
-
-    console.log("datadata", data)
-    
     const payload = {
       selfIntroduction: values.introduction,
       motivation: values.motivation,

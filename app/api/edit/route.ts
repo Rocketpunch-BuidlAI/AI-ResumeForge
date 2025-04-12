@@ -71,6 +71,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log("data", data)
+
     // Compose prompt
     let systemPrompt = `
 You are an experienced cover letter writer with 10 years of experience. You know how to write cover letters for different jobs and careers. Your task is to generate a Korean-style cover letter based on the data provided by the client, tailored to the job and career.
