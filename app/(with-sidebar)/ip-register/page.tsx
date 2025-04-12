@@ -21,14 +21,14 @@ export default function IpRegisterPage() {
     e.preventDefault();
     
     if (!session?.user?.id) {
-      toast.error('로그인이 필요합니다.');
+      toast.error('Login is required.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // 1. 이메일로 지갑 주소 조회
+      // 1. Get wallet address by email
       const walletResponse = await fetch('/api/privy', {
         method: 'POST',
         headers: {
@@ -38,13 +38,13 @@ export default function IpRegisterPage() {
       });
 
       if (!walletResponse.ok) {
-        throw new Error('지갑 주소 조회에 실패했습니다.');
+        throw new Error('Failed to fetch wallet address');
       }
 
       const walletData = await walletResponse.json();
       const walletAddress = walletData.wallets[0].address;
 
-      // 2. IP 자산 등록
+      // 2. Register IP asset
       const registerResponse = await fetch('/api/story', {
         method: 'POST',
         headers: {
@@ -59,15 +59,15 @@ export default function IpRegisterPage() {
 
       if (!registerResponse.ok) {
         const errorData = await registerResponse.json();
-        throw new Error(errorData.error || 'IP 자산 등록에 실패했습니다.');
+        throw new Error(errorData.error || 'Failed to register IP asset');
       }
 
       const registerData = await registerResponse.json();
       setResponse(registerData);
-      toast.success('IP 자산이 성공적으로 등록되었습니다.');
+      toast.success('IP asset has been successfully registered');
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error instanceof Error ? error.message : 'IP 자산 등록에 실패했습니다.');
+      toast.error(error instanceof Error ? error.message : 'Failed to register IP asset');
     } finally {
       setIsLoading(false);
     }
@@ -85,15 +85,15 @@ export default function IpRegisterPage() {
     <div className="container mx-auto p-6">
       <Card>
         <CardHeader>
-          <CardTitle>IP 자산 등록</CardTitle>
+          <CardTitle>IP Asset Registration</CardTitle>
           <CardDescription>
-            IPFS에 업로드된 파일을 IP 자산으로 등록합니다.
+            Register files uploaded to IPFS as IP assets.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">이메일</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 name="email"
@@ -118,13 +118,13 @@ export default function IpRegisterPage() {
             </div>
 
             <Button type="submit" disabled={isLoading || !session?.user?.id}>
-              {isLoading ? '등록 중...' : 'IP 자산 등록'}
+              {isLoading ? 'Registering...' : 'Register IP Asset'}
             </Button>
           </form>
 
           {response && (
             <div className="mt-6 space-y-2">
-              <h3 className="text-lg font-semibold">등록 결과</h3>
+              <h3 className="text-lg font-semibold">Registration Result</h3>
               <pre className="bg-muted p-4 rounded-md overflow-auto">
                 {JSON.stringify(response, null, 2)}
               </pre>
