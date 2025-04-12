@@ -21,7 +21,15 @@ if (!connectionString) {
   throw new Error('POSTGRES_URL environment variable is not set.');
 }
 
-const client = postgres(connectionString, { ssl: 'require' });
+const client = postgres(connectionString, { 
+  ssl: 'require',
+  connect_timeout: 10,
+  max: 10,
+  idle_timeout: 20,
+  max_lifetime: 60 * 30,
+  prepare: false
+});
+
 export const db = drizzle(client);
 
 // Define metadata interface
