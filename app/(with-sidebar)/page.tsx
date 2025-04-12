@@ -145,9 +145,11 @@ export default function Page() {
   const [rewardChangePercent, setRewardChangePercent] = useState<number>(0);
   const [uploadedResumeCount, setUploadedResumeCount] = useState<number>(0);
   const [aiGeneratedResumeCount, setAiGeneratedResumeCount] = useState<number>(0);
-  const [setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
+  const [recentRewards, setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
     []
   );
+
+  console.log('recentRewards', recentRewards);
 
   const { wallets } = useWallets();
 
