@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { saveCoverletter, saveCoverletterWithReferences } from '@/db';
 import { AI_AGENT_URL } from '@/utils/config';
 import { put } from '@vercel/blob';
-import { auth } from '@/auth';
 import axios from 'axios';
 
 export async function POST(request: Request) {
@@ -10,12 +9,11 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const text = formData.get('text') as string;
+    const userId = formData.get('userId') as string;
     const referencesJson = formData.get('references') as string;
     const metadata = formData.get('metadata') as string;
-    const role = formData.get('role') as string;
-    const experience = formData.get('experience') as string;
 
-    if (!file || !text || !referencesJson) {
+    if (!file || !text || !referencesJson || !metadata) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -36,19 +34,18 @@ export async function POST(request: Request) {
     // CID와 파일 경로 추출
     const cid = blob.url.split('/').pop() ?? blob.url;
     const filePath = blob.url;
-
-    const session = await auth();
-    const userId = session?.user?.id;
     
     // 데이터베이스에 Coverletter 정보 저장
     const savedCoverletterId = await saveCoverletter(Number(userId), cid, filePath, metadata);
+
+    const metadataObj = JSON.parse(metadata);
 
     console.log('Uploading to AI agent:', AI_AGENT_URL);
     const response = await axios.post(`${AI_AGENT_URL}/upload`, {
       text: text,
       id: savedCoverletterId,
-      role: role,
-      experience: experience,
+      role: metadataObj.jobTitle,
+      experience: metadataObj.yearsOfExperience,
     });
 
     const aiAgentResponse = response.data;
