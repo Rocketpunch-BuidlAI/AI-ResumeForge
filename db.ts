@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { pgTable, serial, varchar, bigint, timestamp, text, json, integer, doublePrecision } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, bigint, timestamp, text, json, integer, doublePrecision, boolean } from 'drizzle-orm/pg-core';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
@@ -56,6 +56,7 @@ const coverletters = pgTable('Coverletter', {
   jobSubcategory: varchar('job_subcategory', { length: 255 }),
   jobSpecific: varchar('job_specific', { length: 255 }),
   metadata: json('metadata'),
+  isAIGenerated: boolean('ai_generated').default(false),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -330,6 +331,10 @@ export async function saveCoverletterWithReferences(
     await saveCoverletterReference(coverletterId, ref.referencedId, ref.contribution);
   }
 }
+
+export const getResume = async (userId: number) => {
+  return await db.select().from(coverletters).where(eq(coverletters.userId, userId));
+};
 
 export async function getUserIPs(userId: number) {
   return await db.select().from(ipAssets).where(eq(ipAssets.userId, userId));
