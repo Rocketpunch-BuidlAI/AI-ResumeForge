@@ -157,7 +157,7 @@ export async function saveCoverletter(
     jobSpecific: metadataObj.jobSpecific || null,
   });
 
-  return await db.insert(coverletters).values({
+  const result = await db.insert(coverletters).values({
     userId,
     cid,
     filePath,
@@ -173,7 +173,9 @@ export async function saveCoverletter(
     fileSize: metadataObj.fileSize || null,
     fileType: metadataObj.fileType || null,
     metadata: metadata,
-  });
+  }).returning({ id: coverletters.id });
+
+  return result[0].id;
 }
 
 export async function getCoverletter(userId: number) {

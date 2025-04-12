@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-import { saveCoverletterWithReferences } from '@/db';
+import { saveCoverletter, saveCoverletterWithReferences } from '@/db';
 import { AI_AGENT_URL } from '@/utils/config';
+import { put } from '@vercel/blob';
+import { auth } from '@/auth';
 import axios from 'axios';
 
 export async function POST(request: Request) {
@@ -9,6 +11,7 @@ export async function POST(request: Request) {
     const file = formData.get('file') as File;
     const text = formData.get('text') as string;
     const referencesJson = formData.get('references') as string;
+    const metadata = formData.get('metadata') as string;
     const role = formData.get('role') as string;
     const experience = formData.get('experience') as string;
 
@@ -23,13 +26,27 @@ export async function POST(request: Request) {
     const references = JSON.parse(referencesJson);
 
     // TODO: Story IP 등록
-    // TODO: coverletter db에 저장
-    const coverletterId = 1; // 임시 ID, 실제로는 DB에서 생성된 ID를 사용해야 함
+
+    console.log('Uploading file to blob storage...');
+    const blob = await put(file.name, file, {
+      access: 'public',
+      allowOverwrite: true,
+    });
+
+    // CID와 파일 경로 추출
+    const cid = blob.url.split('/').pop() ?? blob.url;
+    const filePath = blob.url;
+
+    const session = await auth();
+    const userId = session?.user?.id;
+    
+    // 데이터베이스에 Coverletter 정보 저장
+    const savedCoverletterId = await saveCoverletter(Number(userId), cid, filePath, metadata);
 
     console.log('Uploading to AI agent:', AI_AGENT_URL);
     const response = await axios.post(`${AI_AGENT_URL}/upload`, {
       text: text,
-      id: coverletterId,
+      id: savedCoverletterId,
       role: role,
       experience: experience,
     });
@@ -47,7 +64,7 @@ export async function POST(request: Request) {
 
     // 이력서 텍스트와 참조 정보 저장
     await saveCoverletterWithReferences(
-      coverletterId,
+      savedCoverletterId,
       text,
       references.map((ref: { id: number; contribution: number }) => ({
         referencedId: ref.id,
