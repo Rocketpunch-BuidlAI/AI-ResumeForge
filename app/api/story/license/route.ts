@@ -48,7 +48,6 @@ export async function POST(request: Request) {
         const response = await client.license.mintLicenseTokens({
           licenseTermsId: licenseTermsId,
           licensorIpId: licensorIpId as `0x${string}`,
-          receiver: receiverWallet as `0x${string}`,
           amount: 1, // default to 1
           maxMintingFee: maxMintingFee ? BigInt(maxMintingFee) : BigInt(0),
           maxRevenueShare: 100, // default
