@@ -119,8 +119,15 @@ export default function IpRegisterPage() {
 
         {result && (
           <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-md">
-            <h3 className="font-bold">등록 성공!</h3>
+            <h3 className="font-bold">
+              {result.status === 'success' ? '등록 성공!' : 
+               result.status === 'failed' ? '등록 실패!' : 
+               '처리 중...'}
+            </h3>
             <div className="mt-2 text-sm">
+              {result.message && (
+                <p className="mb-1">{result.message}</p>
+              )}
               {result.ipId && (
                 <p className="mb-1">
                   <span className="font-semibold">IP ID:</span> {result.ipId}
@@ -135,7 +142,7 @@ export default function IpRegisterPage() {
                 <p className="mb-1">
                   <span className="font-semibold">Transaction Hash:</span>{" "}
                   <a 
-                    href={`https://aeneid.story.xyz/tx/${result.txHash}`} 
+                    href={`https://sepolia.etherscan.io/tx/${result.txHash}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
@@ -148,6 +155,38 @@ export default function IpRegisterPage() {
                 <p className="mb-1">
                   <span className="font-semibold">License Terms IDs:</span> {result.licenseTermsIds.join(', ')}
                 </p>
+              )}
+              
+              {result.status === 'success' && (
+                <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded border border-blue-200">
+                  <p className="font-semibold mb-1">등록된 IP 자산 확인 방법:</p>
+                  <ol className="list-decimal pl-5 space-y-1 text-xs">
+                    <li>
+                      <a 
+                        href="/ip-query" 
+                        className="text-blue-500 hover:underline"
+                      >
+                        IP 자산 조회 페이지
+                      </a>
+                      에서 IP ID를 입력하여 정보를 확인할 수 있습니다.
+                    </li>
+                    <li>
+                      이더스캔에서도 트랜잭션을 확인할 수 있습니다. (
+                      <a 
+                        href={`https://sepolia.etherscan.io/tx/${result.txHash}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        링크
+                      </a>
+                      )
+                    </li>
+                    <li>
+                      Story Protocol이 다시 정상화되면 Explorer에서도 확인할 수 있습니다: aeneid.story.xyz
+                    </li>
+                  </ol>
+                </div>
               )}
             </div>
           </div>

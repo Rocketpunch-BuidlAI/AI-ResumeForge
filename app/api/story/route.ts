@@ -43,13 +43,18 @@ export async function POST(request: Request) {
       
       console.log("Using SPG contract:", spgNftContract);
       
+      // Pinata IPFS 게이트웨이 URL과 사용자 CID를 결합
+      const ipfsMetadataUrl = `https://gateway.pinata.cloud/ipfs/${cid}`;
+      console.log("Using metadata URL:", ipfsMetadataUrl);
+      
       // mintAndRegisterIpAssetWithPilTerms 함수 호출
       // - NFT를 발행하고, IP로 등록하고, 라이센스 약관을 연결하는 기능
       // - mintFeeToken 함수 직접 호출을 하지 않고 SDK가 처리하도록 함
+      console.log("mintAndRegisterIpAssetWithPilTerms 함수 호출", cid);
       const response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
         spgNftContract: spgNftContract,
         ipMetadata: {
-          ipMetadataURI: cid,
+          ipMetadataURI: ipfsMetadataUrl,
         },
         recipient: walletAddress as `0x${string}`,
         licenseTermsData: [

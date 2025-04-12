@@ -1,12 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, BarChart, ChevronRight, FileText } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 
 import { CodeViewer } from './components/code-viewer';
 import { MaxLengthSelector } from './components/maxlength-selector';
@@ -55,6 +57,28 @@ const formSchema = z.object({
 
 // Define type for form values
 type FormValues = z.infer<typeof formSchema>;
+
+// 참고 이력서 데이터
+const referencedResumes = [
+  { 
+    name: "Software Developer Resume", 
+    reference: 65,
+    icon: "💻",
+    description: "Resume focused on technical stack and development experience."
+  },
+  { 
+    name: "Frontend Expert Resume", 
+    reference: 25,
+    icon: "🎨",
+    description: "Resume emphasizing UI/UX design experience and frontend technologies."
+  },
+  { 
+    name: "UX/UI Designer Resume", 
+    reference: 10,
+    icon: "🖌️",
+    description: "Resume highlighting user experience and design philosophy." 
+  },
+];
 
 export default function PlaygroundPage() {
   // Form
@@ -109,19 +133,64 @@ export default function PlaygroundPage() {
         <Separator />
         <Tabs defaultValue="edit" className="w-full flex-1 items-center">
           <div className="container h-full py-6">
-            <div className="mb-4 flex justify-center">
-              <TabsList>
-                <TabsTrigger value="edit">Resume Information</TabsTrigger>
-                <TabsTrigger value="complete">AI Generation</TabsTrigger>
-                <TabsTrigger value="insert">Preview</TabsTrigger>
-              </TabsList>
-            </div>
             <div className="grid h-full items-stretch gap-6 md:grid-cols-[1fr_200px]">
               <div className="hidden flex-col space-y-4 sm:flex md:order-2">
                 <ModelSelector types={types} models={models} />
                 <TemperatureSelector defaultValue={[0.56]} />
                 <MaxLengthSelector defaultValue={[256]} />
                 <TopPSelector defaultValue={[0.9]} />
+                
+                {/* 참고한 이력서 목록 */}
+                <div className="space-y-2 mt-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BarChart className="h-4 w-4" />
+                    <h3 className="text-sm font-medium">Referenced Resumes</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {referencedResumes.map((resume, index) => (
+                      <HoverCard key={index}>
+                        <HoverCardTrigger asChild>
+                          <Card className="overflow-hidden p-3 cursor-pointer hover:bg-accent/40 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9 border">
+                                <AvatarFallback className="text-sm">{resume.icon}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 space-y-1">
+                                <div className="flex items-center">
+                                  <p className="text-sm font-medium flex-1">{resume.name}</p>
+                                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-primary rounded-full" 
+                                      style={{ width: `${resume.reference}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-muted-foreground">{resume.reference}%</span>
+                                </div>
+                              </div>
+                            </div>
+                          </Card>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <div className="flex justify-between space-x-4">
+                            <div className="space-y-1">
+                              <h4 className="text-sm font-semibold">{resume.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {resume.description}
+                              </p>
+                              <div className="flex items-center pt-2">
+                                <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">Reference Rate: {resume.reference}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    ))}
+                  </div>
+                </div>
               </div>
               <div className="md:order-1">
                 <TabsContent value="complete" className="mt-0 border-0 p-0">
