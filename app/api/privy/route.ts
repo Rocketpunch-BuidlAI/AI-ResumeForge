@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrivyClient } from '@privy-io/server-auth';
-
-// Initialize Privy client
-const privy = new PrivyClient(process.env.PRIVY_APP_ID!, process.env.PRIVY_API_SECRET!, {
-  apiURL: 'https://auth.privy.io',
-});
+import { getPrivyClient } from '@/utils/privy';
 
 interface Wallet {
   address: string;
@@ -20,6 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
+    const privy = getPrivyClient();
     // Get user by email
     const user = await privy.getUserByEmail(email);
 
