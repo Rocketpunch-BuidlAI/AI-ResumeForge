@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { WalletInfo } from '@/components/wallet-info';
-import { RewardChart } from '@/components/reward-chart';
 import { FileText, DownloadCloud, Briefcase, Eye, BarChart, FileUp, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -31,6 +30,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import FilePreview from '@/lib/pdf/FilePreview';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import getSession from '@/utils/getSession';
+import { useWallets } from '@privy-io/react-auth';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 // Resume type definitions
 interface ResumeMetadata {
@@ -93,42 +94,6 @@ interface CoverletterResponse {
   updated_at: string;
 }
 
-// Fallback mock data in case API fails
-const fallbackResumes: UploadedResume[] = [
-  {
-    id: '1',
-    fileName: 'Frontend Developer Resume.pdf',
-    fileUrl: '/path/to/resume1.pdf',
-    rewardAmount: 0.5,
-    referenceCount: 10,
-    createdAt: '2024-04-01',
-    updatedAt: '2024-04-10',
-    metadata: {
-      jobTitle: 'Frontend Developer',
-      companyName: 'ABC Tech',
-      yearsOfExperience: '3-5 years',
-      skills: 'React, TypeScript, Next.js',
-      additionalInfo: 'Experienced frontend specialist with various project experiences',
-    },
-  },
-  {
-    id: '2',
-    fileName: 'Backend Developer Resume.pdf',
-    fileUrl: '/path/to/resume2.pdf',
-    rewardAmount: 0.3,
-    referenceCount: 5,
-    createdAt: '2024-04-05',
-    updatedAt: '2024-04-08',
-    metadata: {
-      jobTitle: 'Backend Developer',
-      companyName: 'XYZ Solutions',
-      yearsOfExperience: '1-2 years',
-      skills: 'Node.js, Express, MongoDB',
-      additionalInfo: 'Experience in backend system development and maintenance',
-    },
-  },
-];
-
 // Sample data - AI generated resumes
 const mockAIGeneratedResumes: AIGeneratedResume[] = [
   {
@@ -163,12 +128,28 @@ const mockRewardData = [
   { date: '2024-04-10', amount: 0.2 },
 ];
 
+// Mock data for reward history chart (past 6 months)
+const mockChartData = [
+  { month: 'Nov', reward: 0.05 },
+  { month: 'Dec', reward: 0.15 },
+  { month: 'Jan', reward: 0.10 },
+  { month: 'Feb', reward: 0.08 },
+  { month: 'Mar', reward: 0.12 },
+  { month: 'Apr', reward: 0.50 },
+];
+
 export default function Page() {
   const [selectedResume, setSelectedResume] = useState<UploadedResume | null>(null);
   const [previewFile, setPreviewFile] = useState<File | null>(null);
   const [uploadedResumes, setUploadedResumes] = useState<UploadedResume[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // Define total reward as a constant instead of a state since it's not changing for now
+  const totalReward = 1.0; // Default value
+
+  const { wallets } = useWallets();
+
+  console.log('useruser', wallets);
 
   // Fetch user's resumes from API
   useEffect(() => {
@@ -226,8 +207,6 @@ export default function Page() {
       } catch (err) {
         console.error('Error fetching resumes:', err);
         setError('Failed to load resumes. Using fallback data.');
-        // Use fallback data if API fails
-        setUploadedResumes(fallbackResumes);
       } finally {
         setIsLoading(false);
       }
@@ -258,53 +237,168 @@ export default function Page() {
   // In a real implementation, you would need to fetch the actual file from an API
   const handleViewFile = (resume: UploadedResume) => {
     setSelectedResume(resume);
-
-    // In a real API, you would fetch the file like this:
-    // const fetchFile = async () => {
-    //   const response = await fetch(`/api/files/${resume.id}`);
-    //   const blob = await response.blob();
-    //   const file = new File([blob], resume.fileName, { type: 'application/pdf' });
-    //   setPreviewFile(file);
-    // };
-    // fetchFile();
   };
 
   // Resumes to display - either from API or fallback
-  const resumes = uploadedResumes.length > 0 ? uploadedResumes : fallbackResumes;
+  const resumes = uploadedResumes.length > 0 ? uploadedResumes : [];
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <WalletInfo address="0x1234...5678" totalReward={1.0} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
+        <WalletInfo address={wallets[0]?.address ?? 'Loading...'} totalReward={totalReward} />
 
-        <Card className="p-4">
-          <CardHeader className="p-0 pb-3">
+        <Card className="flex flex-col h-full">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-xl">
-              <BarChart className="h-5 w-5" />
+              <BarChart className="h-5 w-5 text-primary" />
               Reward History
             </CardTitle>
+            <CardDescription>ETH rewards for your resume uploads</CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            <RewardChart data={mockRewardData} />
+          <CardContent className="pt-0 flex-grow">
+            <div className="space-y-5 h-full flex flex-col">
+              <div className="flex items-center justify-between rounded-lg bg-primary/5 p-3 border border-primary/10">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium">Total Rewards</h4>
+                  <p className="text-muted-foreground text-xs">Lifetime ETH rewards received</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
+                    <BarChart className="text-primary h-5 w-5" />
+                  </div>
+                  <div className="flex items-end">
+                    <span className="text-2xl font-bold">1.0</span>
+                    <span className="text-muted-foreground ml-1 text-sm">ETH</span>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-lg border p-4 flex-grow flex flex-col">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-medium">Monthly Reward Trend</h4>
+                    <p className="text-muted-foreground text-xs">Last 6 months reward history</p>
+                  </div>
+                  <div className="flex items-center gap-1 rounded-md bg-primary/10 px-2 py-1">
+                    <span className="text-xs font-medium text-primary">+20.1%</span>
+                    <span className="text-muted-foreground text-xs">vs last month</span>
+                  </div>
+                </div>
+                <div className="h-[180px] flex-grow">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={mockChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="rewardGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" strokeOpacity={0.5} />
+                      <XAxis 
+                        dataKey="month" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
+                        dy={5}
+                      />
+                      <YAxis hide={true} />
+                      <RechartsTooltip 
+                        formatter={(value) => [`${value} ETH`, 'Reward']}
+                        labelFormatter={(label) => `${label}`}
+                        cursor={{ stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '3 3' }}
+                        contentStyle={{ 
+                          backgroundColor: 'var(--background)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                          color: 'var(--foreground)',
+                          fontSize: '12px',
+                          padding: '8px 12px'
+                        }}
+                      />
+                      <Line 
+                        type="natural" 
+                        dataKey="reward" 
+                        stroke="var(--primary)" 
+                        strokeWidth={2.5}
+                        dot={{ 
+                          stroke: 'var(--primary)', 
+                          strokeWidth: 2, 
+                          fill: 'var(--background)', 
+                          r: 4 
+                        }}
+                        activeDot={{ 
+                          r: 6, 
+                          stroke: 'var(--primary)', 
+                          strokeWidth: 2,
+                          fill: 'var(--background)'
+                        }}
+                        isAnimationActive={true}
+                        animationDuration={1000}
+                        animationEasing="ease-out"
+                        fill="url(#rewardGradient)"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="p-4">
-          <CardHeader className="p-0 pb-3">
+        <Card className="flex flex-col h-full">
+          <CardHeader className="p-4 pb-3">
             <CardTitle className="flex items-center gap-2 text-xl">
               <FileUp className="h-5 w-5" />
               Resume Statistics
             </CardTitle>
+            <CardDescription>Resume statistics and reward history</CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
-                <p className="text-muted-foreground text-sm">Uploaded Resumes</p>
-                <p className="text-3xl font-bold">{resumes.length}</p>
+          <CardContent className="p-4 pt-0 flex-grow">
+            <div className="space-y-4 h-full flex flex-col">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
+                  <p className="text-muted-foreground text-sm">Uploaded Resumes</p>
+                  <p className="text-3xl font-bold">{resumes.length}</p>
+                </div>
+                <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
+                  <p className="text-muted-foreground text-sm">AI Generated Resumes</p>
+                  <p className="text-3xl font-bold">{mockAIGeneratedResumes.length}</p>
+                </div>
               </div>
-              <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
-                <p className="text-muted-foreground text-sm">AI Generated Resumes</p>
-                <p className="text-3xl font-bold">{mockAIGeneratedResumes.length}</p>
+
+              <div className="mt-4 space-y-2 flex-grow">
+                <h4 className="text-sm font-medium">Recent Reward History</h4>
+                <div className="space-y-2 flex-grow">
+                  {mockRewardData.map((reward, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between rounded-lg border p-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
+                          <BarChart className="text-primary h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {new Date(reward.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </p>
+                          <p className="text-muted-foreground text-xs">Reward Received</p>
+                        </div>
+                      </div>
+                      <div className="flex items-end gap-1">
+                        <span className="font-medium">{reward.amount}</span>
+                        <span className="text-muted-foreground text-xs">ETH</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button variant="outline" size="sm" className="mt-2 w-full">
+                  View All Reward History
+                </Button>
               </div>
             </div>
           </CardContent>

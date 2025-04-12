@@ -10,6 +10,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export function NavFavorites({
   favorites,
@@ -59,12 +60,14 @@ export function NavFavorites({
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
+        <Link href="/resume/playground">
         <SidebarMenuItem className="mt-3 px-1">
           <SidebarMenuButton className="text-sidebar-foreground/70 hover:bg-primary/5 w-full cursor-pointer rounded-md px-3 py-3 transition-colors duration-200">
             <PlusCircle className="text-primary h-5 w-5 flex-shrink-0" />
             <span className="text-muted-foreground ml-3 truncate">Make New Resume</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
+        </Link>
       </SidebarMenu>
     </SidebarGroup>
   );
