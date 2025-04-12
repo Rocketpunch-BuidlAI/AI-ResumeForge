@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getWalletAddressByEmail } from '@/utils/privy';
-import { toHex } from 'viem';
 import { client } from '@/utils/config';
 
 export async function POST(request: Request) {
