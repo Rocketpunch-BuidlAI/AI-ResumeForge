@@ -145,7 +145,7 @@ export default function Page() {
   const [rewardChangePercent, setRewardChangePercent] = useState<number>(0);
   const [uploadedResumeCount, setUploadedResumeCount] = useState<number>(0);
   const [aiGeneratedResumeCount, setAiGeneratedResumeCount] = useState<number>(0);
-  const [setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
+  const [recentRewards, setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
     []
   );
 
@@ -443,23 +443,20 @@ export default function Page() {
                       <RechartsTooltip
                         formatter={(value: number) => [`${value}`, 'Resumes']}
                         contentStyle={{
-                          backgroundColor: '#000000',
-                          border: '1px solid hsl(var(--border))',
+                          backgroundColor: 'var(--background)',
+                          border: '1px solid var(--border)',
                           borderRadius: '8px',
                           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-                          color: '#ffffff',
+                          color: 'var(--foreground)',
                           fontSize: '12px',
                           padding: '8px 12px',
-                        }}
-                        itemStyle={{
-                          color: '#ffffff',
                         }}
                       />
                       <Legend 
                         formatter={(value) => value}
                         wrapperStyle={{
                           fontSize: '12px',
-                          color: 'hsl(var(--popover-foreground))',
+                          color: 'var(--muted-foreground)',
                           paddingTop: '8px',
                         }}
                         layout="horizontal"
