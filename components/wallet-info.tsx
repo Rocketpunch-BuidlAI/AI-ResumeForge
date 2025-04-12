@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface WalletInfoProps {
   address: string;
+  totalReward: number;
 }
 
 interface RecentRoyalty {
@@ -18,9 +19,8 @@ interface RecentRoyalty {
   txHash: string;
 }
 
-export function WalletInfo({ address }: WalletInfoProps) {
+export function WalletInfo({ address, totalReward }: WalletInfoProps) {
   const [copied, setCopied] = useState(false);
-  const [totalReward, setTotalReward] = useState(0);
   const [recentRoyalties, setRecentRoyalties] = useState<RecentRoyalty[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
@@ -30,11 +30,6 @@ export function WalletInfo({ address }: WalletInfoProps) {
       if (session?.user?.id) {
         try {
           setIsLoading(true);
-          // Total rewards 가져오기
-          const rewardsResponse = await fetch(`/api/home/rewards?userId=${session.user.id}`);
-          const rewardsData = await rewardsResponse.json();
-          setTotalReward(rewardsData.totalRewards);
-
           // Recent royalties 가져오기
           const royaltiesResponse = await fetch(
             `/api/home/recent-royalties?userId=${session.user.id}`
@@ -135,7 +130,7 @@ export function WalletInfo({ address }: WalletInfoProps) {
               {isLoading ? (
                 <Skeleton className="h-8 w-35" />
               ) : (
-                <p className="text-2xl font-bold">{totalReward} ETH</p>
+                <p className="text-2xl font-bold">{totalReward} WIP</p>
               )}
             </div>
           </div>
@@ -168,7 +163,7 @@ export function WalletInfo({ address }: WalletInfoProps) {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-medium">+{royalty.amount} ETH</p>
+                        <p className="text-xs font-medium">+{royalty.amount} WIP</p>
                         <p className="text-muted-foreground text-xs">
                           <span className="flex items-center justify-end gap-0.5 text-green-600">
                             <CheckCircle2 className="h-3 w-3" /> Completed

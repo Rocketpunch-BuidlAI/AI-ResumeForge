@@ -14,13 +14,13 @@ export async function GET(request: Request) {
   const uploadedResumeCount = resume.filter((r) => !r.aiGenerated).length;
   const aiGeneratedResumeCount = resume.filter((r) => r.aiGenerated).length;
 
-  // 사용자의 IP 목록 조회
+  // Get user's IP list
   const userIPs = await getUserIPs(Number(userId));
 
-  // IP ID 목록 추출
+  // Extract IP IDs
   const ipIds = userIPs.map((ip) => ip.id);
 
-  // 모든 IP에 대한 로열티 정보를 한 번에 조회
+  // Get all royalty information for IPs at once
   const royalties = await getRoyaltiesByIpIds(ipIds);
 
   const recentRewards = royalties

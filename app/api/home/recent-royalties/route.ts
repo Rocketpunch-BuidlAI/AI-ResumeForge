@@ -29,15 +29,15 @@ export async function GET(request: Request) {
       .slice(0, 5)
       .map((royalty) => ({
         id: royalty.id,
-        amount: Number(royalty.amount) * 0.001, // ETH 단위로 변환
-        date: royalty.created_at
-          ? new Date(royalty.created_at).toLocaleDateString('ko-KR', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            })
-          : 'N/A',
-        txHash: royalty.txHash,
+        amount: Number(royalty.amount) * 0.001, // Convert to WIP
+        date: royalty.created_at ? new Date(royalty.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) : 'N/A',
+        txHash: royalty.txHash
       }));
 
     return NextResponse.json(recentRoyalties);

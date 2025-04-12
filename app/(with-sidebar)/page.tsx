@@ -39,7 +39,12 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
 } from 'recharts';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Resume type definitions
 interface ResumeMetadata {
@@ -271,14 +276,14 @@ export default function Page() {
               <BarChart className="text-primary h-5 w-5" />
               Reward History
             </CardTitle>
-            <CardDescription>ETH rewards for your resume uploads</CardDescription>
+            <CardDescription>WIP rewards for your resume uploads</CardDescription>
           </CardHeader>
           <CardContent className="flex-grow pt-0">
             <div className="flex h-full flex-col space-y-5">
               <div className="bg-primary/5 border-primary/10 flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium">Total Rewards</h4>
-                  <p className="text-muted-foreground text-xs">Lifetime ETH rewards received</p>
+                  <p className="text-muted-foreground text-xs">Lifetime WIP rewards received</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full">
@@ -286,22 +291,22 @@ export default function Page() {
                   </div>
                   <div className="flex items-end">
                     <span className="text-2xl font-bold">{totalReward}</span>
-                    <span className="text-muted-foreground ml-1 text-sm">ETH</span>
+                    <span className="text-muted-foreground ml-1 text-sm">WIP</span>
                   </div>
                 </div>
               </div>
               <div className="flex flex-grow flex-col rounded-lg border p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <div>
-                    <h4 className="text-sm font-medium">Monthly Reward Trend</h4>
-                    <p className="text-muted-foreground text-xs">Last 6 months reward history</p>
+                    <h4 className="text-sm font-medium">Daily Reward Trend</h4>
+                    <p className="text-muted-foreground text-xs">Last 3 days reward history</p>
                   </div>
                   <div className="bg-primary/10 flex items-center gap-1 rounded-md px-2 py-1">
                     <span className="text-primary text-xs font-medium">
                       {rewardChangePercent >= 0 ? '+' : ''}
                       {rewardChangePercent}%
                     </span>
-                    <span className="text-muted-foreground text-xs">vs last month</span>
+                    <span className="text-muted-foreground text-xs">vs last day</span>
                   </div>
                 </div>
                 <div className="h-[180px] flex-grow">
@@ -328,7 +333,7 @@ export default function Page() {
                       />
                       <YAxis hide={true} />
                       <RechartsTooltip
-                        formatter={(value) => [`${value} ETH`, 'Reward']}
+                        formatter={(value) => [`${value} WIP`, 'Reward']}
                         labelFormatter={(label) => `${label}`}
                         cursor={{ stroke: 'var(--border)', strokeWidth: 1, strokeDasharray: '3 3' }}
                         contentStyle={{
@@ -381,50 +386,87 @@ export default function Page() {
           </CardHeader>
           <CardContent className="flex-grow p-4 pt-0">
             <div className="flex h-full flex-col space-y-4">
+              <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
+                <p className="text-muted-foreground text-sm">Total Resumes</p>
+                {isLoading ? (
+                  <div className="flex h-8 items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold">{uploadedResumeCount + aiGeneratedResumeCount}</p>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
-                  <p className="text-muted-foreground text-sm">Uploaded Resumes</p>
-                  <p className="text-3xl font-bold">{uploadedResumeCount}</p>
+                  <p className="text-muted-foreground text-sm">My Uploaded Resumes</p>
+                  {isLoading ? (
+                    <div className="flex h-8 items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <p className="text-3xl font-bold">{uploadedResumeCount}</p>
+                  )}
                 </div>
                 <div className="bg-muted/30 flex flex-col items-center justify-center rounded-lg p-4">
                   <p className="text-muted-foreground text-sm">AI Generated Resumes</p>
-                  <p className="text-3xl font-bold">{aiGeneratedResumeCount}</p>
+                  {isLoading ? (
+                    <div className="flex h-8 items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <p className="text-3xl font-bold">{aiGeneratedResumeCount}</p>
+                  )}
                 </div>
               </div>
 
-              <div className="mt-4 flex-grow space-y-2">
-                <h4 className="text-sm font-medium">Recent Reward History</h4>
-                <div className="flex-grow space-y-2">
-                  {recentRewards.map((reward, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between rounded-lg border p-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-full">
-                          <BarChart className="text-primary h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">
-                            {new Date(reward.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                            })}
-                          </p>
-                          <p className="text-muted-foreground text-xs">Reward Received</p>
-                        </div>
-                      </div>
-                      <div className="flex items-end gap-1">
-                        <span className="font-medium">{reward.amount}</span>
-                        <span className="text-muted-foreground text-xs">ETH</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" size="sm" className="mt-2 w-full">
-                  View All Reward History
-                </Button>
+              <div className="flex h-[200px] items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'My Uploaded', value: uploadedResumeCount, color: 'var(--primary)' },
+                          { name: 'AI Generated', value: aiGeneratedResumeCount, color: 'var(--muted-foreground)' }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {[
+                          { name: 'My Uploaded', value: uploadedResumeCount, color: 'var(--primary)' },
+                          { name: 'AI Generated', value: aiGeneratedResumeCount, color: 'var(--muted-foreground)' }
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        formatter={(value: number) => [`${value}`, 'Resumes']}
+                        contentStyle={{
+                          backgroundColor: 'var(--background)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                          color: 'var(--foreground)',
+                          fontSize: '12px',
+                          padding: '8px 12px',
+                        }}
+                      />
+                      <Legend 
+                        formatter={(value) => value}
+                        wrapperStyle={{
+                          fontSize: '12px',
+                          color: 'var(--muted-foreground)',
+                          paddingTop: '8px',
+                        }}
+                        layout="horizontal"
+                        verticalAlign="bottom"
+                        align="center"
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+             
               </div>
             </div>
           </CardContent>
@@ -583,7 +625,7 @@ export default function Page() {
                           </div>
                         </TableCell>
                         <TableCell className="text-center font-medium">
-                          {resume.rewardAmount} ETH
+                          {resume.rewardAmount} WIP
                         </TableCell>
                         <TableCell className="text-center">{resume.referenceCount} times</TableCell>
                         <TableCell className="text-center">
