@@ -7,6 +7,7 @@ import { WIP_TOKEN_ADDRESS } from '@story-protocol/core-sdk';
 import { zeroAddress } from 'viem';
 import { defaultNftContractAbi } from '@/utils/defaultNftContractAbi';
 
+export const maxDuration = 300;
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
