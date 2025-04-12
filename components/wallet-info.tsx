@@ -74,7 +74,7 @@ export function WalletInfo({ address, totalReward }: WalletInfoProps) {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
-                        onClick={() => window.open(`https://etherscan.io/address/${address}`, '_blank')}
+                        onClick={() => window.open(`https://aeneid.storyscan.io/address/${address}`, '_blank')}
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
                       </Button>
