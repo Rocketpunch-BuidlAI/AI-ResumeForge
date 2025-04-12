@@ -44,6 +44,7 @@ import {
   Cell,
   Legend,
 } from 'recharts';
+import Link from 'next/link';
 
 
 // Resume type definitions
@@ -530,10 +531,12 @@ export default function Page() {
                   <p className="text-muted-foreground text-sm">
                     You haven&apos;t uploaded any resumes yet.
                   </p>
-                  <Button className="mt-4">
-                    <FileUp className="mr-2 h-4 w-4" />
-                    Upload a Resume
-                  </Button>
+                  <Link href="/resume/upload">
+                    <Button className="mt-4">
+                      <FileUp className="mr-2 h-4 w-4" />
+                      Upload a Resume
+                    </Button>
+                  </Link>
                 </div>
               ) : (
                 <Table>
