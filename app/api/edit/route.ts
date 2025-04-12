@@ -40,7 +40,11 @@ export const maxDuration = 300;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { payload, body: { role, experience }, modelParams } = body;
+    const {
+      payload,
+      body: { role, experience },
+      modelParams,
+    } = body;
 
     const response = await axios.post(`${AI_AGENT_URL}/coverletters`, {
       role: role,

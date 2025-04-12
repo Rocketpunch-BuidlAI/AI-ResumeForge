@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import {
   RotateCcw,
-  BarChart,
   ChevronRight,
   FileText,
   Briefcase,
@@ -14,8 +13,9 @@ import {
   Building2,
   Users,
   FileEdit,
+  Loader2,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
@@ -37,8 +37,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Command,
@@ -48,22 +46,28 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
-import { CodeViewer } from './components/code-viewer';
 import { MaxLengthSelector } from './components/maxlength-selector';
 import { ModelSelector } from './components/model-selector';
-import { PresetActions } from './components/preset-actions';
-import { PresetSave } from './components/preset-save';
-import { PresetSelector } from './components/preset-selector';
-import { PresetShare } from './components/preset-share';
 import { TemperatureSelector } from './components/temperature-selector';
 import { TopPSelector } from './components/top-p-selector';
 import { models, types } from './data/models';
-import { presets } from './data/presets';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, ControllerRenderProps } from 'react-hook-form';
+import { useForm, type ControllerRenderProps } from 'react-hook-form';
 import { useWallets } from '@privy-io/react-auth';
 import getSession from '@/utils/getSession';
+import { useRouter } from 'next/navigation';
 
 // Form schema
 const formSchema = z.object({
@@ -151,26 +155,26 @@ const jobRolesData: JobRolesData = {
 };
 
 // 참고 이력서 데이터
-const referencedResumes = [
-  {
-    name: 'Software Developer Resume',
-    reference: 65,
-    icon: '💻',
-    description: 'Resume focused on technical stack and development experience.',
-  },
-  {
-    name: 'Frontend Expert Resume',
-    reference: 25,
-    icon: '🎨',
-    description: 'Resume emphasizing UI/UX design experience and frontend technologies.',
-  },
-  {
-    name: 'UX/UI Designer Resume',
-    reference: 10,
-    icon: '🖌️',
-    description: 'Resume highlighting user experience and design philosophy.',
-  },
-];
+// const referencedResumes = [
+//   {
+//     name: 'Software Developer Resume',
+//     reference: 65,
+//     icon: '💻',
+//     description: 'Resume focused on technical stack and development experience.',
+//   },
+//   {
+//     name: 'Frontend Expert Resume',
+//     reference: 25,
+//     icon: '🎨',
+//     description: 'Resume emphasizing UI/UX design experience and frontend technologies.',
+//   },
+//   {
+//     name: 'UX/UI Designer Resume',
+//     reference: 10,
+//     icon: '🖌️',
+//     description: 'Resume highlighting user experience and design philosophy.',
+//   },
+// ];
 
 // 스키마 정의
 const coverLetterSchema = z.object({
@@ -189,7 +193,17 @@ export default function PlaygroundPage() {
   const [error, setError] = useState<Error | null>(null);
   const [savedToDatabase, setSavedToDatabase] = useState(false);
 
+  // 저장 진행 상태 관련 상태
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveProgress, setSaveProgress] = useState(0);
+  const [currentSaveStep, setCurrentSaveStep] = useState('');
+  const [showSaveProgress, setShowSaveProgress] = useState(false);
+  const [uploadTaskId, setUploadTaskId] = useState<string | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const { wallets } = useWallets();
+
+  const router = useRouter();
 
   // Form setup
   const form = useForm<z.infer<typeof formSchema>>({
@@ -291,8 +305,8 @@ export default function PlaygroundPage() {
 
     try {
       // 작업 시작 알림
-      toast('자기소개서 생성 시작', {
-        description: '자기소개서가 생성되고 있습니다.',
+      toast('Cover Letter Generation Started', {
+        description: 'Your cover letter is being generated.',
         icon: <Check className="h-4 w-4 text-green-500" />,
       });
 
@@ -306,15 +320,15 @@ export default function PlaygroundPage() {
         modelParams: {
           temperature: temperature[0],
           max_tokens: maxLength[0],
-          top_p: topP[0]
-        }
+          top_p: topP[0],
+        },
       });
     } catch (err) {
       console.error('제출 오류:', err);
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(err instanceof Error ? err : new Error(errorMessage));
 
-      toast('오류 발생', {
+      toast('Save Error', {
         description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
         icon: <X className="h-4 w-4 text-white" />,
@@ -361,13 +375,111 @@ export default function PlaygroundPage() {
     ));
   };
 
+  // 서버 작업 상태 폴링 함수
+  const pollTaskStatus = async (taskId: string) => {
+    try {
+      if (!taskId) {
+        console.error('작업 ID가 없습니다');
+        return;
+      }
+
+      const response = await fetch(`/api/edit/status/${taskId}`);
+
+      if (!response.ok) {
+        throw new Error('상태 확인 중 오류가 발생했습니다');
+      }
+
+      const data = await response.json();
+
+      // 서버로부터 받은 상태 업데이트
+      if (data.progress) {
+        setSaveProgress(data.progress);
+      }
+      if (data.step) {
+        setCurrentSaveStep(data.step);
+      }
+
+      // 작업이 완료되었거나 실패했는지 확인
+      if (data.status === 'completed') {
+        // 폴링 중지
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+
+        setSaveProgress(100);
+        setCurrentSaveStep('Save completed!');
+        setSavedToDatabase(true);
+
+        // 성공 메시지 표시
+        toast('Cover Letter Saved', {
+          description: 'Your cover letter has been successfully converted to PDF and saved.',
+          icon: <Check className="h-4 w-4 text-green-500" />,
+        });
+
+        // 잠시 후 프로그레스 대화상자 닫기
+        setTimeout(() => {
+          // setShowSaveProgress(false);
+          setIsSaving(false);
+          setUploadTaskId(null);
+        }, 1500);
+      } else if (data.status === 'failed') {
+        // 폴링 중지
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+          pollingIntervalRef.current = null;
+        }
+
+        throw new Error(data.error || '저장 중 오류가 발생했습니다');
+      }
+    } catch (err) {
+      console.error('상태 확인 오류:', err);
+
+      // 폴링 중지
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+
+      setShowSaveProgress(false);
+      setIsSaving(false);
+      setUploadTaskId(null);
+
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      toast('Status Check Error', {
+        description: errorMessage,
+        style: { backgroundColor: 'hsl(var(--destructive))' },
+        icon: <X className="h-4 w-4 text-white" />,
+      });
+    }
+  };
+
+  // 업로드 상태 관찰 코드 추가
+  useEffect(() => {
+    // uploadTaskId가 설정되면 폴링 시작
+    if (uploadTaskId) {
+      // 폴링 시작 (2초마다)
+      pollingIntervalRef.current = setInterval(() => {
+        pollTaskStatus(uploadTaskId);
+      }, 2000);
+    }
+
+    // 클린업 함수
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [uploadTaskId]); // uploadTaskId가 변경될 때마다 실행
+
   // 결과 저장 함수
   const handleSaveResume = async () => {
     if (!object?.text) return;
 
     if (!wallets[0]?.address) {
-      toast('지갑 주소가 없습니다.', {
-        description: '지갑 주소를 설정해주세요.',
+      toast('No Wallet Address', {
+        description: 'Please set up your wallet address.',
         icon: <X className="h-4 w-4 text-white" />,
       });
       return;
@@ -376,19 +488,18 @@ export default function PlaygroundPage() {
     const session = await getSession();
 
     if (!session?.user?.id) {
-      toast('세션 정보가 없습니다.', {
-        description: '세션 정보를 확인해주세요.',
+      toast('No Session Information', {
+        description: 'Please check your session information.',
         icon: <X className="h-4 w-4 text-white" />,
       });
       return;
     }
 
     try {
-      // 저장 시작 알림
-      toast('자기소개서 저장 중', {
-        description: '자기소개서를 PDF로 변환하고 저장하고 있습니다.',
-        icon: <Clock className="h-4 w-4 text-blue-500" />,
-      });
+      // 저장 상태 초기화 및 진행 대화상자 표시
+      setIsSaving(true);
+      setShowSaveProgress(true);
+      setSaveProgress(0);
 
       // PDF 생성
       const pdf = new jsPDF();
@@ -420,7 +531,7 @@ export default function PlaygroundPage() {
       pdf.setFontSize(12);
 
       // 텍스트 줄바꿈 처리 (PDF 페이지 너비에 맞게)
-      const splitText = pdf.splitTextToSize(object.text, 170);
+      const splitText = pdf.output('blob') === null ? [] : pdf.splitTextToSize(object.text, 170);
       pdf.text(splitText, 20, 45);
 
       // PDF를 Blob으로 변환
@@ -435,7 +546,7 @@ export default function PlaygroundPage() {
 
       // 현재 날짜 포맷팅
       const now = new Date();
-      const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+      const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
 
       // 회사명에서 특수문자 제거하고 짧게 처리
       const safeCompanyName = company.replace(/[^\w가-힣]/g, '').substring(0, 10);
@@ -448,6 +559,7 @@ export default function PlaygroundPage() {
 
       // 특별한 파일명 생성
       const specialFileName = `coverletter_${shortJobTitle}_${safeCompanyName}_${experienceLevel}_${dateStr}.pdf`;
+      setCurrentSaveStep('Preparing to upload data to server...');
 
       // 기존 FormData에 PDF 추가
       const formData = new FormData();
@@ -474,27 +586,46 @@ export default function PlaygroundPage() {
         })
       );
 
+      // API 호출 (업로드)
       const response = await fetch('/api/edit/upload', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('저장에 실패했습니다.');
+        throw new Error('Failed to save.');
       }
 
-      setSavedToDatabase(true);
+      const result = await response.json();
 
-      // 저장 성공 알림
-      toast('자기소개서 저장 완료', {
-        description: '자기소개서가 PDF로 변환되어 성공적으로 저장되었습니다.',
-        icon: <Check className="h-4 w-4 text-green-500" />,
-      });
+      // 서버에서 작업 ID를 반환한 경우 상태 폴링 시작
+      if (result.taskId) {
+        setUploadTaskId(result.taskId);
+        setCurrentSaveStep('Processing on server...');
+      } else {
+        // 기존 방식 (작업 ID가 없는 경우)
+        setSaveProgress(100);
+        setCurrentSaveStep('Save completed!');
+        setSavedToDatabase(true);
+
+        toast('Cover Letter Saved', {
+          description: 'Your cover letter has been successfully converted to PDF and saved.',
+          icon: <Check className="h-4 w-4 text-green-500" />,
+        });
+
+        setTimeout(() => {
+          setShowSaveProgress(false);
+          setIsSaving(false);
+        }, 1500);
+      }
     } catch (err) {
       console.error('저장 오류:', err);
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
 
-      toast('저장 오류', {
+      setShowSaveProgress(false);
+      setIsSaving(false);
+
+      toast('Save Error', {
         description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
         icon: <X className="h-4 w-4 text-white" />,
@@ -533,7 +664,7 @@ export default function PlaygroundPage() {
         />
       </div>
       <div className="hidden h-full flex-col items-center justify-center md:flex">
-        <div className="container flex flex-col items-start justify-between space-y-2 py-4 sm:flex-row sm:items-center sm:space-y-0 md:h-16">
+        {/* <div className="container flex flex-col items-start justify-between space-y-2 py-4 sm:flex-row sm:items-center sm:space-y-0 md:h-16">
           <h2 className="text-lg font-semibold">Playground</h2>
           <div className="ml-auto flex w-full space-x-2 sm:justify-end">
             <PresetSelector presets={presets} />
@@ -544,7 +675,7 @@ export default function PlaygroundPage() {
             </div>
             <PresetActions />
           </div>
-        </div>
+        </div> */}
         <Separator />
         <Tabs defaultValue="edit" className="w-full flex-1 items-center">
           <div className="container h-full py-6">
@@ -562,7 +693,7 @@ export default function PlaygroundPage() {
                 <TopPSelector defaultValue={topP} onValueChange={(value) => setTopP(value)} />
 
                 {/* 참고한 이력서 목록 */}
-                <div className="mt-10 space-y-2">
+                {/* <div className="mt-10 space-y-2">
                   <div className="mb-2 flex items-center gap-2">
                     <BarChart className="h-4 w-4" />
                     <h3 className="text-sm font-medium">Referenced Resumes</h3>
@@ -613,7 +744,7 @@ export default function PlaygroundPage() {
                       </HoverCard>
                     ))}
                   </div>
-                </div>
+                </div> */}
               </div>
               <div className="md:order-1">
                 <TabsContent value="complete" className="mt-0 border-0 p-0">
@@ -1184,14 +1315,23 @@ export default function PlaygroundPage() {
                         <Button
                           variant="outline"
                           onClick={handleSaveResume}
-                          disabled={savedToDatabase}
+                          disabled={savedToDatabase || isSaving}
                           className={cn(
                             savedToDatabase && 'border-green-500 text-green-500',
                             'cursor-pointer'
                           )}
                         >
-                          <FileText className="mr-2 h-4 w-4" />
-                          {savedToDatabase ? 'Saved' : 'Save'}
+                          {isSaving ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              저장 중...
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="mr-2 h-4 w-4" />
+                              {savedToDatabase ? 'Saved' : 'Save'}
+                            </>
+                          )}
                         </Button>
                       )}
                     </div>
@@ -1202,6 +1342,59 @@ export default function PlaygroundPage() {
           </div>
         </Tabs>
       </div>
+
+      {/* 저장 진행상황 알림 대화상자 */}
+      <AlertDialog
+        open={showSaveProgress}
+        onOpenChange={(open) => {
+          // 저장 중일 때는 사용자가 대화상자를 닫지 못하게 함
+          if (!open && isSaving && saveProgress < 100) {
+            return;
+          }
+          setShowSaveProgress(open);
+        }}
+      >
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {saveProgress === 100 ? (
+                <>
+                  <Check className="h-5 w-5 text-green-500" />
+                  Save Completed
+                </>
+              ) : (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Saving Cover Letter
+                </>
+              )}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4 pt-2">
+              <p>{currentSaveStep}</p>
+              <Progress value={saveProgress} className="h-2 w-full">
+                <div
+                  className="bg-primary h-full transition-all"
+                  style={{ width: `${saveProgress}%` }}
+                />
+              </Progress>
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>PDF Generation</span>
+                <span>Upload</span>
+                <span>Server Processing</span>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            {saveProgress === 100 ? (
+              <AlertDialogAction onClick={() => router.push('/')}>Confirm</AlertDialogAction>
+            ) : (
+              <AlertDialogCancel disabled={isSaving && saveProgress < 100}>
+                {isSaving && saveProgress < 100 ? 'Processing...' : 'Cancel'}
+              </AlertDialogCancel>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

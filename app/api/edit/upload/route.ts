@@ -15,6 +15,8 @@ import { WIP_TOKEN_ADDRESS } from '@story-protocol/core-sdk';
 import { zeroAddress } from 'viem';
 import { defaultNftContractAbi } from '@/utils/defaultNftContractAbi';
 import { creativeCommonsAttribution } from '@/utils/terms';
+import { v4 as uuidv4 } from 'uuid';
+import { taskStatusMap } from './taskStatus';
 
 export const maxDuration = 300;
 export async function POST(request: Request) {
@@ -31,6 +33,59 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // 작업 ID 생성
+    const taskId = uuidv4();
+
+    // Initialize task status
+    taskStatusMap.set(taskId, {
+      status: 'pending',
+      step: 'Starting request processing',
+      progress: 5,
+    });
+
+    // Start asynchronous processing - return response immediately
+    processUpload(taskId, pdf, text, walletAddress, userId, referencesJson, metadata).catch(
+      (error) => {
+        console.error('Processing error:', error);
+        taskStatusMap.set(taskId, {
+          status: 'failed',
+          step: 'Error occurred during processing',
+          progress: 0,
+          error: error.message || 'An unknown error occurred',
+        });
+      }
+    );
+
+    // Return task ID
+    return NextResponse.json({
+      success: true,
+      taskId,
+      message: 'Task has started. Please use the task ID to check the status.',
+    });
+  } catch (error) {
+    console.error('Error initializing upload:', error);
+    return NextResponse.json({ error: 'Failed to initialize upload process' }, { status: 500 });
+  }
+}
+
+// 비동기 처리 함수
+async function processUpload(
+  taskId: string,
+  pdf: File,
+  text: string,
+  walletAddress: string,
+  userId: string,
+  referencesJson: string,
+  metadata: string
+) {
+  try {
+    // Update status: Starting reference analysis
+    taskStatusMap.set(taskId, {
+      status: 'processing',
+      step: 'Analyzing reference documents...',
+      progress: 10,
+    });
+
     // references JSON 파싱
     const references = JSON.parse(referencesJson);
 
@@ -42,7 +97,12 @@ export async function POST(request: Request) {
       )
       .slice(0, 3);
 
-    // TODO: Story IP 등록
+    // Update status: Starting file upload
+    taskStatusMap.set(taskId, {
+      status: 'processing',
+      step: 'Uploading to file storage...',
+      progress: 20,
+    });
 
     console.log('Uploading file to blob storage...', pdf, pdf.name);
     const blob = await put(pdf.name, pdf, {
@@ -54,10 +114,24 @@ export async function POST(request: Request) {
     const cid = blob.url.split('/').pop() ?? blob.url;
     const filePath = blob.url;
 
+    // Update status: Starting database storage
+    taskStatusMap.set(taskId, {
+      status: 'processing',
+      step: 'Saving document information to database...',
+      progress: 30,
+    });
+
     // 데이터베이스에 Coverletter 정보 저장
     const savedCoverletterId = await saveCoverletter(Number(userId), cid, filePath, metadata, true);
 
     const metadataObj = JSON.parse(metadata);
+
+    // Update status: Sending to AI agent
+    taskStatusMap.set(taskId, {
+      status: 'processing',
+      step: 'Sending document to AI analysis service...',
+      progress: 40,
+    });
 
     console.log('Uploading to AI agent:', AI_AGENT_URL, {
       text: text,
@@ -80,14 +154,31 @@ export async function POST(request: Request) {
 
     if (aiAgentResponse.status !== 'success') {
       console.error('AI agent returned error:', aiAgentResponse);
-      return NextResponse.json(
-        { status: 'error', message: aiAgentResponse.message },
-        { status: 400 }
-      );
+      taskStatusMap.set(taskId, {
+        status: 'failed',
+        step: 'AI agent processing failed',
+        progress: 0,
+        error: aiAgentResponse.message || 'AI agent error',
+      });
+      return;
     }
+
+    // Update status: Saving reference information
+    taskStatusMap.set(taskId, {
+      status: 'processing',
+      step: 'Saving reference information and resume text...',
+      progress: 50,
+    });
 
     // 이력서 텍스트와 참조 정보 저장
     await saveCoverletterWithReferences(savedCoverletterId, text, topReferences);
+
+    // Update status: Collecting IP asset information
+    taskStatusMap.set(taskId, {
+      status: 'processing',
+      step: 'Collecting IP asset information...',
+      progress: 60,
+    });
 
     // Get all IP asset information for references
     const ipAssets = [];
@@ -102,6 +193,13 @@ export async function POST(request: Request) {
         contribution: ref.contributions,
       });
     }
+
+    // Update status: Minting license tokens
+    taskStatusMap.set(taskId, {
+      status: 'processing',
+      step: 'Minting license tokens...',
+      progress: 70,
+    });
 
     // Mint license tokens for each IP asset
     const licenseTokenIds = [];
@@ -118,6 +216,13 @@ export async function POST(request: Request) {
       console.log('License minted:', {
         'Transaction Hash': response.txHash,
         'License Token IDs': response.licenseTokenIds,
+      });
+
+      // Update status: Processing token approval
+      taskStatusMap.set(taskId, {
+        status: 'processing',
+        step: 'Processing token approval...',
+        progress: 75,
       });
 
       // Approve license token
@@ -147,6 +252,13 @@ export async function POST(request: Request) {
       licenseTokenIds.push(response.licenseTokenIds![0]);
     }
 
+    // Update status: Registering derivative IP asset
+    taskStatusMap.set(taskId, {
+      status: 'processing',
+      step: 'Registering derivative IP asset...',
+      progress: 80,
+    });
+
     // if there are license token IDs, register derivative IP asset with all license tokens
     if (licenseTokenIds.length > 0) {
       // Register derivative IP asset with all license tokens
@@ -161,6 +273,13 @@ export async function POST(request: Request) {
         recipient: walletAddress as `0x${string}`,
       });
 
+      // Update status: Saving IP asset
+      taskStatusMap.set(taskId, {
+        status: 'processing',
+        step: 'Saving IP asset information ...',
+        progress: 85,
+      });
+
       // Save IP asset to database
       const savedIpAsset = await saveIpAsset(
         Number(userId),
@@ -170,6 +289,13 @@ export async function POST(request: Request) {
         child.ipId || '',
         child.txHash || ''
       );
+
+      // Update status: Saving IP reference information
+      taskStatusMap.set(taskId, {
+        status: 'processing',
+        step: 'Saving IP reference information...',
+        progress: 90,
+      });
 
       // Save IP references to database
       for (const ipAsset of ipAssets) {
@@ -181,6 +307,13 @@ export async function POST(request: Request) {
           }
         }
       }
+
+      // Update status: Processing royalties
+      taskStatusMap.set(taskId, {
+        status: 'processing',
+        step: 'Processing royalty payments...',
+        progress: 95,
+      });
 
       // Process royalties for each IP asset
       for (const ipAsset of ipAssets) {
@@ -217,6 +350,13 @@ export async function POST(request: Request) {
         );
       }
     } else {
+      // Update status: Registering IP asset with PIL terms
+      taskStatusMap.set(taskId, {
+        status: 'processing',
+        step: 'Registering IP asset with PIL terms...',
+        progress: 90,
+      });
+
       const response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
         spgNftContract: process.env.STORY_SPG_NFT_CONTRACT as `0x${string}`,
         ipMetadata: {
@@ -247,12 +387,19 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    // Update status: Completed
+    taskStatusMap.set(taskId, {
+      status: 'completed',
+      step: 'All tasks completed successfully!',
+      progress: 100,
+    });
   } catch (error) {
-    console.error('Error saving coverletter text and references:', error);
-    return NextResponse.json(
-      { error: 'Failed to save coverletter text and references' },
-      { status: 500 }
-    );
+    console.error('Error processing upload:', error);
+    taskStatusMap.set(taskId, {
+      status: 'failed',
+      step: 'Error occurred during processing',
+      progress: 0,
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
+    });
   }
 }
