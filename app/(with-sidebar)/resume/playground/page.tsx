@@ -302,8 +302,8 @@ export default function PlaygroundPage() {
 
     try {
       // 작업 시작 알림
-      toast('자기소개서 생성 시작', {
-        description: '자기소개서가 생성되고 있습니다.',
+      toast('Cover Letter Generation Started', {
+        description: 'Your cover letter is being generated.',
         icon: <Check className="h-4 w-4 text-green-500" />,
       });
 
@@ -322,10 +322,10 @@ export default function PlaygroundPage() {
       });
     } catch (err) {
       console.error('제출 오류:', err);
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       setError(err instanceof Error ? err : new Error(errorMessage));
 
-      toast('오류 발생', {
+      toast('Save Error', {
         description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
         icon: <X className="h-4 w-4 text-white" />,
@@ -405,12 +405,12 @@ export default function PlaygroundPage() {
         }
         
         setSaveProgress(100);
-        setCurrentSaveStep('저장이 완료되었습니다!');
+        setCurrentSaveStep('Save completed!');
         setSavedToDatabase(true);
         
         // 성공 메시지 표시
-        toast('자기소개서 저장 완료', {
-          description: '자기소개서가 PDF로 변환되어 성공적으로 저장되었습니다.',
+        toast('Cover Letter Saved', {
+          description: 'Your cover letter has been successfully converted to PDF and saved.',
           icon: <Check className="h-4 w-4 text-green-500" />,
         });
         
@@ -420,10 +420,6 @@ export default function PlaygroundPage() {
           setIsSaving(false);
           setUploadTaskId(null);
         }, 1500);
-
-
-
-        
       } else if (data.status === 'failed') {
         // 폴링 중지
         if (pollingIntervalRef.current) {
@@ -446,8 +442,8 @@ export default function PlaygroundPage() {
       setIsSaving(false);
       setUploadTaskId(null);
       
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
-      toast('상태 확인 오류', {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      toast('Status Check Error', {
         description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
         icon: <X className="h-4 w-4 text-white" />,
@@ -479,8 +475,8 @@ export default function PlaygroundPage() {
     if (!object?.text) return;
 
     if (!wallets[0]?.address) {
-      toast('지갑 주소가 없습니다.', {
-        description: '지갑 주소를 설정해주세요.',
+      toast('No Wallet Address', {
+        description: 'Please set up your wallet address.',
         icon: <X className="h-4 w-4 text-white" />,
       });
       return;
@@ -489,8 +485,8 @@ export default function PlaygroundPage() {
     const session = await getSession();
 
     if (!session?.user?.id) {
-      toast('세션 정보가 없습니다.', {
-        description: '세션 정보를 확인해주세요.',
+      toast('No Session Information', {
+        description: 'Please check your session information.',
         icon: <X className="h-4 w-4 text-white" />,
       });
       return;
@@ -547,7 +543,7 @@ export default function PlaygroundPage() {
 
       // 현재 날짜 포맷팅
       const now = new Date();
-      const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+      const dateStr = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
 
       // 회사명에서 특수문자 제거하고 짧게 처리
       const safeCompanyName = company.replace(/[^\w가-힣]/g, '').substring(0, 10);
@@ -560,7 +556,7 @@ export default function PlaygroundPage() {
 
       // 특별한 파일명 생성
       const specialFileName = `coverletter_${shortJobTitle}_${safeCompanyName}_${experienceLevel}_${dateStr}.pdf`;
-      setCurrentSaveStep('서버에 데이터 업로드 준비 중...');
+      setCurrentSaveStep('Preparing to upload data to server...');
 
       // 기존 FormData에 PDF 추가
       const formData = new FormData();
@@ -594,7 +590,7 @@ export default function PlaygroundPage() {
       });
 
       if (!response.ok) {
-        throw new Error('저장에 실패했습니다.');
+        throw new Error('Failed to save.');
       }
       
       const result = await response.json();
@@ -602,15 +598,15 @@ export default function PlaygroundPage() {
       // 서버에서 작업 ID를 반환한 경우 상태 폴링 시작
       if (result.taskId) {
         setUploadTaskId(result.taskId);
-        setCurrentSaveStep('서버에서 처리 중...');
+        setCurrentSaveStep('Processing on server...');
       } else {
         // 기존 방식 (작업 ID가 없는 경우)
         setSaveProgress(100);
-        setCurrentSaveStep('저장이 완료되었습니다!');
+        setCurrentSaveStep('Save completed!');
         setSavedToDatabase(true);
         
-        toast('자기소개서 저장 완료', {
-          description: '자기소개서가 PDF로 변환되어 성공적으로 저장되었습니다.',
+        toast('Cover Letter Saved', {
+          description: 'Your cover letter has been successfully converted to PDF and saved.',
           icon: <Check className="h-4 w-4 text-green-500" />,
         });
         
@@ -621,12 +617,12 @@ export default function PlaygroundPage() {
       }
     } catch (err) {
       console.error('저장 오류:', err);
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
 
       setShowSaveProgress(false);
       setIsSaving(false);
       
-      toast('저장 오류', {
+      toast('Save Error', {
         description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
         icon: <X className="h-4 w-4 text-white" />,
@@ -1358,12 +1354,12 @@ export default function PlaygroundPage() {
               {saveProgress === 100 ? (
                 <>
                   <Check className="h-5 w-5 text-green-500" />
-                  저장 완료
+                  Save Completed
                 </>
               ) : (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  자기소개서 저장 중
+                  Saving Cover Letter
                 </>
               )}
             </AlertDialogTitle>
@@ -1376,18 +1372,18 @@ export default function PlaygroundPage() {
                 />
               </Progress>
               <div className="flex justify-between text-xs text-gray-500">
-                <span>PDF 생성</span>
-                <span>업로드</span>
-                <span>서버 처리</span>
+                <span>PDF Generation</span>
+                <span>Upload</span>
+                <span>Server Processing</span>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             {saveProgress === 100 ? (
-              <AlertDialogAction onClick={() => router.push('/')}>확인</AlertDialogAction>
+              <AlertDialogAction onClick={() => router.push('/')}>Confirm</AlertDialogAction>
             ) : (
               <AlertDialogCancel disabled={isSaving && saveProgress < 100}>
-                {isSaving && saveProgress < 100 ? '처리 중...' : '취소'}
+                {isSaving && saveProgress < 100 ? 'Processing...' : 'Cancel'}
               </AlertDialogCancel>
             )}
           </AlertDialogFooter>

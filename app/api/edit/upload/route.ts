@@ -36,29 +36,29 @@ export async function POST(request: Request) {
     // 작업 ID 생성
     const taskId = uuidv4();
     
-    // 작업 상태 초기화
+    // Initialize task status
     taskStatusMap.set(taskId, {
       status: 'pending',
-      step: '요청 처리 시작',
+      step: 'Starting request processing',
       progress: 5
     });
 
-    // 비동기 처리 시작 - 응답은 즉시 반환
+    // Start asynchronous processing - return response immediately
     processUpload(taskId, pdf, text, walletAddress, userId, referencesJson, metadata).catch(error => {
       console.error('Processing error:', error);
       taskStatusMap.set(taskId, {
         status: 'failed',
-        step: '처리 중 오류 발생',
+        step: 'Error occurred during processing',
         progress: 0,
-        error: error.message || '알 수 없는 오류가 발생했습니다'
+        error: error.message || 'An unknown error occurred'
       });
     });
 
-    // 작업 ID 반환
+    // Return task ID
     return NextResponse.json({ 
       success: true, 
       taskId,
-      message: '작업이 시작되었습니다. 상태를 확인하려면 작업 ID를 사용하세요.'
+      message: 'Task has started. Please use the task ID to check the status.'
     });
 
   } catch (error) {
@@ -81,10 +81,10 @@ async function processUpload(
   metadata: string
 ) {
   try {
-    // 상태 업데이트: 참조 분석 시작
+    // Update status: Starting reference analysis
     taskStatusMap.set(taskId, {
       status: 'processing',
-      step: '참조 문서 분석 중...',
+      step: 'Analyzing reference documents...',
       progress: 10
     });
 
@@ -99,10 +99,10 @@ async function processUpload(
       )
       .slice(0, 3);
 
-    // 상태 업데이트: 파일 업로드 시작
+    // Update status: Starting file upload
     taskStatusMap.set(taskId, {
       status: 'processing',
-      step: '파일 스토리지에 업로드 중...',
+      step: 'Uploading to file storage...',
       progress: 20
     });
 
@@ -116,10 +116,10 @@ async function processUpload(
     const cid = blob.url.split('/').pop() ?? blob.url;
     const filePath = blob.url;
 
-    // 상태 업데이트: 데이터베이스 저장 시작
+    // Update status: Starting database storage
     taskStatusMap.set(taskId, {
       status: 'processing',
-      step: '데이터베이스에 문서 정보 저장 중...',
+      step: 'Saving document information to database...',
       progress: 30
     });
 
@@ -128,10 +128,10 @@ async function processUpload(
 
     const metadataObj = JSON.parse(metadata);
 
-    // 상태 업데이트: AI 에이전트 전송 중
+    // Update status: Sending to AI agent
     taskStatusMap.set(taskId, {
       status: 'processing',
-      step: 'AI 분석 서비스로 문서 전송 중...',
+      step: 'Sending document to AI analysis service...',
       progress: 40
     });
 
@@ -158,27 +158,27 @@ async function processUpload(
       console.error('AI agent returned error:', aiAgentResponse);
       taskStatusMap.set(taskId, {
         status: 'failed',
-        step: 'AI 에이전트 처리 실패',
+        step: 'AI agent processing failed',
         progress: 0,
-        error: aiAgentResponse.message || 'AI 에이전트 오류'
+        error: aiAgentResponse.message || 'AI agent error'
       });
       return;
     }
 
-    // 상태 업데이트: 참조 정보 저장 중
+    // Update status: Saving reference information
     taskStatusMap.set(taskId, {
       status: 'processing',
-      step: '참조 정보 및 이력서 텍스트 저장 중...',
+      step: 'Saving reference information and resume text...',
       progress: 50
     });
 
     // 이력서 텍스트와 참조 정보 저장
     await saveCoverletterWithReferences(savedCoverletterId, text, topReferences);
 
-    // 상태 업데이트: IP 에셋 정보 수집 중
+    // Update status: Collecting IP asset information
     taskStatusMap.set(taskId, {
       status: 'processing',
-      step: 'IP 에셋 정보 수집 중...',
+      step: 'Collecting IP asset information...',
       progress: 60
     });
 
@@ -196,10 +196,10 @@ async function processUpload(
       });
     }
 
-    // 상태 업데이트: 라이센스 토큰 발행 중
+    // Update status: Minting license tokens
     taskStatusMap.set(taskId, {
       status: 'processing',
-      step: '라이센스 토큰 발행 중...',
+      step: 'Minting license tokens...',
       progress: 70
     });
 
@@ -220,10 +220,10 @@ async function processUpload(
         'License Token IDs': response.licenseTokenIds,
       });
 
-      // 상태 업데이트: 토큰 승인 중
+      // Update status: Processing token approval
       taskStatusMap.set(taskId, {
         status: 'processing',
-        step: '토큰 승인 처리 중...',
+        step: 'Processing token approval...',
         progress: 75
       });
 
@@ -254,10 +254,10 @@ async function processUpload(
       licenseTokenIds.push(response.licenseTokenIds![0]);
     }
 
-    // 상태 업데이트: 파생 IP 에셋 등록 중
+    // Update status: Registering derivative IP asset
     taskStatusMap.set(taskId, {
       status: 'processing',
-      step: '파생 IP 에셋 등록 중...',
+      step: 'Registering derivative IP asset...',
       progress: 80
     });
 
@@ -275,10 +275,10 @@ async function processUpload(
         recipient: walletAddress as `0x${string}`,
       });
 
-      // 상태 업데이트: IP 에셋 저장 중
+      // Update status: Saving IP asset
       taskStatusMap.set(taskId, {
         status: 'processing',
-        step: 'IP 에셋 정보 데이터베이스에 저장 중...',
+        step: 'Saving IP asset information ...',
         progress: 85
       });
 
@@ -292,10 +292,10 @@ async function processUpload(
         child.txHash || ''
       );
 
-      // 상태 업데이트: IP 참조 정보 저장 중
+      // Update status: Saving IP reference information
       taskStatusMap.set(taskId, {
         status: 'processing',
-        step: 'IP 참조 정보 저장 중...',
+        step: 'Saving IP reference information...',
         progress: 90
       });
 
@@ -310,10 +310,10 @@ async function processUpload(
         }
       }
 
-      // 상태 업데이트: 로열티 처리 중
+      // Update status: Processing royalties
       taskStatusMap.set(taskId, {
         status: 'processing',
-        step: '로열티 지급 처리 중...',
+        step: 'Processing royalty payments...',
         progress: 95
       });
 
@@ -352,10 +352,10 @@ async function processUpload(
         );
       }
     } else {
-      // 상태 업데이트: PIL 조건으로 IP 에셋 등록 중
+      // Update status: Registering IP asset with PIL terms
       taskStatusMap.set(taskId, {
         status: 'processing',
-        step: 'PIL 조건으로 IP 에셋 등록 중...',
+        step: 'Registering IP asset with PIL terms...',
         progress: 90
       });
 
@@ -389,10 +389,10 @@ async function processUpload(
       );
     }
 
-    // 상태 업데이트: 완료
+    // Update status: Completed
     taskStatusMap.set(taskId, {
       status: 'completed',
-      step: '모든 작업이 성공적으로 완료되었습니다!',
+      step: 'All tasks completed successfully!',
       progress: 100
     });
 
@@ -400,9 +400,9 @@ async function processUpload(
     console.error('Error processing upload:', error);
     taskStatusMap.set(taskId, {
       status: 'failed',
-      step: '처리 중 오류 발생',
+      step: 'Error occurred during processing',
       progress: 0,
-      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다'
+      error: error instanceof Error ? error.message : 'An unknown error occurred'
     });
   }
 }
