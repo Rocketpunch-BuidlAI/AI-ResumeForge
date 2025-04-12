@@ -36,7 +36,9 @@ export function WalletInfo({ address }: WalletInfoProps) {
           setTotalReward(rewardsData.totalRewards);
 
           // Recent royalties 가져오기
-          const royaltiesResponse = await fetch(`/api/home/recent-royalties?userId=${session.user.id}`);
+          const royaltiesResponse = await fetch(
+            `/api/home/recent-royalties?userId=${session.user.id}`
+          );
           const royaltiesData = await royaltiesResponse.json();
           setRecentRoyalties(royaltiesData);
         } catch (error) {
@@ -65,11 +67,11 @@ export function WalletInfo({ address }: WalletInfoProps) {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between gap-2 text-xl">
           <div className="flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-primary" />
+            <Wallet className="text-primary h-5 w-5" />
             Wallet Info
           </div>
           <Badge variant="outline" className="px-2 py-0.5 text-xs">
-            <span className="size-2 rounded-full bg-green-500 mr-1"></span>Connected
+            <span className="mr-1 size-2 rounded-full bg-green-500"></span>Connected
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -87,14 +89,18 @@ export function WalletInfo({ address }: WalletInfoProps) {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
                         onClick={copyAddress}
                         disabled={isLoading}
                       >
-                        {copied ? <CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copied ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>{copied ? 'Copied!' : 'Copy Address'}</TooltipContent>
@@ -108,7 +114,9 @@ export function WalletInfo({ address }: WalletInfoProps) {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6"
-                        onClick={() => window.open(`https://aeneid.storyscan.io/address/${address}`, '_blank')}
+                        onClick={() =>
+                          window.open(`https://aeneid.storyscan.io/address/${address}`, '_blank')
+                        }
                         disabled={isLoading}
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
@@ -120,8 +128,8 @@ export function WalletInfo({ address }: WalletInfoProps) {
               </div>
             </div>
           </div>
-          
-          <div className="flex justify-between items-center">
+
+          <div className="flex items-center justify-between">
             <div>
               <h3 className="text-muted-foreground text-xs font-medium">Total Reward Amount</h3>
               {isLoading ? (
@@ -146,7 +154,10 @@ export function WalletInfo({ address }: WalletInfoProps) {
               ) : (
                 <>
                   {recentRoyalties.map((royalty) => (
-                    <div key={royalty.id} className="flex items-center justify-between rounded-md border p-2">
+                    <div
+                      key={royalty.id}
+                      className="flex items-center justify-between rounded-md border p-2"
+                    >
                       <div className="flex items-center gap-2">
                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100">
                           <ArrowDownLeft className="h-3.5 w-3.5 text-green-600" />

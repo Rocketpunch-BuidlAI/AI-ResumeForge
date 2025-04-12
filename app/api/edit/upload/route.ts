@@ -35,38 +35,36 @@ export async function POST(request: Request) {
 
     // 작업 ID 생성
     const taskId = uuidv4();
-    
+
     // Initialize task status
     taskStatusMap.set(taskId, {
       status: 'pending',
       step: 'Starting request processing',
-      progress: 5
+      progress: 5,
     });
 
     // Start asynchronous processing - return response immediately
-    processUpload(taskId, pdf, text, walletAddress, userId, referencesJson, metadata).catch(error => {
-      console.error('Processing error:', error);
-      taskStatusMap.set(taskId, {
-        status: 'failed',
-        step: 'Error occurred during processing',
-        progress: 0,
-        error: error.message || 'An unknown error occurred'
-      });
-    });
+    processUpload(taskId, pdf, text, walletAddress, userId, referencesJson, metadata).catch(
+      (error) => {
+        console.error('Processing error:', error);
+        taskStatusMap.set(taskId, {
+          status: 'failed',
+          step: 'Error occurred during processing',
+          progress: 0,
+          error: error.message || 'An unknown error occurred',
+        });
+      }
+    );
 
     // Return task ID
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       taskId,
-      message: 'Task has started. Please use the task ID to check the status.'
+      message: 'Task has started. Please use the task ID to check the status.',
     });
-
   } catch (error) {
     console.error('Error initializing upload:', error);
-    return NextResponse.json(
-      { error: 'Failed to initialize upload process' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to initialize upload process' }, { status: 500 });
   }
 }
 
@@ -85,7 +83,7 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'processing',
       step: 'Analyzing reference documents...',
-      progress: 10
+      progress: 10,
     });
 
     // references JSON 파싱
@@ -103,7 +101,7 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'processing',
       step: 'Uploading to file storage...',
-      progress: 20
+      progress: 20,
     });
 
     console.log('Uploading file to blob storage...', pdf, pdf.name);
@@ -120,7 +118,7 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'processing',
       step: 'Saving document information to database...',
-      progress: 30
+      progress: 30,
     });
 
     // 데이터베이스에 Coverletter 정보 저장
@@ -132,7 +130,7 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'processing',
       step: 'Sending document to AI analysis service...',
-      progress: 40
+      progress: 40,
     });
 
     console.log('Uploading to AI agent:', AI_AGENT_URL, {
@@ -160,7 +158,7 @@ async function processUpload(
         status: 'failed',
         step: 'AI agent processing failed',
         progress: 0,
-        error: aiAgentResponse.message || 'AI agent error'
+        error: aiAgentResponse.message || 'AI agent error',
       });
       return;
     }
@@ -169,7 +167,7 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'processing',
       step: 'Saving reference information and resume text...',
-      progress: 50
+      progress: 50,
     });
 
     // 이력서 텍스트와 참조 정보 저장
@@ -179,7 +177,7 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'processing',
       step: 'Collecting IP asset information...',
-      progress: 60
+      progress: 60,
     });
 
     // Get all IP asset information for references
@@ -200,7 +198,7 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'processing',
       step: 'Minting license tokens...',
-      progress: 70
+      progress: 70,
     });
 
     // Mint license tokens for each IP asset
@@ -224,7 +222,7 @@ async function processUpload(
       taskStatusMap.set(taskId, {
         status: 'processing',
         step: 'Processing token approval...',
-        progress: 75
+        progress: 75,
       });
 
       // Approve license token
@@ -258,7 +256,7 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'processing',
       step: 'Registering derivative IP asset...',
-      progress: 80
+      progress: 80,
     });
 
     // if there are license token IDs, register derivative IP asset with all license tokens
@@ -279,7 +277,7 @@ async function processUpload(
       taskStatusMap.set(taskId, {
         status: 'processing',
         step: 'Saving IP asset information ...',
-        progress: 85
+        progress: 85,
       });
 
       // Save IP asset to database
@@ -296,7 +294,7 @@ async function processUpload(
       taskStatusMap.set(taskId, {
         status: 'processing',
         step: 'Saving IP reference information...',
-        progress: 90
+        progress: 90,
       });
 
       // Save IP references to database
@@ -314,7 +312,7 @@ async function processUpload(
       taskStatusMap.set(taskId, {
         status: 'processing',
         step: 'Processing royalty payments...',
-        progress: 95
+        progress: 95,
       });
 
       // Process royalties for each IP asset
@@ -356,7 +354,7 @@ async function processUpload(
       taskStatusMap.set(taskId, {
         status: 'processing',
         step: 'Registering IP asset with PIL terms...',
-        progress: 90
+        progress: 90,
       });
 
       const response = await client.ipAsset.mintAndRegisterIpAssetWithPilTerms({
@@ -393,16 +391,15 @@ async function processUpload(
     taskStatusMap.set(taskId, {
       status: 'completed',
       step: 'All tasks completed successfully!',
-      progress: 100
+      progress: 100,
     });
-
   } catch (error) {
     console.error('Error processing upload:', error);
     taskStatusMap.set(taskId, {
       status: 'failed',
       step: 'Error occurred during processing',
       progress: 0,
-      error: error instanceof Error ? error.message : 'An unknown error occurred'
+      error: error instanceof Error ? error.message : 'An unknown error occurred',
     });
   }
 }

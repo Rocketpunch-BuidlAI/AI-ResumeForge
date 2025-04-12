@@ -47,7 +47,16 @@ import {
 } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 import { CodeViewer } from './components/code-viewer';
 import { MaxLengthSelector } from './components/maxlength-selector';
@@ -189,7 +198,7 @@ const coverLetterSchema = z.object({
 export default function PlaygroundPage() {
   const [error, setError] = useState<Error | null>(null);
   const [savedToDatabase, setSavedToDatabase] = useState(false);
-  
+
   // 저장 진행 상태 관련 상태
   const [isSaving, setIsSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState(0);
@@ -317,8 +326,8 @@ export default function PlaygroundPage() {
         modelParams: {
           temperature: temperature[0],
           max_tokens: maxLength[0],
-          top_p: topP[0]
-        }
+          top_p: topP[0],
+        },
       });
     } catch (err) {
       console.error('제출 오류:', err);
@@ -379,15 +388,15 @@ export default function PlaygroundPage() {
         console.error('작업 ID가 없습니다');
         return;
       }
-      
+
       const response = await fetch(`/api/edit/status/${taskId}`);
-      
+
       if (!response.ok) {
         throw new Error('상태 확인 중 오류가 발생했습니다');
       }
-      
+
       const data = await response.json();
-      
+
       // 서버로부터 받은 상태 업데이트
       if (data.progress) {
         setSaveProgress(data.progress);
@@ -395,7 +404,7 @@ export default function PlaygroundPage() {
       if (data.step) {
         setCurrentSaveStep(data.step);
       }
-      
+
       // 작업이 완료되었거나 실패했는지 확인
       if (data.status === 'completed') {
         // 폴링 중지
@@ -403,17 +412,17 @@ export default function PlaygroundPage() {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
         }
-        
+
         setSaveProgress(100);
         setCurrentSaveStep('Save completed!');
         setSavedToDatabase(true);
-        
+
         // 성공 메시지 표시
         toast('Cover Letter Saved', {
           description: 'Your cover letter has been successfully converted to PDF and saved.',
           icon: <Check className="h-4 w-4 text-green-500" />,
         });
-        
+
         // 잠시 후 프로그레스 대화상자 닫기
         setTimeout(() => {
           // setShowSaveProgress(false);
@@ -426,22 +435,22 @@ export default function PlaygroundPage() {
           clearInterval(pollingIntervalRef.current);
           pollingIntervalRef.current = null;
         }
-        
+
         throw new Error(data.error || '저장 중 오류가 발생했습니다');
       }
     } catch (err) {
       console.error('상태 확인 오류:', err);
-      
+
       // 폴링 중지
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
       }
-      
+
       setShowSaveProgress(false);
       setIsSaving(false);
       setUploadTaskId(null);
-      
+
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       toast('Status Check Error', {
         description: errorMessage,
@@ -497,7 +506,7 @@ export default function PlaygroundPage() {
       setIsSaving(true);
       setShowSaveProgress(true);
       setSaveProgress(0);
-      
+
       // PDF 생성
       const pdf = new jsPDF();
 
@@ -592,9 +601,9 @@ export default function PlaygroundPage() {
       if (!response.ok) {
         throw new Error('Failed to save.');
       }
-      
+
       const result = await response.json();
-      
+
       // 서버에서 작업 ID를 반환한 경우 상태 폴링 시작
       if (result.taskId) {
         setUploadTaskId(result.taskId);
@@ -604,12 +613,12 @@ export default function PlaygroundPage() {
         setSaveProgress(100);
         setCurrentSaveStep('Save completed!');
         setSavedToDatabase(true);
-        
+
         toast('Cover Letter Saved', {
           description: 'Your cover letter has been successfully converted to PDF and saved.',
           icon: <Check className="h-4 w-4 text-green-500" />,
         });
-        
+
         setTimeout(() => {
           setShowSaveProgress(false);
           setIsSaving(false);
@@ -621,7 +630,7 @@ export default function PlaygroundPage() {
 
       setShowSaveProgress(false);
       setIsSaving(false);
-      
+
       toast('Save Error', {
         description: errorMessage,
         style: { backgroundColor: 'hsl(var(--destructive))' },
@@ -1339,15 +1348,18 @@ export default function PlaygroundPage() {
           </div>
         </Tabs>
       </div>
-      
+
       {/* 저장 진행상황 알림 대화상자 */}
-      <AlertDialog open={showSaveProgress} onOpenChange={(open) => {
-        // 저장 중일 때는 사용자가 대화상자를 닫지 못하게 함
-        if (!open && isSaving && saveProgress < 100) {
-          return;
-        }
-        setShowSaveProgress(open);
-      }}>
+      <AlertDialog
+        open={showSaveProgress}
+        onOpenChange={(open) => {
+          // 저장 중일 때는 사용자가 대화상자를 닫지 못하게 함
+          if (!open && isSaving && saveProgress < 100) {
+            return;
+          }
+          setShowSaveProgress(open);
+        }}
+      >
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -1366,8 +1378,8 @@ export default function PlaygroundPage() {
             <AlertDialogDescription className="space-y-4 pt-2">
               <p>{currentSaveStep}</p>
               <Progress value={saveProgress} className="h-2 w-full">
-                <div 
-                  className="h-full bg-primary transition-all" 
+                <div
+                  className="bg-primary h-full transition-all"
                   style={{ width: `${saveProgress}%` }}
                 />
               </Progress>
