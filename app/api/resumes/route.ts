@@ -1,10 +1,11 @@
 // app/api/resumes/route.ts
 import { NextResponse } from 'next/server';
-import { getCoverletter, saveCoverletter, getLatestCoverletterByCidAndUserId } from '@/db';
+import { getCoverletter, saveCoverletter, getLatestCoverletterByCidAndUserId, type ResumeMetadata } from '@/db';
 import { put } from '@vercel/blob';
 import axios from 'axios';
 import { PdfManager } from '@/utils/PdfManager';
 import { AI_AGENT_URL } from '@/utils/config';
+
 
 export async function GET(request: Request) {
   try {
@@ -67,8 +68,8 @@ export async function POST(request: Request) {
     const response = await axios.post(`${AI_AGENT_URL}/upload`, {
       text: extractedText,
       id: savedCoverletter.id.toString(),
-      role: savedCoverletter.metadata.jobTitle,
-      experience: savedCoverletter.metadata.yearsOfExperience
+      role: (savedCoverletter.metadata as ResumeMetadata).jobTitle,
+      experience: (savedCoverletter.metadata as ResumeMetadata).yearsOfExperience
     });
 
     const aiAgentResponse = response.data;

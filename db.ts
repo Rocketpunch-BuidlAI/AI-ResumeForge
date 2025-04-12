@@ -14,7 +14,7 @@ const client = postgres(connectionString, { ssl: 'require' });
 const db = drizzle(client);
 
 // Define metadata interface
-interface ResumeMetadata {
+export interface ResumeMetadata {
   jobTitle?: string;
   companyName?: string;
   yearsOfExperience?: string;
