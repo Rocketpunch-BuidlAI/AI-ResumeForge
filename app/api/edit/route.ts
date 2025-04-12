@@ -11,11 +11,10 @@ type CoverLetterSection = {
   motivation: string;
   relevantExperience: string;
   futureAspirations: string;
-  targetCompany: string;
-  department: string;
-  position: string;
-  original_cover_letter: File;
-  metadata: string;
+  targetCompany: string | null;
+  department: string | null;
+  position: string | null;
+  customPrompt: string;
 };
 
 export async function POST(request: NextRequest) {
@@ -46,11 +45,14 @@ export async function POST(request: NextRequest) {
       motivation: jsonData.motivation,
       relevantExperience: jsonData.relevantExperience,
       futureAspirations: jsonData.futureAspirations,
-      metadata: {
-        targetCompany: jsonData.targetCompany,
-        department: jsonData.department,
-        position: jsonData.position,
-      },
+      ...(jsonData.targetCompany || jsonData.department || jsonData.position ? {
+        metadata: {
+          targetCompany: jsonData.targetCompany,
+          department: jsonData.department,
+          position: jsonData.position,
+        }
+      } : {}),
+      customPrompt: jsonData.customPrompt,
     });
 
     const aiAgentResponse = response.data;
