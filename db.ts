@@ -32,10 +32,9 @@ export interface ResumeMetadata {
 // Table schema definitions
 export const users = pgTable('User', {
   id: serial('id').primaryKey(),
-  name: varchar('name', { length: 255 }),
-  email: varchar('email', { length: 255 }),
+  email: varchar('email', { length: 64 }),
   password: varchar('password', { length: 64 }),
-  image: varchar('image', { length: 255 }),
+  name: varchar('name', { length: 64 }),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 });
