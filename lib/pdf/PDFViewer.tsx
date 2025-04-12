@@ -16,11 +16,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 interface PDFViewerProps {
-  file: File | null;
+  file?: File | null;
+  fileUrl?: string;
   className?: string;
 }
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
+const PDFViewer: React.FC<PDFViewerProps> = ({ file, fileUrl, className }) => {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
@@ -59,6 +60,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    } else if (fileUrl) {
+      // URL이 제공된 경우 직접 다운로드 링크 열기
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = fileUrl.split('/').pop() || 'download.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
   };
 
@@ -72,14 +81,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
 
   useEffect(() => {
     // 파일이 변경될 때마다 로딩 상태와 에러 초기화
-    if (file) {
+    if (file || fileUrl) {
       setLoading(true);
       setError(null);
       setPageNumber(1);
     }
-  }, [file]);
+  }, [file, fileUrl]);
 
-  if (!file) {
+  if (!file && !fileUrl) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <p className="text-muted-foreground">PDF 파일을 선택해주세요</p>
@@ -98,6 +107,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
       </div>
     );
   }
+
+  // file 또는 fileUrl 중 하나를 Document 컴포넌트에 전달
+  const fileSource = file || fileUrl;
 
   return (
     <div className={cn('flex h-full w-full flex-col items-center', className)}>
@@ -136,7 +148,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ file, className }) => {
       <div className="w-full flex-1 overflow-auto">
         <div className="flex min-h-full justify-center">
           <Document
-            file={file}
+            file={fileSource}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             loading={

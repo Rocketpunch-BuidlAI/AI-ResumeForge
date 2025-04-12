@@ -1,6 +1,7 @@
 // app/api/resumes/route.ts
 import { NextResponse } from 'next/server';
-import { getCoverletter } from '@/db';
+import { getCoverletter, saveCoverletter } from '@/db';
+import { put } from '@vercel/blob';
 
 export async function GET(request: Request) {
   try {
@@ -20,5 +21,38 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error fetching resumes:', error);
     return NextResponse.json({ error: 'Failed to fetch resumes' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const userId = formData.get('userId') as string;
+    const metadata = formData.get('metadata') as string;
+
+    console.log('metadata', metadata);
+
+    if (!file || !userId) {
+      return NextResponse.json('File and user ID are required.', { status: 400 });
+    }
+
+    const blob = await put(file.name, file, {
+      access: 'public',
+      allowOverwrite: true,
+    });
+
+    const cid = blob.url.split('/').pop() ?? blob.url;
+
+    console.log('cid', cid);
+
+    // Save to database with metadata
+    await saveCoverletter(Number(userId), cid, blob.url, metadata);
+
+    // Return both CID and complete uploadResponse
+    return NextResponse.json({ url: blob.url, cid });
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    return NextResponse.json('An error occurred while uploading the file.', { status: 500 });
   }
 }

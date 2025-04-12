@@ -247,7 +247,7 @@ export default function ResumeUploadPage() {
       );
 
       // API 호출하여 파일 업로드
-      const uploadResponse = await fetch('/api/pinata', {
+      const uploadResponse = await fetch('/api/resumes', {
         method: 'POST',
         body: formData,
       });
