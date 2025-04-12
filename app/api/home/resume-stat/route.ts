@@ -11,8 +11,8 @@ export async function GET(request: Request) {
 
   const resume = await getResume(Number(userId));
 
-  const uploadedResumeCount = resume.filter(r => !r.isAIGenerated).length;
-  const aiGeneratedResumeCount = resume.filter(r => r.isAIGenerated).length;
+  const uploadedResumeCount = resume.filter(r => !r.aiGenerated).length;
+  const aiGeneratedResumeCount = resume.filter(r => r.aiGenerated).length;
 
   // 사용자의 IP 목록 조회
   const userIPs = await getUserIPs(Number(userId));
