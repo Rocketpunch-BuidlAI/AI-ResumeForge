@@ -3,12 +3,13 @@ import { getWalletAddressByEmail } from '@/utils/privy';
 import { client, stroyAccount } from '@/utils/config';
 import { publicClient, walletClient } from '@/utils/config';
 import { defaultNftContractAbi } from '@/utils/defaultNftContractAbi';
+import { saveIpAsset, saveIpReference, getIpAssetByIpId } from '@/db';
 
 export async function POST(request: Request) {
   try {
-    const { email, licenseTermsId, licensorIpId, cid, maxMintingFee } = await request.json();
+    const { email, licenseInfos, cid, userId } = await request.json();
 
-    if (!email || !licenseTermsId || !licensorIpId || !cid || maxMintingFee === undefined) {
+    if (!email || !licenseInfos || !Array.isArray(licenseInfos) || licenseInfos.length === 0 || !cid || !userId) {
       return NextResponse.json({ error: 'Required parameters are missing' }, { status: 400 });
     }
 
@@ -18,49 +19,54 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Wallet address not found' }, { status: 404 });
     }
 
-    // Mint license tokens
-    const response = await client.license.mintLicenseTokens({
-      licenseTermsId: licenseTermsId,
-      licensorIpId: licensorIpId,
-      amount: 1,
-      maxMintingFee: BigInt(maxMintingFee), // Use the value directly
-      maxRevenueShare: 100, // default
-      txOptions: { waitForTransaction: true },
-    });
+    // Mint license tokens for each license info
+    const licenseTokenIds = [];
+    for (const licenseInfo of licenseInfos) {
+      const response = await client.license.mintLicenseTokens({
+        licenseTermsId: licenseInfo.licenseTermsId,
+        licensorIpId: licenseInfo.licensorIpId,
+        amount: 1,
+        maxMintingFee: BigInt(licenseInfo.maxMintingFee),
+        maxRevenueShare: 100, // default
+        txOptions: { waitForTransaction: true },
+      });
 
-    console.log('License minted:', {
-      'Transaction Hash': response.txHash,
-      'License Token IDs': response.licenseTokenIds,
-    });
+      console.log('License minted:', {
+        'Transaction Hash': response.txHash,
+        'License Token IDs': response.licenseTokenIds,
+      });
 
-    // Approve license token
-    const { request: approveRequest } = await publicClient.simulateContract({
-      address: '0xFe3838BFb30B34170F00030B52eA4893d8aAC6bC',
-      abi: defaultNftContractAbi,
-      functionName: 'approve',
-      args: [
-        '0x9e2d496f72C547C2C535B167e06ED8729B374a4f', // contract
-        response.licenseTokenIds![0], // tokenId
-      ],
-      account: stroyAccount,
-    });
+      // Approve license token
+      const { request: approveRequest } = await publicClient.simulateContract({
+        address: '0xFe3838BFb30B34170F00030B52eA4893d8aAC6bC',
+        abi: defaultNftContractAbi,
+        functionName: 'approve',
+        args: [
+          '0x9e2d496f72C547C2C535B167e06ED8729B374a4f', // contract
+          response.licenseTokenIds![0], // tokenId
+        ],
+        account: stroyAccount,
+      });
 
-    // Execute approval transaction
-    const hash2 = await walletClient.writeContract({ ...approveRequest, account: stroyAccount });
+      // Execute approval transaction
+      const hash2 = await walletClient.writeContract({ ...approveRequest, account: stroyAccount });
 
-    // Wait for approval transaction
-    const receipt2 = await publicClient.waitForTransactionReceipt({
-      hash: hash2,
-    });
+      // Wait for approval transaction
+      const receipt2 = await publicClient.waitForTransactionReceipt({
+        hash: hash2,
+      });
 
-    console.log('Total license token limit set:', {
-      Receipt: receipt2,
-    });
+      console.log('Total license token limit set:', {
+        Receipt: receipt2,
+      });
 
-    // Register derivative IP asset
+      licenseTokenIds.push(response.licenseTokenIds![0]);
+    }
+
+    // Register derivative IP asset with all license tokens
     const child = await client.ipAsset.mintAndRegisterIpAndMakeDerivativeWithLicenseTokens({
       spgNftContract: process.env.STORY_SPG_NFT_CONTRACT as `0x${string}`,
-      licenseTokenIds: response.licenseTokenIds!,
+      licenseTokenIds: licenseTokenIds,
       ipMetadata: {
         ipMetadataURI: cid
       },
@@ -68,6 +74,30 @@ export async function POST(request: Request) {
       txOptions: { waitForTransaction: true },
       recipient: walletAddress as `0x${string}`,
     });
+
+    // Save IP asset to database
+    const savedIpAsset = await saveIpAsset(
+      userId,
+      Number(child.tokenId),
+      Number(licenseInfos[0].licenseTermsId),
+      cid,
+      child.ipId || '',
+      child.txHash || ''
+    );
+
+    // Save IP references to database
+    for (const licenseInfo of licenseInfos) {
+      if (savedIpAsset && savedIpAsset.length > 0) {
+        // Get parent IP asset ID from database
+        const parentIpAsset = await getIpAssetByIpId(licenseInfo.licensorIpId);
+        if (parentIpAsset && parentIpAsset.length > 0) {
+          await saveIpReference(
+            savedIpAsset[0].id,
+            parentIpAsset[0].id
+          );
+        }
+      }
+    }
 
     return NextResponse.json({
       txHash: child.txHash,

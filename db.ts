@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { pgTable, serial, varchar, bigint, timestamp, text, json } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, bigint, timestamp, text, json, integer } from 'drizzle-orm/pg-core';
 import { eq, and, desc } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
@@ -11,7 +11,7 @@ if (!connectionString) {
 }
 
 const client = postgres(connectionString, { ssl: 'require' });
-const db = drizzle(client);
+export const db = drizzle(client);
 
 // Define metadata interface
 export interface ResumeMetadata {
@@ -30,11 +30,13 @@ export interface ResumeMetadata {
 }
 
 // Table schema definitions
-const users = pgTable('User', {
-  id: serial('id').primaryKey(),
-  email: varchar('email', { length: 64 }),
-  password: varchar('password', { length: 64 }),
-  name: varchar('name', { length: 64 }),
+export const users = pgTable('User', {
+  id: bigint('id', { mode: 'number' }).primaryKey(),
+  name: varchar('name', { length: 255 }),
+  email: varchar('email', { length: 255 }),
+  image: varchar('image', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 const coverletters = pgTable('Coverletter', {
@@ -58,7 +60,7 @@ const coverletters = pgTable('Coverletter', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
-// IP 자산 등록 정보 테이블
+// IP Asset Registration Information Table
 const ipAssets = pgTable('Ip', {
   id: serial('id').primaryKey(),
   userId: bigint('user_id', { mode: 'number' }).notNull(),
@@ -67,6 +69,14 @@ const ipAssets = pgTable('Ip', {
   cid: varchar('cid', { length: 255 }).notNull(),
   ipId: varchar('ip_id', { length: 255 }).notNull(),
   txHash: varchar('tx_hash', { length: 255 }).notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// IP Asset Reference Information Table
+const ipReferences = pgTable('IpReferences', {
+  ip_id: integer('ip_id').primaryKey(),
+  reference_ip_id: bigint('reference_ip_id', { mode: 'number' }).notNull(),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
@@ -150,7 +160,7 @@ export async function getCoverletterById(id: number) {
   return await db.select().from(coverletters).where(eq(coverletters.id, id));
 }
 
-// IP 자산 등록 정보 저장 함수
+// Function to save IP asset registration information
 export async function saveIpAsset(
   userId: number,
   tokenId: number,
@@ -158,7 +168,7 @@ export async function saveIpAsset(
   cid: string,
   ipId: string,
   txHash: string
-) {
+): Promise<{ id: number }[]> {
   return await db.insert(ipAssets).values({
     userId,
     tokenId,
@@ -166,15 +176,15 @@ export async function saveIpAsset(
     cid,
     ipId,
     txHash,
-  });
+  }).returning({ id: ipAssets.id });
 }
 
-// IP 자산 등록 정보 조회 함수
+// Function to retrieve IP asset registration information
 export async function getIpAssets(userId: number) {
   return await db.select().from(ipAssets).where(eq(ipAssets.userId, userId));
 }
 
-// IP 자산 등록 정보 ID로 조회 함수
+// Function to retrieve IP asset registration information by ID
 export async function getIpAssetById(id: number) {
   return await db.select().from(ipAssets).where(eq(ipAssets.id, id));
 }
@@ -208,6 +218,29 @@ export async function getCoverletterTextByCoverletterId(coverletterId: number) {
     .select()
     .from(coverletterTexts)
     .where(eq(coverletterTexts.coverletterId, coverletterId));
+}
+
+// Function to save IP asset reference information
+export async function saveIpReference(ipId: number, referenceIpId: number) {
+  return await db.insert(ipReferences).values({
+    ip_id: ipId,
+    reference_ip_id: referenceIpId,
+  });
+}
+
+// Function to retrieve IP asset reference information
+export async function getIpReferences(ipId: number) {
+  return await db.select().from(ipReferences).where(eq(ipReferences.ip_id, ipId));
+}
+
+// Function to retrieve IP asset reference information by ID
+export async function getIpReferenceById(id: number) {
+  return await db.select().from(ipReferences).where(eq(ipReferences.ip_id, id));
+}
+
+// Function to retrieve IP asset registration information by IP ID
+export async function getIpAssetByIpId(ipId: string) {
+  return await db.select().from(ipAssets).where(eq(ipAssets.ipId, ipId));
 }
 
 async function ensureTablesExist() {
@@ -359,6 +392,25 @@ async function ensureTablesExist() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT coverletter_id FOREIGN KEY (coverletter_id) REFERENCES "Coverletter" (id)
+      );`;
+  }
+
+  const ipReferenceResult = await client`
+    SELECT EXISTS (
+      SELECT FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'IpReferences'
+    );`;
+
+  if (!ipReferenceResult[0].exists) {
+    await client`
+      CREATE TABLE "IpReferences" (
+        ip_id INTEGER,
+        reference_ip_id BIGINT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT IpReferences_pkey PRIMARY KEY (ip_id),
+        CONSTRAINT id FOREIGN KEY (ip_id) REFERENCES public.Ip (id)
       );`;
   }
 }

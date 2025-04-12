@@ -6,33 +6,47 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { Plus, Trash2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+
+interface LicenseInfo {
+  licenseTermsId: string;
+  licensorIpId: string;
+  maxMintingFee: string;
+}
 
 export default function DerivativePage() {
+  const [licenseInfos, setLicenseInfos] = useState<LicenseInfo[]>([
+    { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' }
+  ]);
   const [formData, setFormData] = useState({
     email: '',
-    licenseTermsId: '',
-    licensorIpId: '',
     cid: '',
-    maxMintingFee: '',
   });
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { data: session } = useSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/story/child', {
+      const response = await fetch('/api/story/child', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          email: formData.email,
+          licenseInfos,
+          cid: formData.cid,
+          userId: session?.user?.id,
+        }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
+      const data = await response.json();
+      if (response.ok) {
         setResponse(data);
         toast.success('Derivative IP asset has been successfully registered');
       } else {
@@ -54,6 +68,25 @@ export default function DerivativePage() {
     }));
   };
 
+  const handleLicenseInfoChange = (index: number, field: keyof LicenseInfo, value: string) => {
+    setLicenseInfos((prev) => {
+      const newLicenseInfos = [...prev];
+      newLicenseInfos[index] = {
+        ...newLicenseInfos[index],
+        [field]: value,
+      };
+      return newLicenseInfos;
+    });
+  };
+
+  const addLicenseInfo = () => {
+    setLicenseInfos((prev) => [...prev, { licenseTermsId: '', licensorIpId: '', maxMintingFee: '' }]);
+  };
+
+  const removeLicenseInfo = (index: number) => {
+    setLicenseInfos((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="container mx-auto p-6">
       <Card>
@@ -65,45 +98,67 @@ export default function DerivativePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="licenseTermsId">License Terms ID</Label>
-              <Input
-                id="licenseTermsId"
-                name="licenseTermsId"
-                value={formData.licenseTermsId}
-                onChange={handleChange}
-                placeholder="1300"
-                required
-              />
-            </div>
+            {licenseInfos.map((licenseInfo, index) => (
+              <div key={index} className="space-y-4 border rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">License Info {index + 1}</h3>
+                  {index > 0 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeLicenseInfo(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`licenseTermsId-${index}`}>License Terms ID</Label>
+                  <Input
+                    id={`licenseTermsId-${index}`}
+                    value={licenseInfo.licenseTermsId}
+                    onChange={(e) => handleLicenseInfoChange(index, 'licenseTermsId', e.target.value)}
+                    placeholder="1300"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`licensorIpId-${index}`}>Licensor IP ID</Label>
+                  <Input
+                    id={`licensorIpId-${index}`}
+                    value={licenseInfo.licensorIpId}
+                    onChange={(e) => handleLicenseInfoChange(index, 'licensorIpId', e.target.value)}
+                    placeholder="0x7A348A2d734C30c7D2abEe6FBaA3C0dF73a407a2"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`maxMintingFee-${index}`}>Max Minting Fee</Label>
+                  <Input
+                    id={`maxMintingFee-${index}`}
+                    type="number"
+                    value={licenseInfo.maxMintingFee}
+                    onChange={(e) => handleLicenseInfoChange(index, 'maxMintingFee', e.target.value)}
+                    placeholder="0"
+                    required
+                  />
+                  <p className="text-muted-foreground text-sm">
+                    Enter the maximum minting fee in wei. Set to 0 to disable.
+                  </p>
+                </div>
+              </div>
+            ))}
 
-            <div className="space-y-2">
-              <Label htmlFor="licensorIpId">Licensor IP ID</Label>
-              <Input
-                id="licensorIpId"
-                name="licensorIpId"
-                value={formData.licensorIpId}
-                onChange={handleChange}
-                placeholder="0x7A348A2d734C30c7D2abEe6FBaA3C0dF73a407a2"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="maxMintingFee">Max Minting Fee (in ETH)</Label>
-              <Input
-                id="maxMintingFee"
-                name="maxMintingFee"
-                type="number"
-                value={formData.maxMintingFee}
-                onChange={handleChange}
-                placeholder="0"
-                required
-              />
-              <p className="text-muted-foreground text-sm">
-                Enter the maximum minting fee in wei. Set to 0 to disable.
-              </p>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addLicenseInfo}
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add License Info
+            </Button>
 
             <div className="space-y-2">
               <Label htmlFor="email">Recipient Email</Label>
