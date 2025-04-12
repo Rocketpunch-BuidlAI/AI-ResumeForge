@@ -10,15 +10,14 @@ import { defaultNftContractAbi } from '@/utils/defaultNftContractAbi';
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const file = formData.get('file') as File;
+    const pdf = formData.get('pdf') as File;
     const text = formData.get('text') as string;
-    // TODO: 동준님 이거 해주세요. walletAddress랑 userId 보내주세요.
     const walletAddress = formData.get('walletAddress') as string;
     const userId = formData.get('userId') as string;
     const referencesJson = formData.get('references') as string;
     const metadata = formData.get('metadata') as string;
 
-    if (!file || !text || !referencesJson || !metadata) {
+    if (!pdf || !text || !referencesJson || !metadata) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -30,8 +29,8 @@ export async function POST(request: Request) {
 
     // TODO: Story IP 등록
 
-    console.log('Uploading file to blob storage...');
-    const blob = await put(file.name, file, {
+    console.log('Uploading file to blob storage...', pdf, pdf.name);
+    const blob = await put(pdf.name, pdf, {
       access: 'public',
       allowOverwrite: true,
     });
@@ -45,13 +44,21 @@ export async function POST(request: Request) {
 
     const metadataObj = JSON.parse(metadata);
 
-    console.log('Uploading to AI agent:', AI_AGENT_URL);
-    const response = await axios.post(`${AI_AGENT_URL}/upload`, {
+    console.log('Uploading to AI agent:', AI_AGENT_URL, {
       text: text,
       id: savedCoverletterId,
-      role: metadataObj.jobTitle,
-      experience: metadataObj.yearsOfExperience,
+      role: metadataObj.role,
+      experience: metadataObj.experience,
     });
+
+    const response = await axios.post(`${AI_AGENT_URL}/upload`, {
+      text: text,
+      id: String(savedCoverletterId),
+      role: metadataObj.role,
+      experience: metadataObj.experience,
+    });
+
+    console.log('response', response);
 
     const aiAgentResponse = response.data;
     console.log('AI agent response:', aiAgentResponse);

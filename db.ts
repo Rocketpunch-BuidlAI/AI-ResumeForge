@@ -117,6 +117,10 @@ export async function getUser(email: string) {
   return await db.select().from(users).where(eq(users.email, email));
 }
 
+export async function getUserById(id: number) {
+  return await db.select().from(users).where(eq(users.id, id));
+}
+
 export async function createUser(email: string, password: string, name: string) {
   const salt = genSaltSync(10);
   const hash = hashSync(password, salt);

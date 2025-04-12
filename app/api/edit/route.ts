@@ -29,7 +29,7 @@ const coverLetterSchema = z.object({
       id: z.string().describe('Referenced template ID'),
       contributions: z.number().describe('Contribution percentage')
     })
-  ).describe('Reference template information')
+  ).describe('Reference template information').optional()
 });
 
 export const maxDuration = 300;
@@ -85,6 +85,9 @@ It should be written in English, follow the item structure below, and the senten
 REFERENCE EXAMPLES:
 The following examples from previous cover letters are specifically tailored to this person's job role and career level. These are highly relevant references that you should actively utilize. These examples contain optimal patterns, expressions, and content structures for this specific career context, so incorporate them actively while adapting to the user's specific information:
 ${JSON.stringify(data, null, 2)}
+
+ADDITIONAL OUTPUT REQUIREMENTS:
+If you used any of the reference examples provided, list the ID of each example and the percentage (%) contribution it made to your generated text in the 'sources' field. For example: [{"id": "example1", "contributions": 30}, {"id": "example2", "contributions": 20}]. The total contribution percentage does not need to equal 100% if other sources or original content were also used.
 `;
     }
 
@@ -106,9 +109,6 @@ Writing style:
 - End naturally with aspirations (no need for a separate closing sentence)
 - Don't overemphasize achievements
 - When writing about accomplishments, be clear and number-driven (e.g., increased MOU by x, increased MOU by 10% - don't use the example used in the final cover letter every time)
-
-ADDITIONAL OUTPUT REQUIREMENTS:
-If you used any of the reference examples provided, list the ID of each example and the percentage (%) contribution it made to your generated text in the 'sources' field. For example: [{"id": "example1", "contributions": 30}, {"id": "example2", "contributions": 20}]. The total contribution percentage does not need to equal 100% if other sources or original content were also used.
 
 CONTENT REQUIREMENTS:
 1. Introduction: ${jsonData.selfIntroduction}

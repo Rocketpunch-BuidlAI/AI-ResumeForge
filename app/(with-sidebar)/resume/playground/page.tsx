@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { experimental_useObject as useObject } from '@ai-sdk/react';
 import { z } from 'zod';
+import { jsPDF } from 'jspdf';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -48,6 +49,8 @@ import { models, types } from './data/models';
 import { presets } from './data/presets';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, ControllerRenderProps } from 'react-hook-form';
+import { useWallets } from '@privy-io/react-auth';
+import getSession from '@/utils/getSession';
 
 // Form schema
 const formSchema = z.object({
@@ -71,7 +74,9 @@ const formSchema = z.object({
   position: z.string().optional(),
   customPrompt: z.string().optional(),
   skills: z.string().optional(),
-  yearsOfExperience: z.string().optional(),
+  yearsOfExperience: z.string().min(1, {
+    message: 'Years of experience is required.',
+  }),
 });
 
 // Define type for form values
@@ -167,6 +172,9 @@ const coverLetterSchema = z.object({
 
 export default function PlaygroundPage() {
   const [error, setError] = useState<Error | null>(null);
+  const [savedToDatabase, setSavedToDatabase] = useState(false);
+
+  const { wallets } = useWallets();
 
   // Form setup
   const form = useForm<z.infer<typeof formSchema>>({
@@ -191,6 +199,8 @@ export default function PlaygroundPage() {
     api: '/api/edit',
     schema: coverLetterSchema,
   });
+
+  console.log("object", object);
 
   // 직업 선택 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -228,25 +238,25 @@ export default function PlaygroundPage() {
     form.setValue('jobTitle', jobTitle, { shouldValidate: true });
   };
 
+  const fullJobTitle = selectedJobTitle
+        ? selectedCategory === 'Professional Services'
+          ? selectedJobTitle
+          : `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
+        : form.getValues('jobTitle');
+
+        // 경력에 따라 S(시니어) 또는 J(주니어) 결정
+    let experienceLevel = "J";
+    if (form.getValues('yearsOfExperience') === "5-10 years" || form.getValues('yearsOfExperience') === "10+ years") {
+      experienceLevel = "S";
+    }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log('폼 제출 시작', values);
     setError(null);
 
  
     
-    // 경력에 따라 S(시니어) 또는 J(주니어) 결정
-    let experienceLevel = "J";
-    if (values.yearsOfExperience === "5-10 years" || values.yearsOfExperience === "10+ years") {
-      experienceLevel = "S";
-    }
-
-
-    const fullJobTitle = selectedJobTitle
-        ? selectedCategory === 'Professional Services'
-          ? selectedJobTitle
-          : `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
-        : values.jobTitle;
-
+    
 
     const payload = {
       selfIntroduction: values.introduction,
@@ -328,6 +338,111 @@ export default function PlaygroundPage() {
     ));
   };
 
+  // 결과 저장 함수
+  const handleSaveResume = async () => {
+    if (!object?.text) return;
+
+    if (!wallets[0]?.address) {
+      toast('지갑 주소가 없습니다.', {
+        description: '지갑 주소를 설정해주세요.',
+        icon: <X className="h-4 w-4 text-white" />,
+      });
+      return;
+    }
+
+    const session = await getSession();
+
+    if (!session?.user?.id) {
+      toast('세션 정보가 없습니다.', {
+        description: '세션 정보를 확인해주세요.',
+        icon: <X className="h-4 w-4 text-white" />,
+      });
+      return;
+    }
+
+    try {
+      // 저장 시작 알림
+      toast('자기소개서 저장 중', {
+        description: '자기소개서를 PDF로 변환하고 저장하고 있습니다.',
+        icon: <Clock className="h-4 w-4 text-blue-500" />,
+      });
+
+      // PDF 생성
+      const pdf = new jsPDF();
+      
+      const company = form.getValues('company') || '미지정';
+      
+      // PDF 제목 및 메타데이터 설정
+      pdf.setProperties({
+        title: `${fullJobTitle} - 자기소개서`,
+        subject: `${company}에 지원하는 자기소개서`,
+        author: session?.user?.id,
+        creator: 'AI-ResumeForge'
+      });
+      
+      // PDF 폰트 및 스타일 설정
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(22);
+      pdf.text(`${fullJobTitle} - 자기소개서`, 20, 20);
+      
+      // 회사명 추가
+      pdf.setFontSize(16);
+      pdf.text(`회사: ${company}`, 20, 30);
+      
+      // 구분선 추가
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(20, 35, 190, 35);
+      
+      // 본문 내용 추가
+      pdf.setFontSize(12);
+      
+      // 텍스트 줄바꿈 처리 (PDF 페이지 너비에 맞게)
+      const splitText = pdf.splitTextToSize(object.text, 170);
+      pdf.text(splitText, 20, 45);
+
+      // PDF를 Blob으로 변환
+      const pdfBlob = pdf.output('blob');
+
+      // 기존 FormData에 PDF 추가
+      const formData = new FormData();
+      formData.append('text', object.text);
+      formData.append('pdf', pdfBlob, 'coverletter.pdf'); // PDF 추가
+      formData.append('walletAddress', wallets[0]?.address || '');
+      formData.append('userId', session?.user?.id || '');
+      formData.append('references', JSON.stringify(object.sources || []));
+      formData.append('metadata', JSON.stringify({
+        role: fullJobTitle,
+        experience: experienceLevel,
+      }));
+
+      const response = await fetch('/api/edit/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('저장에 실패했습니다.');
+      }
+
+      setSavedToDatabase(true);
+
+      // 저장 성공 알림
+      toast('자기소개서 저장 완료', {
+        description: '자기소개서가 PDF로 변환되어 성공적으로 저장되었습니다.',
+        icon: <Check className="h-4 w-4 text-green-500" />,
+      });
+    } catch (err) {
+      console.error('저장 오류:', err);
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      
+      toast('저장 오류', {
+        description: errorMessage,
+        style: { backgroundColor: 'hsl(var(--destructive))' },
+        icon: <X className="h-4 w-4 text-white" />,
+      });
+    }
+  };
+
   // Notification when result generation is complete
   useEffect(() => {
     if (object && object.text && !isLoading) {
@@ -335,6 +450,8 @@ export default function PlaygroundPage() {
         description: 'Your cover letter has been successfully generated.',
         icon: <Check className="h-4 w-4 text-green-500" />,
       });
+      // 생성 완료 시 저장 상태 초기화
+      setSavedToDatabase(false);
     }
   }, [object, isLoading]);
 
@@ -702,6 +819,52 @@ export default function PlaygroundPage() {
 
                                     <FormField
                                       control={form.control}
+                                      name="yearsOfExperience"
+                                      render={({
+                                        field,
+                                      }: {
+                                        field: ControllerRenderProps<FormValues, 'yearsOfExperience'>;
+                                      }) => (
+                                        <FormItem>
+                                          <FormLabel className="flex items-center gap-2">
+                                            <Clock className="text-muted-foreground h-4 w-4" />
+                                            Years of Experience
+                                          </FormLabel>
+                                          <div>
+                                            <div className="mt-1 flex flex-wrap gap-2">
+                                              {['Less than 1 year', '1-2 years', '3-5 years', '5-10 years', '10+ years'].map((option) => (
+                                                <Badge
+                                                  key={option}
+                                                  variant={field.value === option ? 'default' : 'outline'}
+                                                  className={cn(
+                                                    'hover:bg-primary/20 cursor-pointer transition-colors',
+                                                    field.value === option
+                                                      ? 'bg-primary text-primary-foreground'
+                                                      : ''
+                                                  )}
+                                                  onClick={() =>
+                                                    form.setValue('yearsOfExperience', option, {
+                                                      shouldValidate: true,
+                                                    })
+                                                  }
+                                                >
+                                                  {option}
+                                                  {field.value === option && <Check className="ml-1 h-3 w-3" />}
+                                                </Badge>
+                                              ))}
+                                            </div>
+                                            {form.formState.errors.yearsOfExperience && (
+                                              <p className="text-destructive mt-2 text-sm">
+                                                {form.formState.errors.yearsOfExperience.message}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
                                       name="introduction"
                                       render={({
                                         field,
@@ -815,52 +978,6 @@ export default function PlaygroundPage() {
                                             />
                                           </FormControl>
                                           <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-
-                                    <FormField
-                                      control={form.control}
-                                      name="yearsOfExperience"
-                                      render={({
-                                        field,
-                                      }: {
-                                        field: ControllerRenderProps<FormValues, 'yearsOfExperience'>;
-                                      }) => (
-                                        <FormItem>
-                                          <FormLabel className="flex items-center gap-2">
-                                            <Clock className="text-muted-foreground h-4 w-4" />
-                                            Years of Experience
-                                          </FormLabel>
-                                          <div>
-                                            <div className="mt-1 flex flex-wrap gap-2">
-                                              {['Less than 1 year', '1-2 years', '3-5 years', '5-10 years', '10+ years'].map((option) => (
-                                                <Badge
-                                                  key={option}
-                                                  variant={field.value === option ? 'default' : 'outline'}
-                                                  className={cn(
-                                                    'hover:bg-primary/20 cursor-pointer transition-colors',
-                                                    field.value === option
-                                                      ? 'bg-primary text-primary-foreground'
-                                                      : ''
-                                                  )}
-                                                  onClick={() =>
-                                                    form.setValue('yearsOfExperience', option, {
-                                                      shouldValidate: true,
-                                                    })
-                                                  }
-                                                >
-                                                  {option}
-                                                  {field.value === option && <Check className="ml-1 h-3 w-3" />}
-                                                </Badge>
-                                              ))}
-                                            </div>
-                                            {form.formState.errors.yearsOfExperience && (
-                                              <p className="text-destructive mt-2 text-sm">
-                                                {form.formState.errors.yearsOfExperience.message}
-                                              </p>
-                                            )}
-                                          </div>
                                         </FormItem>
                                       )}
                                     />
@@ -989,6 +1106,17 @@ export default function PlaygroundPage() {
                         <X className="h-4 w-4 mr-2" />
                         Stop Generation
                       </Button>
+                      {object?.text && !isLoading && (
+                        <Button 
+                          variant="outline" 
+                          onClick={handleSaveResume}
+                          disabled={savedToDatabase}
+                          className={cn(savedToDatabase && "border-green-500 text-green-500")}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          {savedToDatabase ? "Saved" : "Save"}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </TabsContent>
