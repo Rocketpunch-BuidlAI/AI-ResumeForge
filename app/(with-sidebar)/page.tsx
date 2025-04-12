@@ -44,7 +44,6 @@ import {
   Cell,
   Legend,
 } from 'recharts';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // Resume type definitions
 interface ResumeMetadata {
@@ -146,7 +145,7 @@ export default function Page() {
   const [rewardChangePercent, setRewardChangePercent] = useState<number>(0);
   const [uploadedResumeCount, setUploadedResumeCount] = useState<number>(0);
   const [aiGeneratedResumeCount, setAiGeneratedResumeCount] = useState<number>(0);
-  const [recentRewards, setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
+  const [setRecentRewards] = useState<Array<{ amount: number; createdAt: string }>>(
     []
   );
 
