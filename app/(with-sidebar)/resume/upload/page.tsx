@@ -32,6 +32,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import FilePreview from '@/lib/pdf/FilePreview';
+import Link from 'next/link';
 
 // Form validation schema
 const formSchema = z.object({
@@ -562,9 +563,11 @@ export default function ResumeUploadPage() {
                 >
                   Upload Another
                 </Button>
+                <Link href="/">
                 <Button className="cursor-pointer">
                   View Dashboard
                 </Button>
+                </Link>
               </div>
             </motion.div>
           </AnimatePresence>
