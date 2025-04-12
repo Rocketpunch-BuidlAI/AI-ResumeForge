@@ -1,7 +1,10 @@
 // app/api/resumes/route.ts
 import { NextResponse } from 'next/server';
-import { getCoverletter, saveCoverletter } from '@/db';
+import { getCoverletter, saveCoverletter, getLatestCoverletterByCidAndUserId } from '@/db';
 import { put } from '@vercel/blob';
+import axios from 'axios';
+import { PdfManager } from '@/utils/PdfManager';
+import { AI_AGENT_URL } from '@/utils/config';
 
 export async function GET(request: Request) {
   try {
@@ -49,6 +52,34 @@ export async function POST(request: Request) {
     // Save to database with metadata
     await saveCoverletter(Number(userId), cid, blob.url, metadata);
 
+    const savedCoverletter = await getLatestCoverletterByCidAndUserId(Number(userId));
+
+    if(!savedCoverletter) {
+      return NextResponse.json('Coverletter not found.', { status: 400 });
+    }
+
+    // // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfBytes = new Uint8Array(arrayBuffer);
+    const extractedText = await PdfManager.extractTextFromBytes(pdfBytes);
+
+    // // upload cover letter to pinecone
+    const response = await axios.post(`${AI_AGENT_URL}/upload`, {
+      text: extractedText,
+      id: savedCoverletter.id.toString(),
+      role: savedCoverletter.metadata.jobTitle,
+      experience: savedCoverletter.metadata.yearsOfExperience
+    });
+
+    const aiAgentResponse = response.data;
+
+    if (aiAgentResponse.status !== 'success') {
+      return NextResponse.json(
+        { status: 'error', message: aiAgentResponse.message },
+        { status: 400 }
+      );
+    }
+    
     // Return both CID and complete uploadResponse
     return NextResponse.json({ url: blob.url, cid });
   } catch (error) {

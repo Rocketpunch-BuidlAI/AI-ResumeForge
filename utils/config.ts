@@ -12,3 +12,5 @@ const config: StoryConfig = {
   chainId: 'aeneid', // Aeneid testnet
 };
 export const client = StoryClient.newClient(config);
+
+export const AI_AGENT_URL = process.env.AI_AGENT_BASE_URL;
