@@ -17,7 +17,6 @@ import {
   SheetDescription,
   SheetFooter
 } from '@/components/ui/sheet';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { z } from 'zod';
 import { useForm } from "react-hook-form";
@@ -33,6 +32,7 @@ import {
 } from "@/components/ui/form";
 import FilePreview from '@/lib/pdf/FilePreview';
 import Link from 'next/link';
+import getSession from '@/utils/getSession';
 
 // Form validation schema
 const formSchema = z.object({
@@ -193,30 +193,88 @@ export default function ResumeUploadPage() {
 
   const onSubmit = async (data: FormValues) => {
     if (!file) return;
-
+    
     setIsUploading(true);
     setProgressValue(0);
 
-    // Upload progress simulation
-    const interval = setInterval(() => {
-      setProgressValue(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          setCurrentStep('complete');
-          toast("Upload complete!", {
-            description: "Your resume and metadata have been successfully uploaded.",
-            icon: <Check className="h-4 w-4 text-green-500" />,
-          });
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 200);
+    try {
+      // 진행률 표시를 위한 시뮬레이션 (실제 업로드와 병행)
+      const interval = setInterval(() => {
+        setProgressValue(prev => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90; // 90%에서 대기 (실제 업로드가 완료될 때까지)
+          }
+          return prev + 1;
+        });
+      }, 70);
 
-    // TODO: Integrate with file upload API
-    console.log('File to upload:', file);
-    console.log('Form data:', data);
+      const session = await getSession();
+
+      console.log('session', session?.user?.id);
+
+      // 실제 파일 업로드 구현
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', session?.user?.id || '');
+      
+      // 메타데이터 추가
+      formData.append('metadata', JSON.stringify({
+        jobTitle: data.jobTitle,
+        companyName: data.companyName,
+        yearsOfExperience: data.yearsOfExperience,
+        skills: data.skills,
+        additionalInfo: data.additionalInfo || '',
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        uploadDate: new Date().toISOString()
+      }));
+
+      // API 호출하여 파일 업로드
+      const uploadResponse = await fetch('/api/pinata', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.message || 'An error occurred while uploading the file.');
+      }
+
+      const result = await uploadResponse.json();
+      
+      // 업로드 완료 후 진행률 100%로 설정
+      clearInterval(interval);
+      setProgressValue(100);
+      
+      // 업로드 완료 후 상태 업데이트
+      setIsUploading(false);
+      setCurrentStep('complete');
+      
+      toast("Upload Complete!", {
+        description: "Your resume and metadata have been successfully uploaded.",
+        icon: <Check className="h-4 w-4 text-green-500" />,
+      });
+      
+      // 콘솔에 결과 로깅 (디버깅용)
+      console.log('Upload result:', result);
+      console.log('File uploaded:', file);
+      console.log('Form data:', data);
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      
+      // 에러 발생 시 업로드 상태 초기화
+      setIsUploading(false);
+      setProgressValue(0);
+      
+      toast("Upload Failed", {
+        description: error instanceof Error ? error.message : "An error occurred while uploading the file.",
+        style: { backgroundColor: 'hsl(var(--destructive))' },
+        icon: <X className="h-4 w-4 text-white" />,
+      });
+    }
   };
 
   const renderStepContent = () => {
@@ -269,7 +327,7 @@ export default function ResumeUploadPage() {
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     Maximum file size: 10MB
-                </div>
+                  </div>
                 <Input
                   id="file"
                   type="file"
@@ -513,8 +571,10 @@ export default function ResumeUploadPage() {
                     >
                       {isUploading ? (
                         <>
-                          <Skeleton className="h-4 w-4 rounded-full animate-pulse mr-2" />
-                          Uploading...
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin"></div>
+                            <span>Uploading: {progressValue}%</span>
+                          </div>
                         </>
                       ) : (
                         <>
@@ -579,7 +639,11 @@ export default function ResumeUploadPage() {
   const getProgressPercentage = () => {
     switch (currentStep) {
       case 'upload': return 0;
-      case 'metadata': return file ? 33 : 0;
+      case 'metadata': 
+        if (isUploading) {
+          return 33 + (progressValue * 0.67 / 100); // Scale upload progress to remaining 67%
+        }
+        return file ? 33 : 0;
       case 'complete': return 100;
       default: return 0;
     }
@@ -720,8 +784,19 @@ export default function ResumeUploadPage() {
       <Sheet open={showPreview} onOpenChange={setShowPreview}>
         <SheetContent 
           side="right" 
-          className="w-[100vw] max-w-none p-4" 
-          style={{ width: '100vw', maxWidth: '100vw' }}
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            maxWidth: '100%',
+            padding: '24px',
+            margin: 0,
+            top: 0,
+            right: 0,
+            border: 0,
+            boxShadow: 'none'
+          }}
+          className="w-screen max-w-none border-none m-0 p-6 !right-0 !left-0"
         >
           <SheetHeader className="mb-6">
             <SheetTitle className="flex items-center gap-2">
