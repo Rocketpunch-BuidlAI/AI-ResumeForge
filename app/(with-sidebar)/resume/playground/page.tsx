@@ -385,6 +385,8 @@ export default function PlaygroundPage() {
 
       const response = await fetch(`/api/edit/status/${taskId}`);
 
+      
+
       if (!response.ok) {
         throw new Error('상태 확인 중 오류가 발생했습니다');
       }
@@ -504,7 +506,7 @@ export default function PlaygroundPage() {
       // PDF 생성
       const pdf = new jsPDF();
 
-      const company = form.getValues('company') || '미지정';
+      const company = form.getValues('company') || '';
 
       // PDF 제목 및 메타데이터 설정
       pdf.setProperties({

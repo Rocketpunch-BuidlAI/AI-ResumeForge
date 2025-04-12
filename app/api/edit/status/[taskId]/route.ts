@@ -4,9 +4,9 @@ import { taskStatusMap } from '../../upload/taskStatus';
 // upload/route.ts에서 정의한 taskStatusMap을 공유하기 위한 가져오기
 // 참고: 실제 프로덕션에서는 Redis 등의 외부 저장소를 사용하는 것이 더 적합합니다
 
-export async function GET(request: Request, { params }: { params: { taskId: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ taskId: string }> }) {
   try {
-    const taskId = params.taskId;
+    const taskId = (await params).taskId;
 
     if (!taskId) {
       return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
