@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { streamObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
-import console from 'console';
+import axios from 'axios';
+import { AI_AGENT_URL } from '@/utils/config';
 
 // note. Using AI SDK to generate cover letter (streaming method)
 
@@ -35,8 +36,22 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
+
+    const body = await request.json();
+
+    const { payload, body: { role, experience } } = body;
+
+    const response = await axios.post(`${AI_AGENT_URL}/coverletters`, {
+      role: role,
+      experience: experience,
+    });
+
+    const data = await response.data;
+
+    console.log("data", data)
+
     // Parse request data
-    const jsonData = (await request.json()) as CoverLetterSection;
+    const jsonData = payload as CoverLetterSection;
 
     // Validate required fields are non-blank
     const requiredFields = [
@@ -60,6 +75,18 @@ export async function POST(request: NextRequest) {
     let systemPrompt = `
 You are an experienced cover letter writer with 10 years of experience. You know how to write cover letters for different jobs and careers. Your task is to generate a Korean-style cover letter based on the data provided by the client, tailored to the job and career.
 It should be written in English, follow the item structure below, and the sentences should flow naturally and smoothly as if written by a human being. The item names should be written in paragraph form under the following headings: 1. Introduction, 2. Motivation and Fit, 3. Experiences, and 4. Career Aspirations.
+`;
+
+    // Add reference examples only if data exists and is not empty
+    if (data && Object.keys(data).length > 0) {
+      systemPrompt += `
+REFERENCE EXAMPLES:
+The following examples from previous cover letters are specifically tailored to this person's job role and career level. These are highly relevant references that you should actively utilize. These examples contain optimal patterns, expressions, and content structures for this specific career context, so incorporate them actively while adapting to the user's specific information:
+${JSON.stringify(data, null, 2)}
+`;
+    }
+
+    systemPrompt += `
 Terms of the request:
 - Four (4) components:
  1. Introduction (major, job title, spark of interest, values, vision, personality)
@@ -77,6 +104,9 @@ Writing style:
 - End naturally with aspirations (no need for a separate closing sentence)
 - Don't overemphasize achievements
 - When writing about accomplishments, be clear and number-driven (e.g., increased MOU by x, increased MOU by 10% - don't use the example used in the final cover letter every time)
+
+ADDITIONAL OUTPUT REQUIREMENTS:
+If you used any of the reference examples provided, list the ID of each example and the percentage (%) contribution it made to your generated text in the 'sources' field. For example: [{"id": "example1", "contributions": 30}, {"id": "example2", "contributions": 20}]. The total contribution percentage does not need to equal 100% if other sources or original content were also used.
 
 CONTENT REQUIREMENTS:
 1. Introduction: ${jsonData.selfIntroduction}

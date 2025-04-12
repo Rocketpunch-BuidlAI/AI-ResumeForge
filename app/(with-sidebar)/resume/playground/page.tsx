@@ -172,7 +172,7 @@ export default function PlaygroundPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      jobTitle: 'Frontend Developer',
+      jobTitle: 'Marketer',
       introduction: 'I am a developer with over 5 years of experience in web frontend development, focusing on user experience. I primarily work with React and TypeScript, and have a deep understanding of accessibility and performance optimization.',
       motivation: 'I was deeply impressed by your company\'s innovative products and user-centric philosophy. I am particularly interested in joining your team to work on frontend development combined with AI-based services.',
       experience: 'I have experience developing large-scale web applications using React, NextJS, and TypeScript. Recently, I participated as a lead developer in an AI-based interface implementation project. I successfully reduced page loading time by 40% through performance optimization.',
@@ -193,9 +193,9 @@ export default function PlaygroundPage() {
   });
 
   // 직업 선택 상태
-  const [selectedCategory, setSelectedCategory] = useState<string>('Technical Roles');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('Web/ Software Dev');
-  const [selectedJobTitle, setSelectedJobTitle] = useState<string>('Frontend Developer');
+  const [selectedCategory, setSelectedCategory] = useState<string>('Business Roles');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('Marketing');
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string>('Marketer');
   const [openJobCategory, setOpenJobCategory] = useState(false);
   const [openJobSubcategory, setOpenJobSubcategory] = useState(false);
   const [openJobTitle, setOpenJobTitle] = useState(false);
@@ -231,12 +231,38 @@ export default function PlaygroundPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log('폼 제출 시작', values);
     setError(null);
+
+ 
     
     // 경력에 따라 S(시니어) 또는 J(주니어) 결정
     let experienceLevel = "J";
     if (values.yearsOfExperience === "5-10 years" || values.yearsOfExperience === "10+ years") {
       experienceLevel = "S";
     }
+
+    console.log("values2", values, experienceLevel)
+
+    const fullJobTitle = selectedJobTitle
+        ? selectedCategory === 'Professional Services'
+          ? selectedJobTitle
+          : `${selectedCategory} > ${selectedSubcategory} > ${selectedJobTitle}`
+        : values.jobTitle;
+
+        console.log("fullJobTitle", fullJobTitle)
+
+    const response = await fetch('/api/coverletters', {
+      method: 'POST',
+      body: JSON.stringify({
+        role: fullJobTitle,
+        experience: experienceLevel,
+      }),
+    });
+
+    console.log("response", response)
+
+    const data = await response.json();
+
+    console.log("datadata", data)
     
     const payload = {
       selfIntroduction: values.introduction,
@@ -248,7 +274,7 @@ export default function PlaygroundPage() {
       position: values.jobTitle || null,
       customPrompt: values.customPrompt || '',
       skills: values.skills || '',
-      experience: experienceLevel,
+      experience: values.yearsOfExperience,
     };
     
     console.log('API 요청 데이터:', payload);
@@ -261,7 +287,10 @@ export default function PlaygroundPage() {
       });
       
       // useObject submit 메서드 사용하여 요청 전송
-      submit(payload);
+      submit({payload, body: {
+        role: fullJobTitle,
+        experience: experienceLevel,
+      }});
       
     } catch (err) {
       console.error('제출 오류:', err);
