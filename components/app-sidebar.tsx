@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { type LucideIcon } from 'lucide-react';
 
-// 네비게이션 아이템 타입 정의
+// Navigation item type definition
 type NavItem = {
   title: string;
   url: string;
@@ -152,7 +152,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
   const pathname = usePathname();
 
-  // URL에 따라 활성 메뉴 항목 설정
+  // Set active menu items based on URL
   const mainNavItems = React.useMemo(() => {
     return data.navMain.map((item) => ({
       ...item,
@@ -160,7 +160,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }));
   }, [pathname]);
 
-  // 보조 메뉴 항목에도 활성 상태 설정
+  // Set active state for secondary menu items
   const secondaryNavItems = React.useMemo(() => {
     return data.navSecondary.map((item) => ({
       ...item,
@@ -169,21 +169,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [pathname]);
 
   const handleLogout = () => {
-    // 로그아웃 로직 구현
-    console.log('로그아웃 처리중...');
-    // 여기에 실제 로그아웃 API 호출 등을 추가할 수 있습니다
+    // Implement logout logic
+    console.log('Processing logout...');
+    // Add actual logout API call here
     setLogoutDialogOpen(false);
   };
 
-  // navSecondary 아이템 클릭 핸들러
+  // navSecondary item click handler
   const handleNavItemClick = (item: NavItem) => {
     if (item.isLogout) {
       setLogoutDialogOpen(true);
       return;
     }
-    // 다른 네비게이션 항목은 정상적으로 URL로 이동
+    // Other navigation items navigate to URL normally
     if (item.url) {
-      // URL 처리 로직
+      // URL handling logic
     }
   };
 
@@ -201,19 +201,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           onItemClick={handleNavItemClick}
         />
 
-        {/* 로그아웃 확인 다이얼로그 */}
+        {/* Logout confirmation dialog */}
         <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>로그아웃 확인</DialogTitle>
-              <DialogDescription>정말 로그아웃 하시겠습니까?</DialogDescription>
+              <DialogTitle>Confirm Logout</DialogTitle>
+              <DialogDescription>Are you sure you want to logout?</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setLogoutDialogOpen(false)}>
-                취소
+                Cancel
               </Button>
               <Button variant="destructive" onClick={handleLogout}>
-                로그아웃
+                Logout
               </Button>
             </DialogFooter>
           </DialogContent>

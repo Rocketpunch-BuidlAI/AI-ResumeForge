@@ -590,7 +590,7 @@ export default function Page() {
                           </Dialog>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-col gap-1 text-sm">
+                          <div className="flex flex-col gap-1 text-sm max-w-[800px]">
                             <div className="flex items-center gap-1">
                               <Briefcase className="text-muted-foreground h-3 w-3" />
                               {resume.metadata.jobSpecific ? (
