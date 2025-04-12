@@ -64,12 +64,6 @@ const data = {
       url: '/resume/upload',
       icon: Inbox,
     },
-    {
-      title: 'Inbox',
-      url: '/inbox',
-      icon: Inbox,
-      badge: '10',
-    },
   ],
   navSecondary: [
     {
