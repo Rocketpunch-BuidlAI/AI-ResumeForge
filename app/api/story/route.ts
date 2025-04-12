@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { client } from '@/utils/config';
 import { creativeCommonsAttribution } from '@/utils/terms';
 import { saveIpAsset } from '@/db';
+import { MintAndRegisterIpAssetWithPilTermsResponse } from '@story-protocol/core-sdk';
+
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
       const spgNftContract = process.env.STORY_SPG_NFT_CONTRACT;
       console.log('Using SPG contract:', spgNftContract);
 
-      let response;
+      let response: MintAndRegisterIpAssetWithPilTermsResponse;
       if (withoutLicense) {
         // 라이선스 없이 IP 자산 등록
         response = await client.ipAsset.mintAndRegisterIp({
@@ -99,7 +101,7 @@ export async function POST(request: Request) {
         tokenId: response.tokenId ? response.tokenId.toString() : undefined,
         txHash: response.txHash,
         licenseTermsIds: !withoutLicense && response.licenseTermsIds
-          ? response.licenseTermsIds.map((id) => id.toString())
+          ? response.licenseTermsIds.map((id: bigint) => id.toString())
           : undefined,
       };
 

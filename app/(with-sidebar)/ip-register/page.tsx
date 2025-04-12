@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/switch';
-import { Loader2 } from 'lucide-react';
 
 export default function IpRegisterPage() {
   const { data: session } = useSession();
