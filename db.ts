@@ -334,6 +334,10 @@ export async function saveCoverletterWithReferences(
   }
 }
 
+export const getResume = async (userId: number) => {
+  return await db.select().from(coverletters).where(eq(coverletters.userId, userId));
+};
+
 export async function getUserIPs(userId: number) {
   return await db.select().from(ipAssets).where(eq(ipAssets.userId, userId));
 }
