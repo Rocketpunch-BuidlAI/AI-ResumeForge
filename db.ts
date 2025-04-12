@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { pgTable, serial, varchar, bigint, timestamp, text, json, integer, doublePrecision } from 'drizzle-orm/pg-core';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import postgres from 'postgres';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
 
@@ -329,6 +329,17 @@ export async function saveCoverletterWithReferences(
   for (const ref of references) {
     await saveCoverletterReference(coverletterId, ref.referencedId, ref.contribution);
   }
+}
+
+export async function getUserIPs(userId: number) {
+  return await db.select().from(ipAssets).where(eq(ipAssets.userId, userId));
+}
+
+export async function getRoyaltiesByIpIds(ipIds: number[]) {
+  return await db
+    .select()
+    .from(royalties)
+    .where(inArray(royalties.parentIpId, ipIds));
 }
 
 async function ensureTablesExist() {
